@@ -3,45 +3,57 @@ import { Amenity } from '../types';
 export const amenities: Amenity[] = [
   {
     id: 'wifi',
-    name: 'Free Wi-Fi',
+    name: 'Wi-Fi Gratuito',
     icon: 'wifi',
-    description: 'High-speed internet access available throughout the space'
+    description: 'Acesso a internet disponível em todo o espaço'
   },
   {
     id: 'coffee',
-    name: 'Coffee Included',
+    name: 'Café Incluso',
     icon: 'coffee',
-    description: 'Complimentary coffee and tea for all workspace users'
+    description: 'Café ou chá para todos os usuários do espaço de trabalho'
   },
   {
-    id: 'comfortable',
-    name: 'Ergonomic Chairs',
+    id: 'chair',
+    name: 'Cadeiras Ergonômicas',
     icon: 'chair',
-    description: 'Comfortable ergonomic seating for productive work sessions'
+    description: 'Assentos ergonômicos e confortáveis para sessões de trabalho produtivas'
   },
   {
-    id: 'park-nearby',
-    name: 'Park Nearby',
+    id: 'park',
+    name: 'Parque Próximo',
     icon: 'park',
-    description: 'Located within walking distance to public parks and green spaces'
+    description: 'Local com vista ou proximidade à um ambiente florestal'
   },
   {
-    id: 'shopping-nearby',
-    name: 'Shopping Nearby',
+    id: 'shopping',
+    name: 'Shopping Próximo',
     icon: 'store',
-    description: 'Close to shops, restaurants, and convenience stores'
+    description: 'Local vizinho ou próximo à shopping, restaurantes e lojas'
   },
   {
     id: 'city-center',
-    name: 'City Center',
+    name: 'Centro da Cidade',
     icon: 'city',
-    description: 'Located in or near the city center with easy access to transportation'
+    description: 'Localizado no centro da cidade'
   },
   {
     id: 'central-location',
-    name: 'Central Location',
+    name: 'Localização Central',
     icon: 'map-pin',
-    description: 'Strategically located for easy access from most parts of the city'
+    description: 'Localização estratégica para fácil acesso à maioria das partes da cidade'
+  },
+  {
+    id: 'comfort',
+    name: 'Espaço de Descompressão',
+    icon: 'flower2',
+    description: 'Ambiente com local dedicado à descanso e descontração'
+  },
+  {
+    id: 'air-conditioning',
+    name: 'Ar Condicionado',
+    icon: 'air-vent',
+    description: 'Cobertura de ar condicionado para todo o espaço'
   }
 ];
 

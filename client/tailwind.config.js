@@ -71,8 +71,10 @@ export default {
 					park: '#00B728',
 					store: '#CDCD00',
 					city: '#0092BA',
+					centralLocation: '#47199c',
 					chairs: '#BE0000',
-					chillRoom: '#DD6903'
+					comfort: '#DD6903',
+					airConditioning: '#0bc6db',
 				}
 			},
 			borderRadius: {

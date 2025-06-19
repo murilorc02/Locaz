@@ -19,16 +19,20 @@ const AmenityBadge = ({ amenityId, className, showLabel = true }: AmenityBadgePr
         return 'bg-purple-100 text-amenities-wifi';
       case 'coffee':
         return 'bg-orange-100 text-amenities-coffee';
-      case 'comfortable':
-        return 'bg-blue-100 text-blue-600';
-      case 'park-nearby':
+      case 'chair':
+        return 'bg-blue-100 text-amenities-chair';
+      case 'park':
         return 'bg-green-100 text-amenities-park';
-      case 'shopping-nearby':
-        return 'bg-blue-100 text-amenities-store';
+      case 'shopping':
+        return 'bg-yellow-300 text-amenities-store';
       case 'city-center':
-        return 'bg-pink-100 text-amenities-city';
+        return 'bg-sky-800 text-amenities-city-center';
       case 'central-location':
-        return 'bg-indigo-100 text-indigo-600';
+        return 'bg-indigo-800 text-amenities-central-location';
+      case 'comfort':
+        return 'bg-amber-700 text-amenities-comfort';
+      case 'air-conditioning':
+        return 'bg-cyan-500 text-amenities-air-conditioning';
       default:
         return 'bg-gray-100 text-gray-800';
     }
