@@ -4,8 +4,11 @@ export type User = {
   id: string;
   name: string;
   email: string;
+  password: string; // Armazenar senhas em texto simples não é recomendado, use hash em produção
   role: UserRole;
   avatar?: string;
+  telephone?: string;
+  document: string; // CPF or CNPJ
 };
 
 export type Amenity = {
@@ -22,8 +25,6 @@ export type Location = {
   city: string;
   state: string;
   zipCode: string;
-  latitude?: number;
-  longitude?: number;
   amenities: string[]; // Array of amenity IDs
   businessId: string;
   description: string;
@@ -49,5 +50,5 @@ export type Booking = {
   startTime: Date;
   endTime: Date;
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pendente' | 'confirmado' | 'cancelado';
 };
