@@ -38,8 +38,7 @@ const BusinessDashboard = () => {
       
       <Navbar />
       <main className="flex-grow">
-        <div className="py-8 dashboard-header">
-          <div className="dashboard-header-bg"></div>
+        <div className="bg-primary-light py-8">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
               <div>

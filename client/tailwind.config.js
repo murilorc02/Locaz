@@ -26,13 +26,13 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#9b87f5',
+					DEFAULT: '#F0C34B',
 					foreground: '#ffffff',
-					light: '#e5deff',
-					dark: '#6E59A5'
+					light: '#FFE799',
+					dark: '#876B22'
 				},
 				secondary: {
-					DEFAULT: '#7E69AB',
+					DEFAULT: '#D99D00',
 					foreground: '#ffffff'
 				},
 				destructive: {
@@ -66,11 +66,13 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				amenities: {
-					wifi: '#8B5CF6',
-					coffee: '#F97316',
-					park: '#10B981',
-					store: '#3B82F6',
-					city: '#EC4899'
+					wifi: '#375B27',
+					coffee: '#654E38',
+					park: '#00B728',
+					store: '#CDCD00',
+					city: '#0092BA',
+					chairs: '#BE0000',
+					chillRoom: '#DD6903'
 				}
 			},
 			borderRadius: {

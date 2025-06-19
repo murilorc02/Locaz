@@ -19,8 +19,8 @@ const Login = () => {
     
     if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Erro",
+        description: "Preencha todos os campos",
         variant: "destructive",
       });
       return;
@@ -33,8 +33,8 @@ const Login = () => {
       navigate('/business/dashboard');
     } catch (error) {
       toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "An error occurred",
+        title: "Erro ao fazer login",
+        description: error instanceof Error ? error.message : "Ocorreu um erro",
         variant: "destructive",
       });
     } finally {
@@ -47,9 +47,9 @@ const Login = () => {
       <div className="mx-auto max-w-md">
         <div className="rounded-lg border bg-card p-8 shadow-sm">
           <div className="mb-6 text-center">
-            <h1 className="text-2xl font-bold">Welcome Back</h1>
+            <h1 className="text-2xl font-bold">Bem-vindo!</h1>
             <p className="text-sm text-gray-500 mt-2">
-              Sign in to access your account
+              Faça login para acessar sua conta
             </p>
           </div>
           
@@ -69,12 +69,12 @@ const Login = () => {
               
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Senha</Label>
                   <Link
                     to="/forgot-password"
                     className="text-xs text-primary hover:underline"
                   >
-                    Forgot password?
+                    Esqueceu a senha?
                   </Link>
                 </div>
                 <Input
@@ -98,21 +98,21 @@ const Login = () => {
           </form>
           
           <div className="mt-6 text-center text-sm">
-            Don't have an account?{" "}
+            Não tem uma conta?{" "}
             <Link to="/signup" className="font-medium text-primary hover:underline">
-              Sign up
+              Inscreva-se
             </Link>
           </div>
           
           <div className="mt-6">
             <p className="text-xs text-center text-gray-500">
-              For demo purposes, you can use:
+              Para fins de demonstração, você pode usar:
               {/* <br />
               Client: john@example.com */}
               <br />
               Business: contact@urbanspaces.com
               <br />
-              (any password will work)
+              (qualquer senha funcionará)
             </p>
           </div>
         </div>

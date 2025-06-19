@@ -77,8 +77,8 @@ const AddLocation = () => {
       <main className="flex-grow">
         <div className="bg-primary-light py-8">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold">Add New Location</h1>
-            <p className="text-gray-600 mt-2">Create a new workspace location for your business</p>
+            <h1 className="text-3xl font-bold">Novo Local</h1>
+            <p className="text-gray-600 mt-2">Crie uma nova localização de espaço de trabalho para sua empresa</p>
           </div>
         </div>
 
@@ -86,11 +86,11 @@ const AddLocation = () => {
           <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-8">
             {/* Basic Information */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-semibold mb-4">Basic Information</h2>
-              
+              <h2 className="text-xl font-semibold mb-4">Informações Básicas</h2>
+
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="locationName">Location Name</Label>
+                  <Label htmlFor="locationName">Nome do Local</Label>
                   <Input 
                     id="locationName" 
                     value={locationName} 
@@ -100,7 +100,7 @@ const AddLocation = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="address">Street Address</Label>
+                  <Label htmlFor="address">Endereço</Label>
                   <Input 
                     id="address" 
                     value={address} 
@@ -111,7 +111,7 @@ const AddLocation = () => {
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="city">City</Label>
+                    <Label htmlFor="city">Cidade</Label>
                     <Input 
                       id="city" 
                       value={city} 
@@ -120,7 +120,7 @@ const AddLocation = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="state">State</Label>
+                    <Label htmlFor="state">Estado</Label>
                     <Input 
                       id="state" 
                       value={state} 
@@ -131,7 +131,7 @@ const AddLocation = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="zipCode">ZIP Code</Label>
+                  <Label htmlFor="zipCode">Código Postal</Label>
                   <Input 
                     id="zipCode" 
                     value={zipCode} 
@@ -141,7 +141,7 @@ const AddLocation = () => {
                 </div>
                 
                 <div>
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description">Descrição</Label>
                   <Textarea 
                     id="description" 
                     value={description} 
@@ -155,9 +155,7 @@ const AddLocation = () => {
             
             {/* Amenities */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-semibold mb-4">Amenities & Features</h2>
-              <p className="text-gray-500 mb-4">Select all the amenities and positive features available at this location</p>
-              
+              <h2 className="text-xl font-semibold mb-4">Comodidades e Recursos</h2>              
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {amenities.map((amenity) => (
                   <div key={amenity.id} className="flex items-center space-x-2">
@@ -183,11 +181,11 @@ const AddLocation = () => {
               </div>
             </div>
             
-            {/* Photos */}
+            {/* Photos
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h2 className="text-xl font-semibold mb-4">Photos</h2>
-              <p className="text-gray-500 mb-4">Upload photos of your location (min. 1)</p>
-              
+              <h2 className="text-xl font-semibold mb-4">Fotos</h2>
+              <p className="text-gray-500 mb-4">Envie fotos do seu local (mín. 1)</p>
+
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {images.map((image, index) => (
                   <div key={index} className="relative aspect-square rounded-md overflow-hidden">
@@ -212,15 +210,15 @@ const AddLocation = () => {
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
-                    <span className="block mt-1 text-sm text-gray-500">Add Photo</span>
+                    <span className="block mt-1 text-sm text-gray-500">Adicionar Foto</span>
                   </div>
                 </div>
               </div>
               
               <p className="text-xs text-gray-400 mt-3">
-                For demo purposes, we'll add a placeholder image when you click "Add Photo"
+                Para fins de demonstração, adicionaremos uma imagem de espaço reservado quando você clicar em "Adicionar Foto"
               </p>
-            </div>
+            </div> */}
             
             <div className="flex justify-end space-x-4">
               <Button 
@@ -228,13 +226,13 @@ const AddLocation = () => {
                 variant="outline"
                 onClick={() => navigate('/business/dashboard')}
               >
-                Cancel
+                Cancelar
               </Button>
               <Button 
                 type="submit"
                 disabled={isLoading}
               >
-                {isLoading ? 'Saving...' : 'Save Location'}
+                {isLoading ? 'Salvando...' : 'Salvar Local'}
               </Button>
             </div>
           </form>
