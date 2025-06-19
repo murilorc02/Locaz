@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useMemo } from 'react';
+import { useLocations } from '../contexts/LocationsContext';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
@@ -12,20 +13,20 @@ import {
 } from '../components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { locations } from '../data/locations';
 import { getWorkspacesByLocation } from '../data/workspaces';
 import { Building, MapPin, Plus } from 'lucide-react';
 
 const BusinessDashboard = () => {
   const { user, isAuthenticated } = useAuth();
+  const { locations } = useLocations();
   const navigate = useNavigate();
   
   // In a real app, this would come from the backend
-  const [businessLocations] = useState(
-    user && user.role === 'business' 
+  const businessLocations = useMemo(() => {
+    return user && user.role === 'business'
       ? locations.filter(location => location.businessId === user.id)
-      : []
-  );
+      : [];
+  }, [locations, user]);
   
   // Redirect if not authenticated or not a business
   if (!isAuthenticated || (user && user.role !== 'business')) {
@@ -114,7 +115,7 @@ const BusinessDashboard = () => {
                           <Button 
                             variant="outline" 
                             size="sm" 
-                            onClick={() => navigate(`/business/edit-location/${location.id}`)}
+                            // onClick={() => navigate(`/business/edit-location/${location.id}`)}
                           >
                             Gerenciar
                           </Button>
@@ -152,7 +153,7 @@ const BusinessDashboard = () => {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => navigate(`/business/add-workspace/${location.id}`)}
+                                  // onClick={() => navigate(`/business/add-workspace/${location.id}`)}
                                 >
                                   <Plus className="h-4 w-4 mr-1" />
                                   Novo Espaço
@@ -195,7 +196,7 @@ const BusinessDashboard = () => {
                                               <Button 
                                                 variant="ghost" 
                                                 size="sm"
-                                                onClick={() => navigate(`/business/edit-workspace/${workspace.id}`)}
+                                                // onClick={() => navigate(`/business/edit-workspace/${workspace.id}`)}
                                               >
                                                 Editar
                                               </Button>

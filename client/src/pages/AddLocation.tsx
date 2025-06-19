@@ -11,11 +11,13 @@ import { Checkbox } from '../components/ui/checkbox';
 import { useToast } from '../components/ui/use-toast';
 import { amenities } from '../data/amenities';
 import AmenityIcon from '../components/AmenityIcon';
+import { useLocations } from '../contexts/LocationsContext';
 
 const AddLocation = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addLocation } = useLocations();
 
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
@@ -49,7 +51,7 @@ const AddLocation = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0 || images.length === 0) {
+    if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0 ) {
       toast({
         title: "Missing Information",
         description: "Please fill all fields and add at least one amenity and image",
@@ -59,6 +61,23 @@ const AddLocation = () => {
     }
     
     setIsLoading(true);
+
+    addLocation({
+      name: locationName,
+      address,
+      city,
+      state,
+      zipCode,
+      description,
+      amenities: selectedAmenities,
+      images,
+      // Os campos 'id' e 'businessId' são adicionados dentro do contexto
+    }, user!);
+
+    toast({
+      title: "Local Adicionado!",
+      description: "Sua nova localização foi salva com sucesso.",
+    });
     
     // Simulate API call delay
     setTimeout(() => {

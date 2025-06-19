@@ -47,6 +47,9 @@ const Login = () => {
       <div className="mx-auto max-w-md">
         <div className="rounded-lg border bg-card p-8 shadow-sm">
           <div className="mb-6 text-center">
+            <div className="text-5xl font-bold text-primary-dark pb-8">
+                L<span className="text-primary">ocaz</span>
+            </div>
             <h1 className="text-2xl font-bold">Bem-vindo!</h1>
             <p className="text-sm text-gray-500 mt-2">
               Faça login para acessar sua conta
@@ -71,7 +74,7 @@ const Login = () => {
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Senha</Label>
                   <Link
-                    to="/forgot-password"
+                    to=""
                     className="text-xs text-primary hover:underline"
                   >
                     Esqueceu a senha?
@@ -110,7 +113,7 @@ const Login = () => {
               {/* <br />
               Client: john@example.com */}
               <br />
-              Business: contact@urbanspaces.com
+              Empresa: contact@urbanspaces.com
               <br />
               (qualquer senha funcionará)
             </p>
