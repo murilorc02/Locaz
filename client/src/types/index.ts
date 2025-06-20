@@ -19,13 +19,13 @@ export type Amenity = {
 };
 
 export type Location = {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  amenities: string[]; // Array of amenity IDs
+  id: number;
+  nomePredio: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  pontosDeDestaque: string[]; // Array of amenity IDs
   businessId: string;
   description: string;
   images: string[];
