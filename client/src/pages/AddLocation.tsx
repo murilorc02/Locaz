@@ -48,9 +48,8 @@ const AddLocation = () => {
     setImages([...images, 'https://images.unsplash.com/photo-1497366811353-6870744d04b2?w=500']);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0 ) {
       toast({
         title: "Missing Information",
@@ -62,34 +61,32 @@ const AddLocation = () => {
     
     setIsLoading(true);
 
-    addLocation({
-      name: locationName,
-      address,
-      city,
-      state,
-      zipCode,
-      description,
-      amenities: selectedAmenities,
-      images,
-      // Os campos 'id' e 'businessId' são adicionados dentro do contexto
-    }, user!);
+    const fullAdrress = `${address}, ${city}, ${state} - ${zipCode}`;
+    const payload = {
+      nomePredio: locationName,
+      endereco: fullAdrress,
+      pontosDeDestaque: selectedAmenities.length > 0
+    };
 
-    toast({
-      title: "Local Adicionado!",
-      description: "Sua nova localização foi salva com sucesso.",
-    });
-    
-    // Simulate API call delay
-    setTimeout(() => {
+    try {
+      await addLocation(payload, user!);
+
       toast({
-        title: "Location Added",
-        description: "Your location has been successfully added.",
+        title: "Local Adicionado",
+        description: "Sua nova localização foi salva com sucesso"
       });
-      setIsLoading(false);
       navigate('/business/dashboard');
-    }, 1500);
+    } catch (error) {
+      toast({
+        title: "Erro ao salvar",
+        description: (error as Error).message || "Ocorreu um problema.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
-
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />

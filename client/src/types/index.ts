@@ -22,13 +22,9 @@ export type Location = {
   id: number;
   nomePredio: string;
   endereco: string;
-  cidade: string;
-  estado: string;
-  cep: string;
   pontosDeDestaque: string[]; // Array of amenity IDs
-  businessId: string;
-  description: string;
-  images: string[];
+  proprietario?: Proprietario;
+  salas?: Workspace[];
 };
 
 export type Workspace = {
@@ -37,7 +33,7 @@ export type Workspace = {
   description: string;
   capacity: number;
   pricePerHour: number;
-  locationId: string;
+  locationId: number;
   images: string[];
   amenities: string[]; // Array of amenity IDs
   available: boolean;
@@ -52,3 +48,16 @@ export type Booking = {
   totalPrice: number;
   status: 'pendente' | 'confirmado' | 'cancelado';
 };
+
+export type Proprietario = {
+  id: number;
+  nome: string;
+  foto?: string; // ou string se for uma URL da imagem
+  predios?: Location[];
+};
+
+export type CreatePredioPayload = {
+  nomePredio: string;
+  endereco: string;
+  pontosDeDestaque: boolean;
+}

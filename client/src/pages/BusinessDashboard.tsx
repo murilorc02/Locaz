@@ -18,15 +18,15 @@ import { Building, MapPin, Plus } from 'lucide-react';
 
 const BusinessDashboard = () => {
   const { user, isAuthenticated } = useAuth();
-  const { locations } = useLocations();
+  const { locations: businessLocations, isLoading, error } = useLocations();
   const navigate = useNavigate();
   
-  // In a real app, this would come from the backend
-  const businessLocations = useMemo(() => {
-    return user && user.role === 'business'
-      ? locations.filter(location => location.businessId === user.id)
-      : [];
-  }, [locations, user]);
+  // // In a real app, this would come from the backend
+  // businessLocations = useMemo(() => {
+  //   return user && user.role === 'business'
+  //     ? locations.filter(location => location.businessId === user.id)
+  //     : [];
+  // }, [locations, user]);
   
   // Redirect if not authenticated or not a business
   if (!isAuthenticated || (user && user.role !== 'business')) {
@@ -74,8 +74,9 @@ const BusinessDashboard = () => {
                   Novo Local
                 </Button>
               </div>
-              
-              {businessLocations.length === 0 ? (
+              {isLoading && <p className='text-center py-12'>Carregando seus locais...</p>}
+              {error && <p className='text-center py-12 text-red-500'>{error}</p>}
+              {!isLoading && !error && businessLocations.length === 0 && (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -89,22 +90,23 @@ const BusinessDashboard = () => {
                     </Button>
                   </CardContent>
                 </Card>
-              ) : (
+              )}
+              {!isLoading && !error && businessLocations.length > 0 && (
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {businessLocations.map(location => (
                     <Card key={location.id} className="overflow-hidden">
                       <div className="h-40 overflow-hidden">
                         <img 
-                          src={location.images[0]} 
-                          alt={location.name}
+                          // src={location.images[0]} 
+                          alt={location.nomePredio}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <CardHeader>
-                        <CardTitle>{location.name}</CardTitle>
+                        <CardTitle>{location.nomePredio}</CardTitle>
                         <CardDescription className="flex items-center">
                           <MapPin className="h-4 w-4 mr-1" />
-                          {location.city}, {location.state}
+                          {location.endereco}
                         </CardDescription>
                       </CardHeader>
                       <CardContent>
@@ -149,7 +151,7 @@ const BusinessDashboard = () => {
                           return (
                             <div key={location.id}>
                               <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold">{location.name}</h3>
+                                <h3 className="text-lg font-semibold">{location.nomePredio}</h3>
                                 <Button 
                                   variant="outline" 
                                   size="sm"
