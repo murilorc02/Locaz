@@ -24,6 +24,10 @@ export class LocadorService {
         return this.predioRepository.salvar(dados, proprietarioId);
     }
 
+    public obterPrediosPorProprietario = async (proprietarioId: number): Promise<Predio[]> => {
+        return this.predioRepository.buscarPorProprietario(proprietarioId);
+    }
+
     public obterPedidosDeReserva = async (locadorId: number): Promise<Horario[]> => {
         return this.horarioRepository.buscarPedidosDeReserva(locadorId);
     }

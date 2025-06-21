@@ -19,4 +19,15 @@ export class PredioRepository {
     public buscarPorId = async (id: number): Promise<Predio | null> => {
         return this.ormRepository.findOneBy({ id });
     }
+
+    public buscarPorProprietario = async (proprietarioId: number): Promise<Predio[]> => {
+        return this.ormRepository.find({
+            where: {
+                proprietario: {
+                    id: proprietarioId,
+                },
+            },
+            relations: ['salas'],
+        });
+    }
 }

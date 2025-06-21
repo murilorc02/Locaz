@@ -11,7 +11,15 @@ async function bootstrap() {
         console.log("Fonte de dados inicializada com sucesso!");
 
         const app = express();
+        const cors = require('cors');
         app.use(express.json());
+
+        const corsOptions = {
+            origin: 'http://localhost:5173',
+            methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+            optionsSuccessStatus: 204 
+        }
+        app.use(cors(corsOptions));
 
         const usuarioController = (await import('./controller/UsuarioController')).default;
         const locadorController = (await import('./controller/LocadorController')).default;
@@ -20,6 +28,7 @@ async function bootstrap() {
         app.use('/api', usuarioController);
         app.use('/api/locador', locadorController);
         app.use('/api/locatario', locatarioController);
+        
 
         // Middleware de tratamento de erros
         app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

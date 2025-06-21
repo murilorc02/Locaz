@@ -6,7 +6,7 @@ import { useToast } from "../components/ui/use-toast";
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: UserRole, telephone: string, document: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
 }
@@ -16,6 +16,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const { toast } = useToast();
+  let userIdCounter = users.length + 1;
 
   const login = async (email: string, password: string) => {
     // Simulate API call delay
@@ -35,7 +36,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     throw new Error('Invalid email or password');
   };
 
-  const signup = async (name: string, email: string, password: string, role: UserRole) => {
+  const signup = async (name: string, email: string, password: string, role: UserRole, telephone: string, document: string) => {
     // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1000));
     
@@ -47,11 +48,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     
     // In a real app, this would create a user in the database
     const newUser: User = {
-      id: `user-${Date.now()}`,
+      id: userIdCounter++,
       name,
       email,
+      password,
       role,
-      avatar: `https://i.pravatar.cc/150?u=${email}`
+      avatar: `https://i.pravatar.cc/150?u=${email}`,
+      telephone,
+      document
     };
     
     // For demo purposes, we'll just set the user

@@ -41,4 +41,21 @@ locadorController.get('/espacos/:id/agenda', async (req: Request, res: Response,
     }
 });
 
+locadorController.get('/predios', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const proprietarioId = req.user.id;
+        
+        if (!proprietarioId) {
+            res.status(401).json({ message: 'ID do proprietário não encontrado no token.' });
+            return;
+        }
+        
+        const predios = await locadorService.obterPrediosPorProprietario(proprietarioId);
+        res.status(200).json(predios);
+    } catch (error) {
+        next(error);
+    }
+});
+
+
 export default locadorController;

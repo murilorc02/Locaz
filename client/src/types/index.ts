@@ -1,7 +1,7 @@
 export type UserRole = 'client' | 'business';
 
 export type User = {
-  id: string;
+  id: number;
   name: string;
   email: string;
   password: string; // Armazenar senhas em texto simples não é recomendado, use hash em produção

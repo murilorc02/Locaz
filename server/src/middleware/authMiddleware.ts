@@ -21,7 +21,7 @@ export const authMiddleware = (req: Request, res: Response, next: NextFunction) 
     const token = authHeader.split(' ')[1];
     
     try {
-        const segredo = process.env.JWT_SECRET || 'naosei';
+        const segredo = process.env.JWT_SECRET || 'naoseinaoseinaoseinaoseinaoseinaoseinaoseinaosei';
         const payload = jwt.verify(token, segredo);
         
         req.user = payload; 
