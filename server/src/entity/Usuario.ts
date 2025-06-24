@@ -1,5 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, BeforeInsert, OneToMany } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Horario } from './Horario'; 
 
 export enum TipoUsuario {
@@ -33,8 +32,4 @@ export class Usuario {
     @OneToMany(() => Horario, horario => horario.usuario)
     horarios!: Horario[];
 
-    @BeforeInsert()
-    async hashPassword?() {
-        this.senha = await bcrypt.hash(this.senha, 10);
-    }
 }

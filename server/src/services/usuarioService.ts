@@ -20,12 +20,16 @@ export class UsuarioService {
 
   public async criar(dados: CriarUsuarioDto): Promise<Omit<Usuario, 'senha'>> {
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
+    
     if (usuarioExistente) {
-      throw new HttpError(409, 'Um usuário com este email já existe.');
+      const { senha, ...resultado } = usuarioExistente;
+      return resultado;
     }
 
     const novoUsuario = new Usuario();
     Object.assign(novoUsuario, dados); 
+
+    novoUsuario.senha = await bcrypt.hash(novoUsuario.senha, 10);
 
     const usuarioSalvo = await this.usuarioRepository.salvar(novoUsuario);
 
@@ -50,13 +54,14 @@ export class UsuarioService {
 
   public async atualizarSenha(id: number, senhaAtual: string, novaSenha: string): Promise<void> {
     const usuarioComSenha = await this.usuarioRepository.buscarPorIdComSenha(id);
+
     if (!usuarioComSenha) {
-      throw new HttpError(404, 'Usuário não encontrado.');
+        throw new HttpError(401, 'Credenciais inválidas.');
     }
 
     const senhasCoincidem = await bcrypt.compare(senhaAtual, usuarioComSenha.senha);
     if (!senhasCoincidem) {
-      throw new HttpError(401, 'A senha atual está incorreta.');
+      throw new HttpError(401, 'Credenciais inválidas.');
     }
 
     const hashNovaSenha = await bcrypt.hash(novaSenha, 10);

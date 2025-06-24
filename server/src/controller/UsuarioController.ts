@@ -11,8 +11,6 @@ import { AtualizarSenhaDto } from '../dto/usuario/atualizar-senha.dto';
 const usuarioController = Router();
 const usuarioService = new UsuarioService();
 
-// --- ROTAS DE AUTENTICAÇÃO PÚBLICAS ---
-
 usuarioController.post('/auth/register', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const dadosDto = plainToInstance(CriarUsuarioDto, req.body);
