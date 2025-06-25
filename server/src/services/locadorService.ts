@@ -1,10 +1,7 @@
-import { getRepository, Repository, In, Between } from 'typeorm';
 import { Predio } from '../entity/Predio';
 import { Horario, StatusHorario } from '../entity/Horario';
-import { Sala } from '../entity/Sala';
 import { CreatePredioDto } from '../dto/usuario/criar-predio.dto';
 import { HttpError } from './usuarioService';
-import { AppDataSource } from '../data-source';
 import { PredioRepository } from '../repository/PredioRepository';
 import { HorarioRepository } from '../repository/HorarioRepository';
 import { SalaRepository } from '../repository/SalaRepository';

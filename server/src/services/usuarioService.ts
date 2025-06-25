@@ -4,6 +4,7 @@ import { UsuarioRepository } from '../repository/UsuarioRepository';
 import { CriarUsuarioDto } from '../dto/usuario/criar-usuario.dto';
 import { AtualizarUsuarioDto } from '../dto/usuario/atualizar-usuario.dto';
 import { Usuario } from '../entity/Usuario';
+import { config } from '../config'
 
 export class HttpError extends Error {
   constructor(public statusCode: number, message: string) {
@@ -20,17 +21,16 @@ export class UsuarioService {
 
   public async criar(dados: CriarUsuarioDto): Promise<Omit<Usuario, 'senha'>> {
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
-    
+
     if (usuarioExistente) {
       const { senha, ...resultado } = usuarioExistente;
       return resultado;
     }
 
     const novoUsuario = new Usuario();
-    Object.assign(novoUsuario, dados); 
+    Object.assign(novoUsuario, dados);
 
     novoUsuario.senha = await bcrypt.hash(novoUsuario.senha, 10);
-
     const usuarioSalvo = await this.usuarioRepository.salvar(novoUsuario);
 
     const { senha, ...resultado } = usuarioSalvo;
@@ -56,7 +56,7 @@ export class UsuarioService {
     const usuarioComSenha = await this.usuarioRepository.buscarPorIdComSenha(id);
 
     if (!usuarioComSenha) {
-        throw new HttpError(401, 'Credenciais inválidas.');
+      throw new HttpError(401, 'Credenciais inválidas.');
     }
 
     const senhasCoincidem = await bcrypt.compare(senhaAtual, usuarioComSenha.senha);
@@ -72,13 +72,13 @@ export class UsuarioService {
   public async validarUsuario(email: string, senhaInserida: string): Promise<Omit<Usuario, 'senha'> | null> {
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
     if (!usuario) {
-        return null;
+      return null;
     }
 
     const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
     if (senhaValida) {
-        const { senha, ...resultado } = usuario;
-        return resultado;
+      const { senha, ...resultado } = usuario;
+      return resultado;
     }
 
     return null;
@@ -86,12 +86,14 @@ export class UsuarioService {
 
   public login(usuario: Omit<Usuario, 'senha'>): { access_token: string } {
     const payload = { sub: usuario.id, email: usuario.email, tipo: usuario.tipo };
-    const segredo = process.env.JWT_SECRET || 'naosei';
 
-    const token = jwt.sign(payload, segredo, { expiresIn: '1d' });
+    if (!config.jwtSecret) {
+      throw new Error("secret não configurada no env");
+    }
+    const token = jwt.sign(payload, config.jwtSecret, { expiresIn: '1d' });
 
     return {
-        access_token: token,
+      access_token: token,
     };
   }
 }

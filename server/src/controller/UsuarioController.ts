@@ -7,35 +7,23 @@ import { CriarUsuarioDto } from '../dto/usuario/criar-usuario.dto';
 import { LoginDto } from '../dto/usuario/login.dto';
 import { AtualizarUsuarioDto } from '../dto/usuario/atualizar-usuario.dto';
 import { AtualizarSenhaDto } from '../dto/usuario/atualizar-senha.dto';
+import { validationMiddleware } from '../middleware/validationMiddleware';
 
 const usuarioController = Router();
 const usuarioService = new UsuarioService();
 
-usuarioController.post('/auth/register', async (req: Request, res: Response, next: NextFunction) => {
+usuarioController.post('/auth/register', validationMiddleware(CriarUsuarioDto), async (req, res, next) => {
     try {
-        const dadosDto = plainToInstance(CriarUsuarioDto, req.body);
-        const erros = await validate(dadosDto);
-        if (erros.length > 0) {
-            res.status(400).json(erros);
-            return;
-        }
-        const novoUsuario = await usuarioService.criar(dadosDto);
+        const novoUsuario = await usuarioService.criar(req.body);
         res.status(201).json(novoUsuario);
     } catch (error) {
         next(error);
     }
 });
 
-usuarioController.post('/auth/login', async (req: Request, res: Response, next: NextFunction) => {
+usuarioController.post('/auth/login', validationMiddleware(LoginDto), async (req, res, next) => {
     try {
-        const dadosDto = plainToInstance(LoginDto, req.body);
-        const erros = await validate(dadosDto);
-        if (erros.length > 0) {
-            res.status(400).json(erros);
-            return;
-        }
-
-        const usuario = await usuarioService.validarUsuario(dadosDto.email, dadosDto.senha);
+        const usuario = await usuarioService.validarUsuario(req.body.email, req.body.senha);
         if (!usuario) {
             res.status(401).json({ message: 'Email ou senha inválidos.' });
             return;
@@ -57,34 +45,22 @@ usuarioController.get('/perfil', authMiddleware, async (req: Request, res: Respo
     }
 });
 
-usuarioController.put('/perfil', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+usuarioController.put('/perfil', authMiddleware, validationMiddleware(AtualizarUsuarioDto), async (req, res, next) => {
     try {
-        const dadosDto = plainToInstance(AtualizarUsuarioDto, req.body);
-        const erros = await validate(dadosDto);
-        if (erros.length > 0) {
-            res.status(400).json(erros);
-            return;
-        }
-        const perfilAtualizado = await usuarioService.atualizar(req.user.id, dadosDto);
+        const perfilAtualizado = await usuarioService.atualizar(req.user.id, req.body);
         res.json(perfilAtualizado);
     } catch (error) {
         next(error);
     }
 });
 
-usuarioController.put('/perfil/alterar-senha', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+usuarioController.put('/perfil/alterar-senha', authMiddleware, validationMiddleware(AtualizarSenhaDto), async (req, res, next) => {
     try {
-        const dadosDto = plainToInstance(AtualizarSenhaDto, req.body);
-        const erros = await validate(dadosDto);
-        if (erros.length > 0) {
-            res.status(400).json(erros);
-            return;
-        }
-        if (dadosDto.novaSenha !== dadosDto.confirmarNovaSenha) {
+        if (req.body.novaSenha !== req.body.confirmarNovaSenha) {
             res.status(400).json({ message: 'A nova senha e a confirmação de senha não correspondem.' });
             return;
         }
-        await usuarioService.atualizarSenha(req.user.id, dadosDto.senhaAtual, dadosDto.novaSenha);
+        await usuarioService.atualizarSenha(req.user.id, req.body.senhaAtual, req.body.novaSenha);
         res.json({ message: 'Senha atualizada com sucesso.' });
     } catch (error) {
         next(error);

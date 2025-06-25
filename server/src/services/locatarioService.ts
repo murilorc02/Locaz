@@ -1,4 +1,3 @@
-import { getRepository, Repository } from 'typeorm';
 import { Horario, StatusHorario } from '../entity/Horario';
 import { Sala } from '../entity/Sala';
 import { HttpError } from './usuarioService';
