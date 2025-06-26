@@ -24,10 +24,10 @@ export class PredioRepository {
         return this.ormRepository.find({
             where: {
                 proprietario: {
-                    id: proprietarioId,
-                },
+                    id: proprietarioId
+                }
             },
-            relations: ['salas'],
+            relations: ['proprietario'] 
         });
     }
 }

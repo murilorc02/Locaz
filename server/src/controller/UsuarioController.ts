@@ -35,8 +35,7 @@ usuarioController.post('/auth/login', validationMiddleware(LoginDto), async (req
     }
 });
 
-
-usuarioController.get('/perfil', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+usuarioController.get('/perfil', authMiddleware, async (req, res, next) => {
     try {
         const perfil = await usuarioService.buscarPorId(req.user.id);
         res.json(perfil);

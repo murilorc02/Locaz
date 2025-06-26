@@ -4,13 +4,17 @@ import { plainToInstance } from 'class-transformer';
 
 export const validationMiddleware = (dtoClass: any) => {
   return async (req: Request, res: Response, next: NextFunction) => {
-    const dadosDto = plainToInstance(dtoClass, req.body);
-    const erros = await validate(dadosDto);
+    const dtoInstance = plainToInstance(dtoClass, req.body);
 
-    if (erros.length > 0) {
-      res.status(400).json(erros);
+    const errors = await validate(dtoInstance);
+
+    if (errors.length > 0) {
+      res.status(400).json({
+        message: 'Erro de validação',
+        errors: errors,
+      });
     } else {
-      req.body = dadosDto;
+      req.body = dtoInstance;
       next();
     }
   };

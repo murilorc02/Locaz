@@ -6,16 +6,16 @@ import { Horario } from "./entity/Horario"
 import { Predio } from "./entity/Predio"
 import { Proprietario } from "./entity/Proprietario"
 import { Sala } from "./entity/Sala"
-import { config } from '../src/config/index';
+import { config } from './config'
 
 
 export const AppDataSource = new DataSource({
     type: "postgres",
     host: config.db.host,
-    port:  config.db.port,
+    port: config.db.port,
     username: config.db.user,
     password: config.db.pass,
-    database: config.db.database,
+    database: config.db.name,
     synchronize: true,
     logging: false,
     entities: [Empresa, Horario, Predio, Proprietario, Sala, Usuario],

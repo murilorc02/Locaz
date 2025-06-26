@@ -1,17 +1,15 @@
-import 'dotenv/config';
+import * as dotenv from 'dotenv';
+dotenv.config();
 
 export const config = {
     port: process.env.PORT || 3000,
     jwtSecret: process.env.JWT_SECRET,
+    corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     db: {
         host: process.env.DB_HOST,
         port: parseInt(process.env.DB_PORT || '5432'),
-        user: process.env.DB_USER,
-        pass: process.env.DB_PASS,
-        database: process.env.DB_DATABASE,
+        user: process.env.DB_USERNAME,
+        pass: process.env.DB_PASSWORD,
+        name: process.env.DB_DATABASE,
     }
 };
-
-if (!config.jwtSecret || !config.db.host || !config.db.user || !config.db.pass || !config.db.database) {
-    throw new Error("Variáveis de ambiente não definidas.");
-}

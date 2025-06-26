@@ -1,8 +1,8 @@
-import 'dotenv/config'; 
 import 'reflect-metadata';
-import 'express-async-errors'; 
+import 'express-async-errors';
 import { AppDataSource } from './data-source';
-import { createServer } from './server'; 
+import { createServer } from './server';
+import { config } from './config';
 
 async function bootstrap() {
     try {
@@ -11,10 +11,10 @@ async function bootstrap() {
 
         const app = await createServer();
 
-        const port = process.env.PORT || 3000;
-        app.listen(port, () => {
+        const port = config.db.port
+        app.listen(port || 3000), () => {
             console.log(`Servidor a ser executado na porta ${port}`);
-        });
+        };
 
     } catch (error) {
         console.error("Erro fatal durante a inicialização da aplicação:", error);
