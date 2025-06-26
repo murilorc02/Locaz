@@ -8,15 +8,19 @@ import Login from "./pages/Login";
 import BusinessDashboard from "./pages/BusinessDashboard";
 import AddLocation from "./pages/AddLocation";
 import { LocationsProvider } from "./contexts/LocationsContext";
-import BusinessProtectedRoute from "./components/BusinessProtectedRoute";
-//import Index from "./pages/Index";
-//import NotFound from "./pages/NotFound";
-//import Signup from "./pages/Signup";
-//import Profile from "./pages/Profile";
-//import Search from "./pages/Search";
-// import WorkspaceDetail from "./pages/WorkspaceDetail";
-// import LocationDetail from "./pages/LocationDetail";
-//import Bookings from "./pages/Bookings";
+import Index from "./pages/Index";
+// import NotFound from "./pages/NotFound";
+import Signup from "./pages/Signup";
+import Profile from "./pages/Profile";
+import Search from "./pages/Search";
+import WorkspaceDetail from "./pages/WorkspaceDetail";
+import LocationDetail from "./pages/LocationDetail";
+import Bookings from "./pages/Bookings";
+import BusinessLocations from "./pages/BusinessLocations";
+import BusinessWorkspaces from "./pages/BusinessWorkspaces";
+import AddWorkspace from "./pages/AddWorkspace";
+import EditLocation from "./pages/EditLocation";
+import BusinessBookings from "./pages/BusinessBookings";
 
 const queryClient = new QueryClient();
 
@@ -29,20 +33,23 @@ const App = () => (
             <Toaster />
             <Sonner />
             <Routes>
-              <Route path="/" element={<Login />} />
-              {/* <Route path="/" element={<Index />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/search" element={<Search />} />
               <Route path="/workspace/:id" element={<WorkspaceDetail />} />
               <Route path="/location/:id" element={<LocationDetail />} />
+              <Route path="/business/dashboard" element={<BusinessDashboard />} />
+              <Route path="/business/locations" element={<BusinessLocations />} />
+              <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
+              <Route path="/business/bookings" element={<BusinessBookings />} />
+              <Route path="/business/add-location" element={<AddLocation />} />
+              <Route path="/business/add-workspace" element={<AddWorkspace />} />
+              <Route path="/business/add-workspace/:locationId" element={<AddWorkspace />} />
+              <Route path="/business/edit-location/:id" element={<EditLocation />} />
               <Route path="/bookings" element={<Bookings />} />
-              <Route path="*" element={<NotFound />} /> */}
-                <Route element={<BusinessProtectedRoute />}>
-                  <Route path="/business/dashboard" element={<BusinessDashboard />} />
-                  <Route path="/business/add-location" element={<AddLocation />} />
-                  {/* Adicione outras rotas de negócio aqui dentro */}
-                </Route>
+              {/* <Route path="*" element={<NotFound />} /> */}
             </Routes>
           </TooltipProvider>
         </LocationsProvider>

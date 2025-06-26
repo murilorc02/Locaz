@@ -12,7 +12,7 @@ export type User = {
 };
 
 export type Amenity = {
-  id: string;
+  id: number;
   name: string;
   icon: string;
   description?: string;
@@ -23,12 +23,14 @@ export type Location = {
   nomePredio: string;
   endereco: string;
   pontosDeDestaque: string[]; // Array of amenity IDs
+  descricao?: string;
   proprietario?: Proprietario;
   salas?: Workspace[];
+  images?: string[]; // Array of image URLs
 };
 
 export type Workspace = {
-  id: string;
+  id: number;
   name: string;
   description: string;
   capacity: number;
@@ -40,9 +42,9 @@ export type Workspace = {
 };
 
 export type Booking = {
-  id: string;
-  workspaceId: string;
-  userId: string;
+  id: number;
+  workspaceId: number;
+  userId: number;
   startTime: Date;
   endTime: Date;
   totalPrice: number;
