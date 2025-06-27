@@ -13,8 +13,11 @@ export class Predio {
     @Column()
     endereco!: string;
 
-    @Column()
-    pontosDeDestaque!: boolean;
+    @Column('text', { array: true, default: () => "'{}'" })
+    pontosDeDestaque!: string[];
+
+    @Column({ type: 'text', nullable: true })
+    descricao?: string;
 
     @OneToMany(() => Sala, sala => sala.predio)
     salas!: Sala[];

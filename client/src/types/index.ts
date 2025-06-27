@@ -61,5 +61,6 @@ export type Proprietario = {
 export type CreatePredioPayload = {
   nomePredio: string;
   endereco: string;
-  pontosDeDestaque: boolean;
+  pontosDeDestaque: string[];
+  descricao: string;
 }

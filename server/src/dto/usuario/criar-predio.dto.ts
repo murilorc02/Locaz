@@ -5,6 +5,6 @@ export class CreatePredioDto {
     estado!: string;
     cep!: string;
     descricao!: string;
-    comodidades!: string[]; // Ex: ['Wi-fi', 'Café']
+    pontosDeDestaque!: string[]; // Ex: ['Wi-fi', 'Café']
     proprietarioId!: number;
 }

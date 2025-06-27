@@ -10,6 +10,8 @@ export async function createServer(): Promise<Application> {
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         optionsSuccessStatus: 204
     }));
+
+    app.use(express.json());
     
     const usuarioController = (await import('./controller/UsuarioController')).default;
     const locadorController = (await import('./controller/LocadorController')).default;

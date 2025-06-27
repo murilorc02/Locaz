@@ -11,10 +11,9 @@ async function bootstrap() {
 
         const app = await createServer();
 
-        const port = config.db.port
-        app.listen(port || 3000), () => {
-            console.log(`Servidor a ser executado na porta ${port}`);
-        };
+        app.listen(3000, () => {
+            console.log(`Servidor a ser executado na porta 3000`);
+        });
 
     } catch (error) {
         console.error("Erro fatal durante a inicialização da aplicação:", error);
