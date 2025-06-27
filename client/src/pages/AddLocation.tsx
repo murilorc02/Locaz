@@ -13,11 +13,14 @@ import AmenityIcon from '../components/AmenityIcon';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
+import { useLocations } from '../contexts/LocationsContext';
 
 const AddLocation = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addLocation } = useLocations();
+
 
   const [locationName, setLocationName] = useState('');
   const [address, setAddress] = useState('');
@@ -51,28 +54,52 @@ const AddLocation = () => {
     setImages(images.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0 || images.length === 0) {
+    if (!user) {
+      toast({ title: "Erro de Autenticação", description: "Usuário não encontrado.", variant: "destructive" });
+      return;
+    }
+    
+    if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0) {
       toast({
         title: "Informações Incompletas",
-        description: "Preencha todos os campos e adicione pelo menos uma comodidade e uma imagem",
+        description: "Preencha todos os campos obrigatórios e selecione pelo menos uma comodidade.",
         variant: "destructive",
       });
       return;
     }
     
     setIsLoading(true);
+
+    const fullAddress = `${address}, ${city}, ${state} - ${zipCode}`;
+    const payload = {
+      nomePredio: locationName,
+      endereco: fullAddress,
+      descricao: description,
+      pontosDeDestaque: selectedAmenities,
+    };
     
-    setTimeout(() => {
+    try {
+      await addLocation(payload, user);
+      
       toast({
-        title: "Local Adicionado",
-        description: "Seu local foi adicionado com sucesso.",
+        title: "Local Adicionado!",
+        description: "Seu novo local foi salvo com sucesso.",
       });
-      setIsLoading(false);
       navigate('/business/locations');
-    }, 1500);
+
+    } catch (error) {
+      toast({
+        title: "Erro ao Salvar",
+        description: (error as Error).message || "Ocorreu um problema ao se comunicar com o servidor.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+
   };
 
   return (
@@ -193,8 +220,8 @@ const AddLocation = () => {
                         <div key={amenity.id} className="flex items-center space-x-2">
                           <Checkbox 
                             id={`amenity-${amenity.id}`} 
-                            checked={selectedAmenities.includes(amenity.id)}
-                            onCheckedChange={() => handleAmenityToggle(amenity.id)}
+                            checked={selectedAmenities.includes(amenity.id.toString())}
+                            onCheckedChange={() => handleAmenityToggle(amenity.id.toString())}
                           />
                           <Label 
                             htmlFor={`amenity-${amenity.id}`} 

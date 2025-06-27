@@ -10,14 +10,13 @@ import { Building, MapPin, Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
+import { Skeleton } from '../components/ui/skeleton';
 
 const BusinessLocations = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { locations: businessLocations } = useLocations();
+  const { locations: businessLocations, isLoading, error } = useLocations();
   const [searchTerm, setSearchTerm] = useState('');
-
-  // In a real app, this would come from the backend
 
   // Redirect if not authenticated or not a business
   if (!isAuthenticated || (user && user.role !== 'business')) {
@@ -29,6 +28,89 @@ const BusinessLocations = () => {
     location.nomePredio.toLowerCase().includes(searchTerm.toLowerCase()) ||
     location.endereco.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const renderContent = () => {
+    // Tratamento de loading e erro
+    if (isLoading) {
+      return (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-80 w-full" />)}
+        </div>
+      );
+    }
+
+    if (error) {
+      return <div className="text-center py-12 text-red-500">{error}</div>;
+    }
+
+    if (filteredLocations.length === 0) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+            <h3 className="text-xl font-semibold mb-2">
+              {searchTerm ? 'Nenhum Local Encontrado' : 'Nenhum Local Adicionado'}
+            </h3>
+            {!searchTerm && (
+              <Button onClick={() => navigate('/business/add-location')}>
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Primeiro Local
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      );
+    }
+    
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {filteredLocations.map(location => {
+          // Contagem de workspaces corrigida
+          const workspaceCount = location.salas?.length || 0;
+          return (
+            <Card key={location.id} className="overflow-hidden flex flex-col">
+              <div className="h-40 overflow-hidden bg-gray-200 flex items-center justify-center">
+                {/* Placeholder para imagem, já que não vem do backend ainda */}
+                <Building className="h-16 w-16 text-gray-400" />
+              </div>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  {location.nomePredio}
+                  <div className="flex gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => navigate(`/business/edit-location/${location.id}`)}>
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700">
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardTitle>
+                <CardDescription className="flex items-center pt-1">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  {location.endereco}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex-grow flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <Badge className="bg-primary-light text-primary-dark">{workspaceCount} Espaços</Badge>
+                    {/* Badge de 'pontosDeDestaque' corrigido para exibir apenas se for true */}
+                    {location.pontosDeDestaque && <Badge variant="secondary">Destaque</Badge>}
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate(`/location/${location.id}`)}>
+                    Visualizar
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
+  };
+
 
   return (
     <SidebarProvider>
@@ -63,101 +145,7 @@ const BusinessLocations = () => {
                 />
               </div>
             </div>
-
-            {filteredLocations.length === 0 ? (
-              <Card>
-                <CardContent className="py-12 text-center">
-                  <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">
-                    {searchTerm ? 'Nenhum Local Encontrado' : 'Nenhum Local Adicionado'}
-                  </h3>
-                  <p className="text-gray-500 mb-6">
-                    {searchTerm
-                      ? 'Tente ajustar sua busca'
-                      : 'Comece adicionando seu primeiro local de trabalho'
-                    }
-                  </p>
-                  {!searchTerm && (
-                    <Button onClick={() => navigate('/business/add-location')}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Primeiro Local
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredLocations.map(location => {
-                  const workspaceCount = getWorkspacesByLocation(location.id).length;
-                  return (
-                    <Card key={location.id} className="overflow-hidden">
-                      <div className="h-40 overflow-hidden">
-                        <img
-                          src={location.images?.[0] || ''}
-                          alt={location.nomePredio}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <CardHeader>
-                        <CardTitle className="flex items-center justify-between">
-                          {location.nomePredio}
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/business/edit-location/${location.id}`)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </CardTitle>
-                        <CardDescription className="flex items-center">
-                          <MapPin className="h-4 w-4 mr-1" />
-                          {location.endereco}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="flex items-center justify-between mb-4">
-                          <Badge className="bg-primary-light text-primary-dark">
-                            {workspaceCount} Espaços
-                          </Badge>
-                          <Badge variant="outline">
-                            {location.pontosDeDestaque.length} Comodidades
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600 line-clamp-2 mb-4">
-                          {location.descricao}
-                        </p>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => navigate(`/location/${location.id}`)}
-                          >
-                            Visualizar
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => navigate(`/business/edit-location/${location.id}`)}
-                          >
-                            Gerenciar
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
+            {renderContent()}
           </main>
         </SidebarInset>
       </div>

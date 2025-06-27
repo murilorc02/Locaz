@@ -10,6 +10,7 @@ locadorController.use(authMiddleware);
 
 locadorController.post('/predios', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        console.log("DADOS DA REQUISIÇÃO:", req.body);
         const proprietarioId = req.user.id;
         const predio = await locadorService.criarPredio(req.body as CreatePredioDto, proprietarioId);
         res.status(201).json(predio);

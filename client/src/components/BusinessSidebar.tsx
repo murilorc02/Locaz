@@ -37,11 +37,6 @@ const businessMenuItems = [
     icon: Calendar,
   },
   {
-    title: 'Análises',
-    url: '/business/analytics',
-    icon: BarChart3,
-  },
-  {
     title: 'Configurações',
     url: '/business/settings',
     icon: Settings,
