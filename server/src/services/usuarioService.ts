@@ -30,7 +30,6 @@ export class UsuarioService {
     const novoUsuario = new Usuario();
     Object.assign(novoUsuario, dados);
 
-    novoUsuario.senha = await bcrypt.hash(novoUsuario.senha, 10);
     const usuarioSalvo = await this.usuarioRepository.salvar(novoUsuario);
 
     const { senha, ...resultado } = usuarioSalvo;
@@ -69,7 +68,7 @@ export class UsuarioService {
   }
 
 
-  public async validarUsuario(email: string, senhaInserida: string): Promise<Omit<Usuario, 'senha'> | null> {
+  public async validarUsuario(email: string, senhaInserida: string): Promise<any> {
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
     if (!usuario) {
       return null;

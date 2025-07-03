@@ -1,6 +1,7 @@
 import { getRepository, Repository } from 'typeorm';
 import { Usuario, TipoUsuario } from '../entity/Usuario';
 import { AppDataSource } from '../data-source';
+import * as bcrypt from 'bcrypt';
 
 export class UsuarioRepository {
     private ormRepository: Repository<Usuario>;
@@ -10,11 +11,23 @@ export class UsuarioRepository {
     }
 
     public salvar = async (usuario: Usuario): Promise<Usuario> => {
-        return this.ormRepository.save(usuario);
-    }
+        return this.ormRepository.save({
+            id: usuario.id,
+            nome: usuario.nome,
+            senha: await bcrypt.hash(usuario.senha, 10),
+            email: usuario.email,
+            cpf: usuario.cpf,
+            telefone: usuario.telefone,
+            tipo: usuario.tipo
+        });
+    }
 
-    public buscarPorId = async (id: number): Promise<Usuario | null> => {
-        return this.ormRepository.findOneBy({ id });
+    public async buscarPorId(id: number): Promise<Usuario | null> {
+        const usuario = await this.ormRepository.findOneBy({ 
+            id: id 
+        });
+
+        return usuario;
     }
 
     public buscarPorEmail = async (email: string): Promise<Usuario | null> => {

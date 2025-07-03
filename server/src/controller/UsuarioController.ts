@@ -1,6 +1,4 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { validate } from 'class-validator';
-import { plainToInstance } from 'class-transformer';
+import { Router } from 'express';
 import { UsuarioService } from '../services/usuarioService';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { CriarUsuarioDto } from '../dto/usuario/criar-usuario.dto';
@@ -37,7 +35,17 @@ usuarioController.post('/auth/login', validationMiddleware(LoginDto), async (req
 
 usuarioController.get('/perfil', authMiddleware, async (req, res, next) => {
     try {
-        const perfil = await usuarioService.buscarPorId(req.user.id);
+        const usuarioId = parseInt(req.query.id as string);
+
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ message: 'ID de usuário inválido.' });
+        }
+        // verificação de autorização
+        if (req.user.sub !== usuarioId) {
+            return res.status(403).json({ message: 'Você não tem permissão para acessar este perfil.' });
+        }
+
+        const perfil = await usuarioService.buscarPorId(usuarioId);
         res.json(perfil);
     } catch (error) {
         next(error);
@@ -46,7 +54,16 @@ usuarioController.get('/perfil', authMiddleware, async (req, res, next) => {
 
 usuarioController.put('/perfil', authMiddleware, validationMiddleware(AtualizarUsuarioDto), async (req, res, next) => {
     try {
-        const perfilAtualizado = await usuarioService.atualizar(req.user.id, req.body);
+        const usuarioId = parseInt(req.query.id as string);
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ message: 'ID de usuário inválido.' });
+        }
+        // verificação de autorização
+        if (req.user.sub !== usuarioId) {
+            return res.status(403).json({ message: 'Você não tem permissão para atualizar este perfil.' });
+        }
+
+        const perfilAtualizado = await usuarioService.atualizar(usuarioId, req.body);
         res.json(perfilAtualizado);
     } catch (error) {
         next(error);
@@ -55,11 +72,20 @@ usuarioController.put('/perfil', authMiddleware, validationMiddleware(AtualizarU
 
 usuarioController.put('/perfil/alterar-senha', authMiddleware, validationMiddleware(AtualizarSenhaDto), async (req, res, next) => {
     try {
+        const usuarioId = parseInt(req.query.id as string);
+        if (isNaN(usuarioId)) {
+            return res.status(400).json({ message: 'ID de usuário inválido.' });
+        }
+        // verificação de autorização
+        if (req.user.sub !== usuarioId) {
+             return res.status(403).json({ message: 'Você não tem permissão para alterar a senha deste usuário.' });
+        }
+        
         if (req.body.novaSenha !== req.body.confirmarNovaSenha) {
             res.status(400).json({ message: 'A nova senha e a confirmação de senha não correspondem.' });
             return;
         }
-        await usuarioService.atualizarSenha(req.user.id, req.body.senhaAtual, req.body.novaSenha);
+        await usuarioService.atualizarSenha(usuarioId, req.body.senhaAtual, req.body.novaSenha);
         res.json({ message: 'Senha atualizada com sucesso.' });
     } catch (error) {
         next(error);
