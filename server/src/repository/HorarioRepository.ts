@@ -29,7 +29,7 @@ export class HorarioRepository {
     public buscarPedidosDeReserva = async (locadorId: number): Promise<Horario[]> => {
         return this.ormRepository.find({
             where: {
-                sala: { predio: { proprietario: { id: locadorId } } },
+                sala: { predio: { usuario: { id: locadorId } } },
                 status: StatusHorario.PENDENTE
             },
             relations: ['usuario', 'sala', 'sala.predio'],

@@ -5,14 +5,14 @@ import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { getWorkspacesByLocation } from '../data/workspaces';
-import { Building, Calendar, Clock, MapPin, Plus, TrendingUp, Users } from 'lucide-react';
+import { Building, Calendar, Clock, MapPin, Plus, TrendingUp, Users, Link } from 'lucide-react';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { Skeleton } from '../components/ui/skeleton';
 import { useEffect } from 'react';
 
 const BusinessDashboard = () => {
-  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { locations: locations, isLoading: isLocationsLoading, error } = useLocations();
   const navigate = useNavigate();
 

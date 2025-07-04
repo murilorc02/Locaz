@@ -32,11 +32,7 @@ const Login = () => {
       await login(email, password);
       navigate('/business/dashboard');
     } catch (error) {
-      toast({
-        title: "Erro ao fazer login",
-        description: error instanceof Error ? error.message : "Ocorreu um erro",
-        variant: "destructive",
-      });
+      console.log('A operação de login falhou:', error);
     } finally {
       setIsLoading(false);
     }
@@ -107,17 +103,6 @@ const Login = () => {
             </Link>
           </div>
           
-          <div className="mt-6">
-            <p className="text-xs text-center text-gray-500">
-              Para fins de demonstração, você pode usar:
-              {/* <br />
-              Client: john@example.com */}
-              <br />
-              Empresa: contact@urbanspaces.com
-              <br />
-              (qualquer senha funcionará)
-            </p>
-          </div>
         </div>
       </div>
     </div>

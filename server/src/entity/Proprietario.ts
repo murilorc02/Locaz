@@ -11,7 +11,4 @@ export class Proprietario {
 
     @Column('bytea', { nullable: true })
     foto!: Buffer;
-
-    @OneToMany(() => Predio, predio => predio.proprietario)
-    predios!: Predio[];
 }

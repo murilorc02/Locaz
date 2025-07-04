@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom';
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { Building, Home, Users, Calendar, BarChart3, Settings, Plus } from 'lucide-react';
 import {
   Sidebar,
@@ -12,8 +12,15 @@ import {
   SidebarHeader,
   SidebarFooter,
 } from '../components/ui/sidebar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from './ui/dropdown-menu';
+import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
+import { UserAvatar } from './UserAvatar';
 
 const businessMenuItems = [
   {
@@ -53,7 +60,8 @@ const quickActions = [
 
 export function BusinessSidebar() {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => {
@@ -117,16 +125,34 @@ export function BusinessSidebar() {
 
       <SidebarFooter className="p-4">
         {user && (
-          <div className="flex items-center space-x-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              {/* <AvatarFallback>{user.name.charAt(0)}</AvatarFallback> */}
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium truncate">{user.name}</p>
-              <p className="text-xs text-gray-500">Empresa</p>
-            </div>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex h-auto w-full items-center justify-start gap-3 rounded-lg px-3 py-2">
+                <UserAvatar
+                  className="h-9 w-9"
+                  src={user.avatar}
+                  name={user.name}
+                />
+
+                <div className="flex flex-col items-start">
+                  <span className="font-medium">{user.name}</span>
+                  <span className="text-xs text-gray-500">Locador</span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent side="right" align="start">
+              <DropdownMenuItem>
+                <Link to="/" className="w-full">Página Inicial</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Link to="/profile" className="w-full">Perfil</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
+                Sair
+              </DropdownMenuItem>
+
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </SidebarFooter>
     </Sidebar>

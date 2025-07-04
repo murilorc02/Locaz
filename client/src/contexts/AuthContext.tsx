@@ -3,6 +3,7 @@ import { User, UserRole } from "../types";
 import { useNavigate } from 'react-router-dom';
 import { useToast } from "../components/ui/use-toast";
 import api from '../services/api';
+import axios from 'axios';
 
 interface LoginResponse {
   access_token: string;
@@ -64,10 +65,29 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const login = async (email: string, senha: string) => {
-    const response = await api.post<LoginResponse>('/auth/login', { email, senha: senha });
-    const { access_token } = response.data;
-    localStorage.setItem('authToken', access_token);
-    await getUserProfile();
+    try {
+      const response = await api.post<LoginResponse>('/auth/login', { email, senha: senha });
+      const { access_token } = response.data;
+      localStorage.setItem('authToken', access_token);
+      await getUserProfile();
+    } catch (error) {
+      let errorMessage;
+
+      // Verifica se o erro é uma resposta da API (como um erro 401 ou 400)
+      if (axios.isAxiosError(error) && error.response) {
+        // Usa a mensagem de erro específica enviada pelo seu backend
+        errorMessage = error.response.data.message;
+      } else {
+        errorMessage = "Ocorreu um erro de rede. Tente novamente.";
+      }
+
+      toast({
+        title: "Falha no Login",
+        description: errorMessage, // Exibe a mensagem dinâmica
+        variant: "destructive",
+      });
+      throw error;
+    }
   };
 
   const signup = async (name: string, email: string, password: string, role: UserRole, telephone: string, document: string) => {

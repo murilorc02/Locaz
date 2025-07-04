@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
 import { Sala } from './Sala';
-import { Proprietario } from './Proprietario';
+import { Usuario } from './Usuario';
 
 @Entity()
 export class Predio {
@@ -22,6 +22,6 @@ export class Predio {
     @OneToMany(() => Sala, sala => sala.predio)
     salas!: Sala[];
 
-    @ManyToOne(() => Proprietario, proprietario => proprietario.predios)
-    proprietario!: Proprietario;
+    @ManyToOne(() => Usuario, (usuario) => usuario.predios)
+    usuario!: Usuario;
 }

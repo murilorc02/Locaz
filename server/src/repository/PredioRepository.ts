@@ -10,9 +10,9 @@ export class PredioRepository {
         this.ormRepository = AppDataSource.getRepository(Predio);
     }
 
-    public salvar = async (dadosPredio: CreatePredioDto, proprietarioId: number): Promise<Predio> => {
-        const proprietario = { id: proprietarioId } as any;
-        const predio = this.ormRepository.create({ ...dadosPredio, proprietario });
+    public salvar = async (dadosPredio: CreatePredioDto, usuarioId: number): Promise<Predio> => {
+        const usuario = { id: usuarioId } as any;
+        const predio = this.ormRepository.create({ ...dadosPredio, usuario });
         return this.ormRepository.save(predio);
     }
 
@@ -20,14 +20,14 @@ export class PredioRepository {
         return this.ormRepository.findOneBy({ id });
     }
 
-    public buscarPorProprietario = async (proprietarioId: number): Promise<Predio[]> => {
+    public buscarPorUsuario = async (usuarioId: number): Promise<Predio[]> => {
         return this.ormRepository.find({
             where: {
-                proprietario: {
-                    id: proprietarioId
+                usuario: {
+                    id: usuarioId
                 }
             },
-            relations: ['proprietario'] 
+            relations: ['salas'] 
         });
     }
 }

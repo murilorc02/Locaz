@@ -9,6 +9,7 @@ export type User = {
   avatar?: string;
   telephone?: string;
   document: string; // CPF or CNPJ
+  predios?: Location[];
 };
 
 export type Amenity = {
@@ -24,7 +25,7 @@ export type Location = {
   endereco: string;
   pontosDeDestaque: string[]; // Array of amenity IDs
   descricao?: string;
-  proprietario?: Proprietario;
+  usuario?: User;
   salas?: Workspace[];
   images?: string[]; // Array of image URLs
 };
@@ -51,12 +52,12 @@ export type Booking = {
   status: 'pendente' | 'confirmado' | 'cancelado';
 };
 
-export type Proprietario = {
-  id: number;
-  nome: string;
-  foto?: string; // ou string se for uma URL da imagem
-  predios?: Location[];
-};
+// export type Proprietario = {
+//   id: number;
+//   nome: string;
+//   foto?: string; // ou string se for uma URL da imagem
+//   predios?: Location[];
+// };
 
 export type CreatePredioPayload = {
   nomePredio: string;

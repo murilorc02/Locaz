@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
 import { Horario } from './Horario'; 
+import { Predio } from './Predio';
 
 export enum TipoUsuario {
     LOCADOR = 'locador',
@@ -31,5 +32,8 @@ export class Usuario {
 
     @OneToMany(() => Horario, horario => horario.usuario)
     horarios!: Horario[];
+    
+    @OneToMany(() => Predio, (predio) => predio.usuario)
+    predios!: Predio[];
 
 }

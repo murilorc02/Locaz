@@ -17,12 +17,12 @@ export class LocadorService {
         this.horarioRepository = new HorarioRepository();
     }
 
-    public criarPredio = async (dados: CreatePredioDto, proprietarioId: number): Promise<Predio> => {
-        return this.predioRepository.salvar(dados, proprietarioId);
+    public criarPredio = async (dados: CreatePredioDto, usuarioId: number): Promise<Predio> => {
+        return this.predioRepository.salvar(dados, usuarioId);
     }
 
-    public obterPrediosPorProprietario = async (proprietarioId: number): Promise<Predio[]> => {
-        return this.predioRepository.buscarPorProprietario(proprietarioId);
+    public obterPrediosPorUsuario = async (usuarioId: number): Promise<Predio[]> => {
+        return this.predioRepository.buscarPorUsuario(usuarioId);
     }
 
     public obterPedidosDeReserva = async (locadorId: number): Promise<Horario[]> => {
