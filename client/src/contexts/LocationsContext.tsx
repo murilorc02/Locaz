@@ -8,7 +8,7 @@ interface LocationsContextType {
   locations: Location[];
   isLoading: boolean;
   error: string | null;
-  addLocation: (payload: CreatePredioPayload, user: User) => Promise<void>;
+  addLocation: (payload: CreatePredioPayload, user: User) => Promise<any>;
   fetchLocations: () => void;
 }
 
@@ -16,14 +16,19 @@ interface LocationsContextType {
 const LocationsContext = createContext<LocationsContextType | undefined>(undefined);
 
 // Define o provedor do contexto
-export const LocationsProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+export default function LocationsProvider ({ children }: { children: ReactNode }) {
+  const { user, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const [locations, setLocations] = useState<Location[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchLocations = async () => {
-    if (!user) return;
+
+    if (!user) {
+        setIsLoading(false);
+        return;
+    };
+
     setIsLoading(true);
     setError(null);
     try {
@@ -38,14 +43,19 @@ export const LocationsProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    fetchLocations();
+    if(user && user.tipo === 'locador') {
+      fetchLocations();
+    } else {
+      setLocations([]);
+      setIsLoading(false);
+    }
   }, [user]);
 
   const addLocation = async (payload: CreatePredioPayload, user: User) => {
     try {
       // Agora o 'payload' tem o tipo correto e pode ser enviado diretamente
       await api.post('/locador/predios', payload);
-      fetchLocations(); 
+      await fetchLocations(); 
     } catch (err) {
       console.error("Erro ao adicionar local:", err);
       throw new Error("Não foi possível adicionar o novo local.");

@@ -1,11 +1,11 @@
-export type UserRole = 'client' | 'business';
+export type UserRole = 'locatario' | 'locador';
 
 export type User = {
   id: number;
   name: string;
   email: string;
   password: string; // Armazenar senhas em texto simples não é recomendado, use hash em produção
-  role: UserRole;
+  tipo: UserRole;
   avatar?: string;
   telephone?: string;
   document: string; // CPF or CNPJ

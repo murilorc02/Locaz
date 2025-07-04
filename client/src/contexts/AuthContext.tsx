@@ -1,7 +1,20 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { User, UserRole } from "../types";
-import { users } from "../data/users";
+import { useNavigate } from 'react-router-dom';
 import { useToast } from "../components/ui/use-toast";
+import api from '../services/api';
+
+interface LoginResponse {
+  access_token: string;
+}
+
+interface JwtPayload {
+  sub: number; // id
+  email: string;
+  tipo: UserRole;
+  iat: number;
+  exp: number;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -9,73 +22,77 @@ interface AuthContextType {
   signup: (name: string, email: string, password: string, role: UserRole, telephone: string, document: string) => Promise<void>;
   logout: () => void;
   isAuthenticated: boolean;
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export default function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
-  let userIdCounter = users.length + 1;
+  const navigate = useNavigate();
 
-  const login = async (email: string, password: string) => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (foundUser) {
-      setUser(foundUser);
-      toast({
-        title: "Login successful",
-        description: `Welcome back, ${foundUser.name}!`,
-      });
-      return;
+  const getUserProfile = async () => {
+    const token = localStorage.getItem('authToken');
+    var decoded;
+    if (token) {
+      decoded = JSON.parse(atob(token.split('.')[1])) as JwtPayload;
+    } else {
+      console.log("Sessão inválida")
     }
-    
-    throw new Error('Invalid email or password');
+    const userId = decoded.sub;
+    const response = await api.get<User>(`/perfil?id=${userId}`);
+    setUser(response.data);
+  };
+
+  useEffect(() => {
+    const loadUserFromToken = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          await getUserProfile();
+        } catch (error) {
+          console.error("Sessão inválida. Token removido.", error);
+          logout();
+        }
+      }
+      setIsLoading(false);
+    };
+    loadUserFromToken();
+  }, []);
+
+
+  const login = async (email: string, senha: string) => {
+    const response = await api.post<LoginResponse>('/auth/login', { email, senha: senha });
+    const { access_token } = response.data;
+    localStorage.setItem('authToken', access_token);
+    await getUserProfile();
   };
 
   const signup = async (name: string, email: string, password: string, role: UserRole, telephone: string, document: string) => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const userExists = users.some(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (userExists) {
-      throw new Error('User with this email already exists');
-    }
-    
-    // In a real app, this would create a user in the database
-    const newUser: User = {
-      id: userIdCounter++,
-      name,
+
+    const payload = {
+      nome: name,
       email,
-      password,
-      role,
-      avatar: `https://i.pravatar.cc/150?u=${email}`,
-      telephone,
-      document
+      senha: password,
+      tipo: role,
+      telefone: telephone,
+      cpf: document
     };
-    
-    // For demo purposes, we'll just set the user
-    setUser(newUser);
-    toast({
-      title: "Account created",
-      description: "You have successfully signed up!",
-    });
+    await api.post('/auth/register', payload);
+    await login(email, password); // loga o usuário após o cadastro
   };
 
   const logout = () => {
     setUser(null);
-    toast({
-      title: "Logged out",
-      description: "You have been logged out successfully",
-    });
+    localStorage.removeItem('authToken'); // O interceptor vai parar de achar o token
+    toast({ title: "Logout realizado" });
+    navigate('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, login, signup, logout, isAuthenticated: !!user, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,7 @@ import { Workspace } from '../types';
 
 export const workspaces: Workspace[] = [
   {
-    id: 'ws-001',
+    id: 1,
     name: 'Executive Suite',
     description: 'Premium private office with high-end furnishings and city views',
     capacity: 4,
@@ -16,7 +16,7 @@ export const workspaces: Workspace[] = [
   }
 ];
 
-export const getWorkspace = (id: string): Workspace | undefined => {
+export const getWorkspace = (id: number): Workspace | undefined => {
   return workspaces.find(workspace => workspace.id === id);
 };
 

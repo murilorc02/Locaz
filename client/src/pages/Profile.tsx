@@ -183,7 +183,7 @@ const Profile = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {user?.role === 'client' && (
+                  {user?.tipo === 'locatario' && (
                     <Button 
                       variant="outline"
                       className="w-full"
@@ -193,7 +193,7 @@ const Profile = () => {
                     </Button>
                   )}
                   
-                  {user?.role === 'business' && (
+                  {user?.tipo === 'locador' && (
                     <Button 
                       variant="outline"
                       className="w-full"

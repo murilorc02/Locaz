@@ -8,12 +8,12 @@ import { RadioGroup, RadioGroupItem } from '../components/ui/radio-group';
 import { useToast } from '../components/ui/use-toast';
 import { UserRole } from '../types';
 
-const Signup = async () => {
+const Signup = () => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [role, setRole] = useState<UserRole>('client');
+    const [role, setRole] = useState<UserRole>('locatario');
     const [telephone, setTelephone] = useState('');
     const [document, setDocument] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -25,40 +25,39 @@ const Signup = async () => {
     const handleSubmit = async (e: React.FormEvent) => {
         if (!name || !email || !password || !confirmPassword || !telephone || !document) {
             toast({
-                title: "Error",
-                description: "Please fill in all fields",
+                title: "Erro",
+                description: "Preencha todos os campos",
                 variant: "destructive",
             });
             return;
         }
-        return;
-    }
 
-    if (password !== confirmPassword) {
-        toast({
-            title: "Error",
-            description: "Passwords do not match",
-            variant: "destructive",
-        });
-        return;
-    }
+        if (password !== confirmPassword) {
+            toast({
+                title: "Erro",
+                description: "Senhas não coincidem",
+                variant: "destructive",
+            });
+            return;
+        }
 
-    setIsLoading(true);
-    try {
-        await signup(name, email, password, role, telephone, document);
-        toast({
-            title: "Success",
-            description: "Your account has been created!",
-        });
-        navigate('/');
-    } catch (error) {
-        toast({
-            title: "Signup failed",
-            description: error instanceof Error ? error.message : "An error occurred",
-            variant: "destructive",
-        });
-    } finally {
-        setIsLoading(false);
+        setIsLoading(true);
+        try {
+            await signup(name, email, password, role, telephone, document);
+            navigate('/');
+            toast({
+                title: "Sucesso",
+                description: "Sua conta foi criada!",
+            });
+        } catch (error) {
+            toast({
+                title: "Falha no cadastro",
+                description: error instanceof Error ? error.message : "Ocorreu um erro, tente novamente mais tarde",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     return (
@@ -66,19 +65,19 @@ const Signup = async () => {
             <div className="mx-auto max-w-md">
                 <div className="rounded-lg border bg-card p-8 shadow-sm">
                     <div className="mb-6 text-center">
-                        <h1 className="text-2xl font-bold">Create an Account</h1>
+                        <h1 className="text-2xl font-bold">Crie uma Conta</h1>
                         <p className="text-sm text-gray-500 mt-2">
-                            Sign up to start using our platform
+                            Cadastre-se para começar a usar nossa plataforma
                         </p>
                     </div>
 
                     <form onSubmit={handleSubmit}>
                         <div className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Full Name</Label>
+                                <Label htmlFor="name">Nome Completo</Label>
                                 <Input
                                     id="name"
-                                    placeholder="John Doe"
+                                    placeholder="Nome"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
                                     required
@@ -89,14 +88,14 @@ const Signup = async () => {
                                 <Label htmlFor="email">Email</Label>
                                 <Input
                                     id="email"
-                                    placeholder="you@example.com"
+                                    placeholder="seuemail@exemplo.com"
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     required
                                 />
                                 <div className="space-y-2">
-                                    <Label htmlFor="password">Password</Label>
+                                    <Label htmlFor="password">Senha</Label>
                                     <Input
                                         id="password"
                                         placeholder="••••••••"
@@ -108,7 +107,7 @@ const Signup = async () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                                    <Label htmlFor="confirmPassword">Repita a senha</Label>
                                     <Input
                                         id="confirmPassword"
                                         placeholder="••••••••"
@@ -120,7 +119,7 @@ const Signup = async () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="telephone">Telephone</Label>
+                                    <Label htmlFor="telephone">Telefone</Label>
                                     <Input
                                         id="telephone"
                                         placeholder="(99) 99999-9999"
@@ -132,10 +131,10 @@ const Signup = async () => {
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="document">Document</Label>
+                                    <Label htmlFor="document">Documento</Label>
                                     <Input
                                         id="document"
-                                        placeholder="CPF or CNPJ"
+                                        placeholder="CPF/CNPJ"
                                         value={document}
                                         onChange={(e) => setDocument(e.target.value)}
                                         required
@@ -144,15 +143,15 @@ const Signup = async () => {
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Account Type</Label>
-                                <RadioGroup defaultValue="client" value={role} onValueChange={(value) => setRole(value as UserRole)}>
+                                <Label>Tipo da Conta</Label>
+                                <RadioGroup defaultValue="locatario" value={role} onValueChange={(value) => setRole(value as UserRole)}>
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="client" id="client" />
-                                        <Label htmlFor="client">Client (looking for workspaces)</Label>
+                                        <RadioGroupItem value="locatario" id="locatario" />
+                                        <Label htmlFor="locatario">Cliente (buscando espaços)</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                        <RadioGroupItem value="business" id="business" />
-                                        <Label htmlFor="business">Business (listing workspaces)</Label>
+                                        <RadioGroupItem value="locador" id="locador" />
+                                        <Label htmlFor="locador">Negócio (vendendo espaços)</Label>
                                     </div>
                                 </RadioGroup>
                             </div>
@@ -162,15 +161,15 @@ const Signup = async () => {
                                 type="submit"
                                 disabled={isLoading}
                             >
-                                {isLoading ? "Creating account..." : "Create Account"}
+                                {isLoading ? "Criando Conta..." : "Criar Conta"}
                             </Button>
                         </div>
                     </form>
 
                     <div className="mt-6 text-center text-sm">
-                        Already have an account?{" "}
+                        Já tem uma conta?{" "}
                         <Link to="/login" className="font-medium text-primary hover:underline">
-                            Sign in
+                            Faça login
                         </Link>
                     </div>
                 </div>

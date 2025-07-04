@@ -11,7 +11,7 @@ locadorController.use(authMiddleware);
 locadorController.post('/predios', async (req: Request, res: Response, next: NextFunction) => {
     try {
         console.log("DADOS DA REQUISIÇÃO:", req.body);
-        const proprietarioId = req.user.id;
+        const proprietarioId = req.user.sub;
         const predio = await locadorService.criarPredio(req.body as CreatePredioDto, proprietarioId);
         res.status(201).json(predio);
     } catch (error) {
@@ -22,7 +22,7 @@ locadorController.post('/predios', async (req: Request, res: Response, next: Nex
 // Rota para ver os pedidos de reserva
 locadorController.get('/pedidos-de-reserva', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const locadorId = req.user.id;
+        const locadorId = req.user.sub;
         const pedidos = await locadorService.obterPedidosDeReserva(locadorId);
         res.json(pedidos);
     } catch (error) {
@@ -44,7 +44,7 @@ locadorController.get('/espacos/:id/agenda', async (req: Request, res: Response,
 
 locadorController.get('/predios', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const proprietarioId = req.user.id;
+        const proprietarioId = req.user.sub;
         
         if (!proprietarioId) {
             res.status(401).json({ message: 'ID do proprietário não encontrado no token.' });

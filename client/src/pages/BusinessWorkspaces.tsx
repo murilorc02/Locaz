@@ -25,7 +25,7 @@ const BusinessWorkspaces = () => {
   );
   
   // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.role !== 'business')) {
+  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
     navigate('/login');
     return null;
   }

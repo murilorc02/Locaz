@@ -35,26 +35,26 @@ const Navbar = () => {
             <Link to="/search" className="text-gray-700 hover:text-primary px-3 py-2">
               Encontrar Espaços
             </Link>
-            {isAuthenticated && user?.role === 'business' && (
-              <Link to="/business/dashboard" className="text-gray-700 hover:text-primary px-3 py-2">
-                Painel de Controle
-              </Link>
-            )}
-            {isAuthenticated ? (
+            {isAuthenticated && user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user!.avatar} alt={user!.name} />
-                      <AvatarFallback>{user!.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user.avatar} alt={user.name} />
+                      {/* <AvatarFallback>{user.name.charAt(0)}</AvatarFallback> */}
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  {user.tipo === 'locador' && (
+                    <DropdownMenuItem>
+                      <Link to="/business/dashboard" className="w-full">Painel de Controle</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem>
                     <Link to="/profile" className="w-full">Perfil</Link>
                   </DropdownMenuItem>
-                  {user?.role === 'client' && (
+                  {user?.tipo === 'locatario' && (
                     <DropdownMenuItem>
                       <Link to="/bookings" className="w-full">Meus Agendamentos</Link>
                     </DropdownMenuItem>
@@ -71,7 +71,7 @@ const Navbar = () => {
                   <Button variant="outline">Entrar</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button>Cadastrar-se</Button>
+                  <Button className='bg-blue-950'>Cadastrar-se</Button>
                 </Link>
               </>
             )}
@@ -116,7 +116,7 @@ const Navbar = () => {
             >
               Encontrar Espaços
             </Link>
-            {isAuthenticated && user?.role === 'business' && (
+            {isAuthenticated && user?.tipo === 'locador' && (
               <Link
                 to="/business/dashboard"
                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"
@@ -134,7 +134,7 @@ const Navbar = () => {
                 >
                   Perfil
                 </Link>
-                {user?.role === 'client' && (
+                {user?.tipo === 'locatario' && (
                   <Link
                     to="/bookings"
                     className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"

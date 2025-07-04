@@ -9,16 +9,23 @@ import { Building, Calendar, Clock, MapPin, Plus, TrendingUp, Users } from 'luci
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { Skeleton } from '../components/ui/skeleton';
+import { useEffect } from 'react';
 
 const BusinessDashboard = () => {
-  const { user, isAuthenticated } = useAuth();
-  const { locations: locations, isLoading, error } = useLocations();
+  const { user, isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  const { locations: locations, isLoading: isLocationsLoading, error } = useLocations();
   const navigate = useNavigate();
 
-  // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.role !== 'business')) {
-    navigate('/');
-    return null;
+  useEffect(() => {
+    // Só redirecione se a verificação de auth já terminou E o usuário não for um locador autenticado
+    if (!isAuthLoading && (!isAuthenticated || user?.tipo !== 'locador')) {
+      navigate('/');
+    }
+  }, [user, isAuthenticated, isAuthLoading, navigate]);
+
+  // Se a autenticação ainda está carregando ou se o usuário não é válido, não renderize nada ainda
+  if (isAuthLoading || !isAuthenticated || user?.tipo !== 'locador') {
+    return <div>Carregando...</div>; // Ou um componente de spinner
   }
 
   const totalLocations = locations.length;
@@ -35,7 +42,7 @@ const BusinessDashboard = () => {
       return <div className="flex justify-center items-center h-full text-red-500"><p>{error}</p></div>;
     }
 
-    if (isLoading) {
+    if (isLocationsLoading) {
       return (
         <>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-8">
