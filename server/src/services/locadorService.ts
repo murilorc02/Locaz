@@ -1,10 +1,12 @@
 import { Predio } from '../entity/Predio';
 import { Horario, StatusHorario } from '../entity/Horario';
-import { CreatePredioDto } from '../dto/usuario/criar-predio.dto';
+import { CreatePredioDto } from '../dto/predio/criar-predio.dto';
 import { HttpError } from './usuarioService';
 import { PredioRepository } from '../repository/PredioRepository';
 import { HorarioRepository } from '../repository/HorarioRepository';
 import { SalaRepository } from '../repository/SalaRepository';
+import { Sala } from '../entity/Sala';
+import { createSalaDto } from '../dto/sala/createSala.dto';
 
 export class LocadorService {
     private predioRepository: PredioRepository
@@ -19,6 +21,10 @@ export class LocadorService {
 
     public criarPredio = async (dados: CreatePredioDto, usuarioId: number): Promise<Predio> => {
         return this.predioRepository.salvar(dados, usuarioId);
+    }
+
+    public criarSala = async (dados: createSalaDto, usuarioId: number): Promise<Sala> => {
+        return this.salaRepository.salvar(dados, usuarioId)
     }
 
     public obterPrediosPorUsuario = async (usuarioId: number): Promise<Predio[]> => {

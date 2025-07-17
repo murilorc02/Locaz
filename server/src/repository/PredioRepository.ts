@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../data-source';
 import { Predio } from '../entity/Predio';
-import { CreatePredioDto } from '../dto/usuario/criar-predio.dto';
+import { CreatePredioDto } from '../dto/predio/criar-predio.dto';
 
 export class PredioRepository {
     private ormRepository: Repository<Predio>;

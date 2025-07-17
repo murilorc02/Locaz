@@ -1,6 +1,7 @@
 import { Repository, ILike } from 'typeorm';
 import { AppDataSource } from '../data-source';
 import { Sala } from '../entity/Sala';
+import { createSalaDto } from '../dto/sala/createSala.dto';
 
 export class SalaRepository {
     private ormRepository: Repository<Sala>;
@@ -11,6 +12,11 @@ export class SalaRepository {
 
     public buscarPorId = async (id: number): Promise<Sala | null> => {
         return this.ormRepository.findOneBy({ id });
+    }
+
+    public salvar = async (dadosSala: createSalaDto, usuarioId: number): Promise<Sala> => {
+        const sala = this.ormRepository.create({...dadosSala})
+        return this.ormRepository.save(sala)
     }
 
     public pesquisar = async (filtros: any): Promise<Sala[]> => {
