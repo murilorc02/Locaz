@@ -12,7 +12,7 @@ export class Sala {
     nomeSala!: string
 
     @Column()
-    capacidade!: string
+    capacidade!: number
 
     @Column()
     categoria!: string

@@ -1,7 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { LocadorService } from '../services/locadorService';
 import { authMiddleware } from '../middleware/authMiddleware';
-import { CreatePredioDto } from '../dto/usuario/criar-predio.dto';
+import { CreatePredioDto } from '../dto/predio/criar-predio.dto';
 
 const locadorController = Router();
 const locadorService = new LocadorService();
@@ -57,6 +57,18 @@ locadorController.get('/predios', async (req: Request, res: Response, next: Next
         next(error);
     }
 });
+
+// Criar sala
+locadorController.post('/sala', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const usuarioId = req.user.sub;
+        const dados = req.body;
+        const sala = await locadorService.criarSala(dados, usuarioId);
+        res.status(201).json(sala)
+    } catch (error) {
+        next(error)
+    }
+})
 
 
 export default locadorController;
