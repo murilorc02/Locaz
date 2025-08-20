@@ -30,7 +30,7 @@ const Index = () => {
           <div 
             className="bg-cover bg-center h-[500px] md:h-[600px] shadow-inner"
             style={{ 
-              backgroundImage: "url('src/assets/imgs/Firefly_bright and comfortable coworking office, colorful, resting place 674052.jpg')",
+              backgroundImage: "url('src/assets/imgs/bg_header.jpg')",
               backgroundPosition: "center 70%",
               boxShadow: "inset 0 10px 10px 0 rgb(0 0 0 / 0.5)"
             }}
