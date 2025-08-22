@@ -4,11 +4,11 @@ export type User = {
   id: number;
   name: string;
   email: string;
-  password: string; // Armazenar senhas em texto simples não é recomendado, use hash em produção
+  password: string;
   tipo: UserRole;
   avatar?: string;
   telephone?: string;
-  document: string; // CPF or CNPJ
+  document: string;
   predios?: Location[];
 };
 
