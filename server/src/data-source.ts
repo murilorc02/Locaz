@@ -18,7 +18,7 @@ export const AppDataSource = new DataSource({
     database: config.db.name,
     synchronize: false,
     logging: true,
-    migrations: ['src/migration/**/*.ts'],
+    migrations: ['dist/migration/**/*.js'],
     entities: [Empresa, Horario, Predio, Proprietario, Sala, Usuario],
     subscribers: [],
     ssl: {
