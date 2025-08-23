@@ -27,8 +27,12 @@ export class UsuarioService {
       return resultado;
     }
 
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
+
     const novoUsuario = new Usuario();
     Object.assign(novoUsuario, dados);
+    novoUsuario.senha = hashedPassword;
 
     const usuarioSalvo = await this.usuarioRepository.salvar(novoUsuario);
 
