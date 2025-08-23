@@ -20,5 +20,8 @@ export const AppDataSource = new DataSource({
     logging: true,
     migrations: ['src/migration/**/*.ts'],
     entities: [Empresa, Horario, Predio, Proprietario, Sala, Usuario],
-    subscribers: []
+    subscribers: [],
+    ssl: {
+        rejectUnauthorized: false
+    }
 })
