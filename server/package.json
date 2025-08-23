@@ -5,7 +5,7 @@
   "main": "dist/app.js",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/app.js",
+    "start": "node -r dotenv/config dist/app.js",
     "start:dev": "nodemon --exec ts-node -r dotenv/config src/app.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "typeorm": "typeorm-ts-node-commonjs -d ./src/data-source.ts",
