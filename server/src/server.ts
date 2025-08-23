@@ -1,12 +1,13 @@
 import express, { Request, Response, NextFunction, Application } from 'express';
 import cors from 'cors';
 import { HttpError } from './services/usuarioService';
+import { config } from './config';
 
 export async function createServer(): Promise<Application> {
     const app = express();
     
     app.use(cors({
-        origin: 'http://localhost:5173', 
+        origin: config.corsOrigin, 
         methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
         optionsSuccessStatus: 204
     }));
