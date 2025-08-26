@@ -23,8 +23,7 @@ export class UsuarioService {
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
 
     if (usuarioExistente) {
-      const { senha, ...resultado } = usuarioExistente;
-      return resultado;
+      throw new HttpError(409, 'Este endereço de e-mail já está em uso.');
     }
 
     const saltRounds = 10;
