@@ -23,6 +23,7 @@ const Signup = () => {
     const navigate = useNavigate();
 
     const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
         if (!name || !email || !password || !confirmPassword || !telephone || !document) {
             toast({
                 title: "Erro",
