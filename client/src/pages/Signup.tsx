@@ -72,10 +72,7 @@ const Signup = () => {
                         </p>
                     </div>
 
-                    <form onSubmit={(e) => {
-                        e.preventDefault();
-                        handleSubmit;
-                    }}>
+                    <form onSubmit={handleSubmit}>
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Nome Completo</Label>
