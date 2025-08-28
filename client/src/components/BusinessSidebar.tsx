@@ -42,12 +42,7 @@ const businessMenuItems = [
     title: 'Reservas',
     url: '/business/bookings',
     icon: Calendar,
-  },
-  {
-    title: 'Configurações',
-    url: '/business/settings',
-    icon: Settings,
-  },
+  }
 ];
 
 const quickActions = [

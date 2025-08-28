@@ -2,7 +2,6 @@ import 'reflect-metadata';
 import 'express-async-errors';
 import { AppDataSource } from './data-source';
 import { createServer } from './server';
-import { config } from './config';
 
 async function bootstrap() {
     try {
@@ -10,13 +9,15 @@ async function bootstrap() {
         console.log("Fonte de dados inicializada com sucesso!");
 
         const app = await createServer();
+        const PORT = process.env.PORT || 3000;
 
-        app.listen(3000, () => {
-            console.log(`Servidor a ser executado na porta 3000`);
+        app.listen(PORT, () => {
+            console.log(`Servidor a ser executado na porta ${PORT}`);
         });
 
     } catch (error) {
         console.error("Erro fatal durante a inicialização da aplicação:", error);
+        process.exit(1);
     }
 }
 

@@ -23,12 +23,15 @@ export class UsuarioService {
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
 
     if (usuarioExistente) {
-      const { senha, ...resultado } = usuarioExistente;
-      return resultado;
+      throw new HttpError(409, 'Este endereço de e-mail já está em uso.');
     }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
 
     const novoUsuario = new Usuario();
     Object.assign(novoUsuario, dados);
+    novoUsuario.senha = hashedPassword;
 
     const usuarioSalvo = await this.usuarioRepository.salvar(novoUsuario);
 
@@ -70,17 +73,24 @@ export class UsuarioService {
 
   public async validarUsuario(email: string, senhaInserida: string): Promise<any> {
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
+
     if (!usuario) {
-      return null;
+        return null;
     }
 
-    const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
-    if (senhaValida) {
-      const { senha, ...resultado } = usuario;
-      return resultado;
+    try {
+        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
+
+        if (senhaValida) {
+            const { senha, ...resultado } = usuario;
+            return resultado;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        throw error;
     }
 
-    return null;
   }
 
   public login(usuario: Omit<Usuario, 'senha'>): { access_token: string } {
