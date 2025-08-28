@@ -70,17 +70,24 @@ export class UsuarioService {
 
   public async validarUsuario(email: string, senhaInserida: string): Promise<any> {
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
+
     if (!usuario) {
-      return null;
+        return null;
     }
 
-    const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
-    if (senhaValida) {
-      const { senha, ...resultado } = usuario;
-      return resultado;
+    try {
+        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
+
+        if (senhaValida) {
+            const { senha, ...resultado } = usuario;
+            return resultado;
+        } else {
+            return null;
+        }
+    } catch (error) {
+        throw error;
     }
 
-    return null;
   }
 
   public login(usuario: Omit<Usuario, 'senha'>): { access_token: string } {
