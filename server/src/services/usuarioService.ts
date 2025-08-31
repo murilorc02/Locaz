@@ -26,13 +26,9 @@ export class UsuarioService {
     console.log('Length da senha:', dados.senha.length);
     console.log('Bytes da senha:', Buffer.from(dados.senha, 'utf8'));
     
-    const saltRounds = 10;
-    const senhaHasheada = await bcrypt.hash(dados.senha, saltRounds);
-    
     console.log('Hash gerado:', senhaHasheada);
     console.log('Tamanho do hash:', senhaHasheada.length);
 
-    
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
 
     if (usuarioExistente) {
