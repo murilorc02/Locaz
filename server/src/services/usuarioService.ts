@@ -29,8 +29,8 @@ export class UsuarioService {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
     
-    console.log('Hash gerado:', senhaHasheada);
-    console.log('Tamanho do hash:', senhaHasheada.length);
+    console.log('Hash gerado:', hashedPassword);
+    console.log('Tamanho do hash:', hashedPassword.length);
 
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
 
