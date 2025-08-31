@@ -32,6 +32,9 @@ export class UsuarioService {
     console.log('Hash gerado:', hashedPassword);
     console.log('Tamanho do hash:', hashedPassword.length);
 
+    const testeImediato = await bcrypt.compare(dados.senha, hashedPassword);
+    console.log('Teste imediato do hash criado:', testeImediato);
+
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
 
     if (usuarioExistente) {
