@@ -72,25 +72,37 @@ export class UsuarioService {
 
 
   public async validarUsuario(email: string, senhaInserida: string): Promise<any> {
+    console.log('=== DEBUG LOGIN ===');
+    console.log('Email:', email);
+    console.log('Senha inserida:', senhaInserida);
+    
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
-
+    
     if (!usuario) {
+        console.log('Usuário não encontrado');
         return null;
     }
-
+    
+    console.log('Usuário encontrado:', usuario.id);
+    console.log('Hash da senha no DB:', usuario.senha);
+    console.log('Tamanho do hash:', usuario.senha.length);
+    
     try {
         const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
-
+        console.log('Resultado da comparação:', senhaValida);
+        
         if (senhaValida) {
             const { senha, ...resultado } = usuario;
+            console.log('Login bem-sucedido para:', resultado.email);
             return resultado;
         } else {
+            console.log('Senha inválida');
             return null;
         }
     } catch (error) {
+        console.error('Erro no bcrypt.compare:', error);
         throw error;
     }
-
   }
 
   public login(usuario: Omit<Usuario, 'senha'>): { access_token: string } {
