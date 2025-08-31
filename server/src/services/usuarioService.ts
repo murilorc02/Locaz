@@ -25,6 +25,9 @@ export class UsuarioService {
     console.log('Tipo da senha:', typeof dados.senha);
     console.log('Length da senha:', dados.senha.length);
     console.log('Bytes da senha:', Buffer.from(dados.senha, 'utf8'));
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
     
     console.log('Hash gerado:', senhaHasheada);
     console.log('Tamanho do hash:', senhaHasheada.length);
@@ -34,9 +37,6 @@ export class UsuarioService {
     if (usuarioExistente) {
       throw new HttpError(409, 'Este endereço de e-mail já está em uso.');
     }
-
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
 
     const novoUsuario = new Usuario();
     Object.assign(novoUsuario, dados);
