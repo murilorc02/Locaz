@@ -21,13 +21,13 @@ export class UsuarioService {
 
   public async criar(dados: CriarUsuarioDto): Promise<Omit<Usuario, 'senha'>> {
     console.log('=== DEBUG REGISTRO ===');
-    console.log('Senha antes do hash:', dadosUsuario.senha);
-    console.log('Tipo da senha:', typeof dadosUsuario.senha);
-    console.log('Length da senha:', dadosUsuario.senha.length);
-    console.log('Bytes da senha:', Buffer.from(dadosUsuario.senha, 'utf8'));
+    console.log('Senha antes do hash:', dados.senha);
+    console.log('Tipo da senha:', typeof dados.senha);
+    console.log('Length da senha:', dados.senha.length);
+    console.log('Bytes da senha:', Buffer.from(dados.senha, 'utf8'));
     
     const saltRounds = 10;
-    const senhaHasheada = await bcrypt.hash(dadosUsuario.senha, saltRounds);
+    const senhaHasheada = await bcrypt.hash(dados.senha, saltRounds);
     
     console.log('Hash gerado:', senhaHasheada);
     console.log('Tamanho do hash:', senhaHasheada.length);
