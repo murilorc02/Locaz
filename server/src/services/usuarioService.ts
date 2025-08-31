@@ -20,26 +20,14 @@ export class UsuarioService {
   }
 
   public async criar(dados: CriarUsuarioDto): Promise<Omit<Usuario, 'senha'>> {
-    console.log('=== DEBUG REGISTRO ===');
-    console.log('Senha antes do hash:', dados.senha);
-    console.log('Tipo da senha:', typeof dados.senha);
-    console.log('Length da senha:', dados.senha.length);
-    console.log('Bytes da senha:', Buffer.from(dados.senha, 'utf8'));
-
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
-    
-    console.log('Hash gerado:', hashedPassword);
-    console.log('Tamanho do hash:', hashedPassword.length);
-
-    const testeImediato = await bcrypt.compare(dados.senha, hashedPassword);
-    console.log('Teste imediato do hash criado:', testeImediato);
-
     const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
 
     if (usuarioExistente) {
       throw new HttpError(409, 'Este endereço de e-mail já está em uso.');
     }
+
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
 
     const novoUsuario = new Usuario();
     Object.assign(novoUsuario, dados);
@@ -83,51 +71,15 @@ export class UsuarioService {
   }
 
 
-  public async validarUsuario(email: string, senhaInserida: string): Promise<any> {
-    console.log('=== DEBUG LOGIN DETALHADO ===');
-    console.log('Email:', email);
-    console.log('Senha inserida:', senhaInserida);
-    console.log('Tipo da senha inserida:', typeof senhaInserida);
-    console.log('Length da senha inserida:', senhaInserida.length);
-    console.log('Bytes da senha inserida:', Buffer.from(senhaInserida, 'utf8'));
-    
+  public async validarUsuario(email: string, senhaInserida: string): Promise<any> {    
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
     
     if (!usuario) {
-        console.log('Usuário não encontrado');
         return null;
     }
     
-    console.log('Usuário encontrado:', usuario.id);
-    console.log('Hash da senha no DB:', usuario.senha);
-    console.log('Tamanho do hash:', usuario.senha.length);
-    console.log('Tipo do hash:', typeof usuario.senha);
-    
     try {
-        // Teste 1: Comparação original
-        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
-        console.log('Resultado da comparação original:', senhaValida);
-        
-        // Teste 2: Criar um novo hash da mesma senha para comparar
-        const novoHash = await bcrypt.hash(senhaInserida, 10);
-        console.log('Novo hash criado:', novoHash);
-        const testeNovoHash = await bcrypt.compare(senhaInserida, novoHash);
-        console.log('Comparação com novo hash:', testeNovoHash);
-        
-        // Teste 3: Verificar se o hash no DB é válido
-        const hashValido = /^\$2[abxy]?\$\d+\$/.test(usuario.senha);
-        console.log('Hash no DB é válido (regex):', hashValido);
-        
-        // Teste 4: Tentar com diferentes encodings da senha
-        const senhaUtf8 = Buffer.from(senhaInserida, 'utf8').toString();
-        const senhaLatin1 = Buffer.from(senhaInserida, 'latin1').toString();
-        
-        const testeUtf8 = await bcrypt.compare(senhaUtf8, usuario.senha);
-        const testeLatin1 = await bcrypt.compare(senhaLatin1, usuario.senha);
-        
-        console.log('Teste UTF-8:', testeUtf8);
-        console.log('Teste Latin-1:', testeLatin1);
-        
+        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);       
         if (senhaValida) {
             const { senha, ...resultado } = usuario;
             return resultado;
@@ -135,7 +87,6 @@ export class UsuarioService {
         
         return null;
     } catch (error) {
-        console.error('Erro no bcrypt:', error);
         throw error;
     }
 
