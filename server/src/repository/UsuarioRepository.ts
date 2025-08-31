@@ -14,7 +14,7 @@ export class UsuarioRepository {
         return this.ormRepository.save({
             id: usuario.id,
             nome: usuario.nome,
-            senha: await bcrypt.hash(usuario.senha, 10),
+            senha: usuario.senha,
             email: usuario.email,
             cpf: usuario.cpf,
             telefone: usuario.telefone,

@@ -71,22 +71,21 @@ export class UsuarioService {
   }
 
 
-  public async validarUsuario(email: string, senhaInserida: string): Promise<any> {
+  public async validarUsuario(email: string, senhaInserida: string): Promise<any> {    
     const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
-
+    
     if (!usuario) {
         return null;
     }
-
+    
     try {
-        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);
-
+        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);       
         if (senhaValida) {
             const { senha, ...resultado } = usuario;
             return resultado;
-        } else {
-            return null;
         }
+        
+        return null;
     } catch (error) {
         throw error;
     }
