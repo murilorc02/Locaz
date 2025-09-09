@@ -1,3 +1,4 @@
+
 import { Link } from 'react-router-dom';
 
 const Footer = () => {
@@ -7,10 +8,10 @@ const Footer = () => {
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           <div>
             <div className="text-2xl font-bold text-primary">
-              Loc<span className="text-secondary">az</span>
+              WorkHub<span className="text-secondary">Oasis</span>
             </div>
             <p className="mt-4 text-gray-600">
-              Encontre e reserve o espaço de trabalho perfeito para suas necessidades profissionais.
+              Find and book the perfect workspace for your professional needs.
             </p>
             <div className="mt-4 flex space-x-4">
               {/* Social Media Icons would go here */}
@@ -19,41 +20,41 @@ const Footer = () => {
           
           <div className="grid grid-cols-2 gap-8">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Para Empresas</h3>
+              <h3 className="text-lg font-semibold text-gray-900">For Businesses</h3>
               <ul className="mt-4 space-y-4">
                 <li>
                   <Link to="/business/signup" className="text-gray-600 hover:text-primary">
-                    Liste seu Espaço
+                    List Your Space
                   </Link>
                 </li>
                 <li>
                   <Link to="/business/dashboard" className="text-gray-600 hover:text-primary">
-                    Painel de Controle
+                    Business Dashboard
                   </Link>
                 </li>
                 <li>
                   <Link to="/terms-business" className="text-gray-600 hover:text-primary">
-                    Termos de Serviço
+                    Business Terms
                   </Link>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900">Para Clientes</h3>
+              <h3 className="text-lg font-semibold text-gray-900">For Clients</h3>
               <ul className="mt-4 space-y-4">
                 <li>
                   <Link to="/search" className="text-gray-600 hover:text-primary">
-                    Encontrar um Espaço
+                    Find a Space
                   </Link>
                 </li>
                 <li>
                   <Link to="/bookings" className="text-gray-600 hover:text-primary">
-                    Gerenciar Reservas
+                    Manage Bookings
                   </Link>
                 </li>
                 <li>
                   <Link to="/terms" className="text-gray-600 hover:text-primary">
-                    Termos de Serviço
+                    Terms of Service
                   </Link>
                 </li>
               </ul>
@@ -61,15 +62,15 @@ const Footer = () => {
           </div>
 
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Contato</h3>
+            <h3 className="text-lg font-semibold text-gray-900">Contact Us</h3>
             <ul className="mt-4 space-y-4">
               <li className="text-gray-600">
-                123 Locaz <br />
-                Cidade, EX 94105
+                123 Workspace Lane<br />
+                San Francisco, CA 94105
               </li>
               <li className="text-gray-600">
-                <a href="mailto:info@locaz.com" className="hover:text-primary">
-                  info@locaz.com
+                <a href="mailto:info@workhub-oasis.com" className="hover:text-primary">
+                  info@workhub-oasis.com
                 </a>
               </li>
               <li className="text-gray-600">
@@ -83,7 +84,7 @@ const Footer = () => {
 
         <div className="mt-12 border-t border-gray-200 pt-8">
           <p className="text-center text-gray-500">
-            © {new Date().getFullYear()} Locaz. Todos os direitos reservados.
+            © {new Date().getFullYear()} WorkHub Oasis. All rights reserved.
           </p>
         </div>
       </div>
