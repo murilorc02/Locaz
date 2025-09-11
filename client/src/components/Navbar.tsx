@@ -36,7 +36,7 @@ const Navbar = () => {
             <Link to="/search" className="text-gray-700 hover:text-primary px-3 py-2">
               Buscar Espaços
             </Link>
-            {isAuthenticated && user?.role === 'business' && (
+            {isAuthenticated && user?.tipo === 'locador' && (
               <Link to="/business/dashboard" className="text-gray-700 hover:text-primary px-3 py-2">
                 Painel Administrativo
               </Link>
@@ -46,8 +46,8 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.name} />
-                      <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user.avatar} alt={user.nome} />
+                      <AvatarFallback>{user.nome.charAt(0)}</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
@@ -115,7 +115,7 @@ const Navbar = () => {
             >
               Buscar Espaços
             </Link>
-            {isAuthenticated && user?.role === 'business' && (
+            {isAuthenticated && user?.tipo === 'locador' && (
               <Link
                 to="/business/dashboard"
                 className="block px-3 py-2 text-base font-medium text-gray-700 hover:bg-gray-50 hover:text-primary"

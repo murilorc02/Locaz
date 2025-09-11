@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, UserRole } from "../types";
+import { User, UserRole } from "@/types";
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "../components/ui/use-toast";
+import { useToast } from '@/hooks/use-toast';
 import api from '../services/api';
 import axios from 'axios';
 

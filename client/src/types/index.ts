@@ -1,57 +1,68 @@
-
-export type UserRole = 'client' | 'business';
+export type UserRole = 'locatario' | 'locador';
 
 export type User = {
-  id: string;
-  name: string;
+  id: number;
+  nome: string;
   email: string;
-  role: UserRole;
+  senha: string;
+  tipo: UserRole;
   avatar?: string;
+  telefone?: string;
+  cpf: string;
+  predios?: Location[];
 };
 
 export type Amenity = {
-  id: string;
+  id: number;
   name: string;
   icon: string;
   description?: string;
 };
 
 export type Location = {
-  id: string;
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  latitude?: number;
-  longitude?: number;
-  amenities: string[]; // Array of amenity IDs
-  businessId: string;
-  description: string;
-  images: string[];
+  id: number;
+  nomePredio: string;
+  endereco: string;
+  pontosDeDestaque: string[]; // Array of amenity IDs
+  descricao?: string;
+  usuario?: User;
+  salas?: Workspace[];
+  imagens?: string[]; // Array of image URLs
 };
 
-export type WorkspaceCategory = 'workstation' | 'meeting-room' | 'training-room' | 'auditorium';
-
 export type Workspace = {
-  id: string;
-  name: string;
-  description: string;
-  capacity: number;
-  pricePerHour: number;
-  locationId: string;
-  images: string[];
-  amenities: string[]; // Array of amenity IDs
-  available: boolean;
-  category: WorkspaceCategory;
+  id: number;
+  nomeSala: string;
+  descricao: string;
+  capacidade: number;
+  precoHora: number;
+  predioId: number;
+  imagens: string[];
+  destaques: string[]; // Array of amenity IDs
+  disponibilidade: boolean;
 };
 
 export type Booking = {
-  id: string;
-  workspaceId: string;
-  userId: string;
-  startTime: Date;
-  endTime: Date;
+  id: number;
+  workspaceId: number;
+  userId: number;
+  date: string;
+  schedules: string[];
   totalPrice: number;
-  status: 'pending' | 'confirmed' | 'cancelled';
+  status: 'pendente' | 'confirmado' | 'cancelado';
 };
+
+// export type Proprietario = {
+//   id: number;
+//   nome: string;
+//   foto?: string;
+//   predios?: Location[];
+// };
+
+export type CreatePredioPayload = {
+  nomePredio: string;
+  endereco: string;
+  pontosDeDestaque: string[];
+  descricao: string;
+  usuarioId: number;
+}

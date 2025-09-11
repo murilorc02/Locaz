@@ -126,11 +126,11 @@ export function BusinessSidebar() {
               <Button variant="ghost" className="w-full h-auto p-2">
                 <div className="flex items-center space-x-3 w-full">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user.avatar} alt={user.nome} />
+                    <AvatarFallback>{user.nome.charAt(1)}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0 text-left">
-                    <p className="text-sm font-medium truncate">{user.name}</p>
+                    <p className="text-sm font-medium truncate">{user.nome}</p>
                     <p className="text-xs text-gray-500">Empresa</p>
                   </div>
                 </div>

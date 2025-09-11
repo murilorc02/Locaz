@@ -83,9 +83,10 @@ const EditLocation = () => {
       setFormData(prev => ({
         ...prev,
         name: location.nomePredio,
-        address: location.endereco,
-        description: location.descricao ?? '',
-        images: location.images || [],
+        endereco: location.endereco,
+        descricao: location.descricao ?? '',
+        pontosDeDestaque: location.pontosDeDestaque,
+        imagens: location.imagens || [],
       }));
     }
   }, [location]);

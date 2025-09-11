@@ -1,4 +1,4 @@
-import { Avatar, AvatarImage, AvatarFallback } from "../components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Função auxiliar para gerar as iniciais a partir do nome
 const getInitials = (name: string = '') => {
