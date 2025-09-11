@@ -1,13 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from 'typeorm';
-import { Horario } from './Horario'; 
-import { Predio } from './Predio';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 export enum TipoUsuario {
-    LOCADOR = 'locador',
+    PROPRIETARIO = 'proprietario',
     LOCATARIO = 'locatario'
 }
 
-@Entity()
+@Entity('Usuario')
 export class Usuario {
     @PrimaryGeneratedColumn()
     id!: number;
@@ -27,13 +25,19 @@ export class Usuario {
     @Column()
     telefone!: string;
 
-    @Column({ type: 'enum', enum: TipoUsuario })
-    tipo!: TipoUsuario;
+    @Column({ 
+        type: 'enum', 
+        enum: TipoUsuario,
+        default: TipoUsuario.LOCATARIO
+    })
+    tipo!: TipoUsuario;  
 
-    @OneToMany(() => Horario, horario => horario.usuario)
-    horarios!: Horario[];
-    
-    @OneToMany(() => Predio, (predio) => predio.usuario)
-    predios!: Predio[];
+    @Column({ name: 'ativo', default: true })
+    ativo!: boolean;  
 
+    @CreateDateColumn({ name: 'createdat' }) 
+    createdAt!: Date;
+
+    @UpdateDateColumn({ name: 'updatedat' }) 
+    updatedAt!: Date;
 }

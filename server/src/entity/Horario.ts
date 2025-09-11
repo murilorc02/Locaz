@@ -1,30 +1,21 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
-import { Usuario } from './Usuario';
+import { Entity, PrimaryGeneratedColumn, Column, OneToOne, JoinColumn } from 'typeorm';
 import { Sala } from './Sala';
 
-export enum StatusHorario {
-    PENDENTE = 'pendente',
-    CONFIRMADO = 'confirmado',
-    CANCELADO = 'cancelado',
-}
-
-@Entity()
+@Entity('Horario')
 export class Horario {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column({ type: 'timestamp' })
-    dataHoraInicio!: Date;
+    @Column({ type: 'time', nullable: true })
+    inicioPeriodo!: string;
 
-    @Column({ type: 'timestamp' })
-    dataHoraFim!: Date;
+    @Column({ type: 'time', nullable: true })
+    fimPeriodo!: string;
 
-    @Column({ type: 'enum', enum: StatusHorario, default: StatusHorario.PENDENTE })
-    status!: StatusHorario;
+    @Column({ type: 'boolean', default: true })
+    disponivel?: boolean;
 
-    @ManyToOne(() => Usuario, usuario => usuario.horarios)
-    usuario!: Usuario;
-
-    @ManyToOne(() => Sala, sala => sala.horarios)
-    sala!: Sala;
+    @OneToOne(() => Sala, sala => sala.horario)
+    @JoinColumn({ name: 'sala_id' })
+    sala?: Sala;
 }

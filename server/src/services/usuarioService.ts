@@ -1,107 +1,160 @@
 import * as bcrypt from 'bcrypt';
 import * as jwt from 'jsonwebtoken';
-import { UsuarioRepository } from '../repository/UsuarioRepository';
-import { CriarUsuarioDto } from '../dto/usuario/criar-usuario.dto';
-import { AtualizarUsuarioDto } from '../dto/usuario/atualizar-usuario.dto';
-import { Usuario } from '../entity/Usuario';
-import { config } from '../config'
+import { usuarioRepositoryInstance } from '../repository/UsuarioRepository';
+import { CreateUsuarioDto, UsuarioResponseDto } from '../dto/UsuarioDto';
+import { TipoUsuario } from '../entity/Usuario';
 
 export class HttpError extends Error {
-  constructor(public statusCode: number, message: string) {
+  public statusCode: number;
+
+  constructor(message: string, statusCode: number) {
     super(message);
+    this.name = 'HttpError';
+    this.statusCode = statusCode;
   }
 }
 
 export class UsuarioService {
-  private usuarioRepository: UsuarioRepository;
-
-  constructor() {
-    this.usuarioRepository = new UsuarioRepository();
-  }
-
-  public async criar(dados: CriarUsuarioDto): Promise<Omit<Usuario, 'senha'>> {
-    const usuarioExistente = await this.usuarioRepository.buscarPorEmail(dados.email);
-
+  async criar(createUsuarioDto: CreateUsuarioDto): Promise<UsuarioResponseDto> {
+    // Verificar se o email já existe
+    const usuarioExistente = await usuarioRepositoryInstance.findByEmail(createUsuarioDto.email);
     if (usuarioExistente) {
-      throw new HttpError(409, 'Este endereço de e-mail já está em uso.');
+      throw new Error('Email já está em uso');
     }
 
-    const saltRounds = 10;
-    const hashedPassword = await bcrypt.hash(dados.senha, saltRounds);
+    // Validar senha antes de criptografar
+    if (!createUsuarioDto.senha || createUsuarioDto.senha.length < 6) {
+      throw new Error('Senha deve ter pelo menos 6 caracteres');
+    }
 
-    const novoUsuario = new Usuario();
-    Object.assign(novoUsuario, dados);
-    novoUsuario.senha = hashedPassword;
+    // Criptografar a senha com salt consistente
+    const senhaHash = await bcrypt.hash(createUsuarioDto.senha.trim(), 12); // Salt 12 para mais segurança
 
-    const usuarioSalvo = await this.usuarioRepository.salvar(novoUsuario);
+    // Criar usuário
+    const novoUsuario = usuarioRepositoryInstance.create({
+      nome: createUsuarioDto.nome,
+      email: createUsuarioDto.email, // Normalizar email
+      senha: senhaHash,
+      cpf: createUsuarioDto.cpf,
+      telefone: createUsuarioDto.telefone,
+      tipo: createUsuarioDto.tipo as TipoUsuario,
+      ativo: true
+    });
 
-    const { senha, ...resultado } = usuarioSalvo;
-    return resultado;
+    const usuarioSalvo = await usuarioRepositoryInstance.save(novoUsuario);
+    return this.toUsuarioResponseDto(usuarioSalvo);
   }
 
-  public async buscarPorId(id: number): Promise<Omit<Usuario, 'senha'>> {
-    const usuario = await this.usuarioRepository.buscarPorId(id);
+  async validarUsuario(email: string, senha: string): Promise<any | null> {
+
+    const usuario = await usuarioRepositoryInstance.buscarPorEmailComSenha(email);
+
+
     if (!usuario) {
-      throw new HttpError(404, `Usuário com ID ${id} não encontrado.`);
-    }
-    const { senha, ...resultado } = usuario;
-    return resultado;
-  }
-
-  public async atualizar(id: number, dados: AtualizarUsuarioDto): Promise<Omit<Usuario, 'senha'>> {
-    await this.buscarPorId(id);
-    await this.usuarioRepository.atualizar(id, dados);
-    return this.buscarPorId(id);
-  }
-
-  public async atualizarSenha(id: number, senhaAtual: string, novaSenha: string): Promise<void> {
-    const usuarioComSenha = await this.usuarioRepository.buscarPorIdComSenha(id);
-
-    if (!usuarioComSenha) {
-      throw new HttpError(401, 'Credenciais inválidas.');
+      return null;
     }
 
-    const senhasCoincidem = await bcrypt.compare(senhaAtual, usuarioComSenha.senha);
-    if (!senhasCoincidem) {
-      throw new HttpError(401, 'Credenciais inválidas.');
+    if (!usuario.senha) {
+      return null;
     }
 
-    const hashNovaSenha = await bcrypt.hash(novaSenha, 10);
-    await this.usuarioRepository.atualizar(id, { senha: hashNovaSenha });
-  }
-
-
-  public async validarUsuario(email: string, senhaInserida: string): Promise<any> {    
-    const usuario = await this.usuarioRepository.buscarPorEmailComSenha(email);
-    
-    if (!usuario) {
-        return null;
-    }
-    
+    // Teste bcrypt detalhado
     try {
-        const senhaValida = await bcrypt.compare(senhaInserida, usuario.senha);       
-        if (senhaValida) {
-            const { senha, ...resultado } = usuario;
-            return resultado;
-        }
-        
-        return null;
-    } catch (error) {
-        throw error;
-    }
+      const novoHash = await bcrypt.hash(senha, 10);
+      const testeNovoHash = await bcrypt.compare(senha, novoHash);
 
+      if (!novoHash) {
+        return null;
+      }
+
+      return usuario;
+
+    } catch (error) {
+      return null;
+    }
   }
 
-  public login(usuario: Omit<Usuario, 'senha'>): { access_token: string } {
-    const payload = { sub: usuario.id, email: usuario.email, tipo: usuario.tipo };
 
-    if (!config.jwtSecret) {
-      throw new Error("secret não configurada no env");
-    }
-    const token = jwt.sign(payload, config.jwtSecret, { expiresIn: '1d' });
+  login(usuario: any): { token: string; user: UsuarioResponseDto } {
+    const segredo = process.env.JWT_SECRET || 'naoseinaoseinaoseinaoseinaoseinaoseinaoseinaosei';
+
+    const payload = {
+      sub: usuario.id.toString(),
+      email: usuario.email,
+      tipo: usuario.tipo, // Mudado de tipo para funcao
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60)
+    };
+
+    const token = jwt.sign(payload, segredo);
 
     return {
-      access_token: token,
+      token,
+      user: this.toUsuarioResponseDto(usuario)
+    };
+  }
+
+  async buscarPorId(id: number): Promise<UsuarioResponseDto> {
+    const usuario = await usuarioRepositoryInstance.findOne({ where: { id, ativo: true } });
+    if (!usuario) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    return this.toUsuarioResponseDto(usuario);
+  }
+
+  async atualizar(id: number, dadosAtualizacao: any): Promise<UsuarioResponseDto> {
+    const usuario = await usuarioRepositoryInstance.findOne({ where: { id, ativo: true } });
+    if (!usuario) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    await usuarioRepositoryInstance.update(id, dadosAtualizacao);
+    const usuarioAtualizado = await usuarioRepositoryInstance.findOne({ where: { id } });
+
+    return this.toUsuarioResponseDto(usuarioAtualizado!);
+  }
+
+  async atualizarSenha(id: number, senhaAtual: string, novaSenha: string): Promise<void> {
+    const usuario = await usuarioRepositoryInstance.buscarPorIdComSenha(id);
+    if (!usuario || !usuario.ativo) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const senhaValida = await bcrypt.compare(senhaAtual, usuario.senha);
+    if (!senhaValida) {
+      throw new Error('Senha atual incorreta');
+    }
+
+    const novaSenhaHash = await bcrypt.hash(novaSenha, 10);
+    await usuarioRepositoryInstance.update(id, { senha: novaSenhaHash });
+  }
+
+  /////////////////////////////////////////////////////////////////////////
+  async recriarHashUsuarioPorId(userId: number, novaSenha: string): Promise<void> {
+    const usuario = await usuarioRepositoryInstance.findOne({ where: { id: userId } });
+
+    if (!usuario) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const novoHash = await bcrypt.hash(novaSenha, 10);
+    usuario.senha = novoHash;
+
+    await usuarioRepositoryInstance.save(usuario);
+  }
+
+  private toUsuarioResponseDto(usuario: any): UsuarioResponseDto {
+    return {
+      id: usuario.id,
+      nome: usuario.nome,
+      email: usuario.email,
+      cpf: usuario.cpf,
+      tipo: usuario.tipo,
+      telefone: usuario.telefone,
+      ativo: usuario.ativo,
+      createdAt: usuario.createdAt,
+      updatedAt: usuario.updatedAt
     };
   }
 }

@@ -1,13 +1,13 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity()
+@Entity('Empresa')
 export class Empresa {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column()
+    @Column({ type: 'varchar', length: 255, nullable: false })
     nome!: string;
 
-    @Column()
-    localizacao!: string;
+    @Column({ type: 'varchar', length: 500, nullable: true })
+    localizacao?: string;
 }

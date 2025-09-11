@@ -11,8 +11,13 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "types": ["node", "express"]
   },
-  "include": ["src/**/*"],
+  "include": [
+    "src/**/*",
+    "src/types/**/*"
+  ],
   "exclude": ["node_modules"]
 }

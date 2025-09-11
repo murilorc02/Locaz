@@ -6,8 +6,9 @@ import { Horario } from "./entity/Horario"
 import { Predio } from "./entity/Predio"
 import { Proprietario } from "./entity/Proprietario"
 import { Sala } from "./entity/Sala"
+import { Reserva } from "./entity/Reserva"
+import { Locatario } from "./entity/Locatario"
 import { config } from './config'
-
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -18,10 +19,17 @@ export const AppDataSource = new DataSource({
     database: config.db.name,
     synchronize: false,
     logging: true,
-    migrations: ['dist/migration/**/*.js'],
-    entities: [Empresa, Horario, Predio, Proprietario, Sala, Usuario],
+    migrations: ["src/**/migrations/*.{js,ts}"],  // "dist/migration/**/*.js" // npx typeorm-ts-node-commonjs migration:create ./src/migrations/AtualizarTabelaUsuarios -d ./src/data-source.ts
+    entities: [
+        Empresa,
+        Horario,
+        Predio,
+        Proprietario,
+        Sala,
+        Usuario,
+        Reserva,
+        Locatario
+    ],
     subscribers: [],
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 })

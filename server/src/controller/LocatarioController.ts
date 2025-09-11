@@ -1,42 +1,96 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import { LocatarioService } from '../services/locatarioService';
-import { authMiddleware } from '../middleware/authMiddleware';
+import { Request, Response } from 'express';
+import { LocatarioService } from '../services/LocatarioService';
+import { StatusReserva } from '../entity/Reserva';
 
-const locatarioController = Router();
-const locatarioService = new LocatarioService();
+export class LocatarioController {
+  private locatarioService = new LocatarioService();
 
-locatarioController.use(authMiddleware);
-
-locatarioController.get('/espacos/pesquisa', async (req: Request, res: Response, next: NextFunction) => {
+  // Busca de Salas
+  async buscarSalas(req: Request, res: Response): Promise<void> {
     try {
-        const espacos = await locatarioService.buscarEspacos(req.query);
-        res.json(espacos);
+      const filtros = req.query;
+      const salas = await this.locatarioService.buscarSalas(filtros);
+      res.json(salas);
     } catch (error) {
-        next(error);
+      res.status(500).json({ error: (error as Error).message });
     }
-});
+  }
 
-// Rota para ver meus horários
-locatarioController.get('/meus-horarios', async (req: Request, res: Response, next: NextFunction) => {
+  async buscarSalaPorId(req: Request, res: Response): Promise<void> {
     try {
-        const usuarioId = req.user.id;
-        const horarios = await locatarioService.obterMeusHorarios(usuarioId);
-        res.json(horarios);
+      const salaId = parseInt(req.params.salaId);
+      const sala = await this.locatarioService.buscarSalaPorId(salaId);
+      res.json(sala);
     } catch (error) {
-        next(error);
+      res.status(404).json({ error: (error as Error).message });
     }
-});
+  }
 
-// Rota para cancelar um horário
-locatarioController.delete('/horarios/:id', async (req: Request, res: Response, next: NextFunction) => {
+  async buscarSalasPorPontosDestaque(req: Request, res: Response): Promise<void> {
     try {
-        const horarioId = parseInt(req.params.id);
-        const usuarioId = req.user.id;
-        await locatarioService.cancelarHorario(horarioId, usuarioId);
-        res.status(204).send(); // Sucesso sem conteúdo
+      const { pontosDestaque } = req.body;
+      const salas = await this.locatarioService.buscarSalasPorPontosDestaque(pontosDestaque);
+      res.json(salas);
     } catch (error) {
-        next(error);
+      res.status(500).json({ error: (error as Error).message });
     }
-});
+  }
 
-export default locatarioController;
+  // Horários
+  async consultarHorariosDisponiveis(req: Request, res: Response): Promise<void> {
+    try {
+      const { salaId, data } = req.query;
+      const horarios = await this.locatarioService.consultarHorariosDisponiveis({
+        salaId: parseInt(salaId as string),
+        data: data as string
+      });
+      res.json(horarios);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  }
+
+  // Reservas
+  async criarReserva(req: Request, res: Response): Promise<void> {
+    try {
+      const locatarioId = parseInt(req.params.locatarioId);
+      const reserva = await this.locatarioService.criarReserva(locatarioId, req.body);
+      res.status(201).json(reserva);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  }
+
+  async buscarMinhasReservas(req: Request, res: Response): Promise<void> {
+    try {
+      const locatarioId = parseInt(req.params.locatarioId);
+      const filtros = req.query;
+      const reservas = await this.locatarioService.buscarMinhasReservas(locatarioId, filtros);
+      res.json(reservas);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async buscarReservasPorStatus(req: Request, res: Response): Promise<void> {
+    try {
+      const locatarioId = parseInt(req.params.locatarioId);
+      const status = req.params.status as StatusReserva;
+      const reservas = await this.locatarioService.buscarReservasPorStatus(locatarioId, status);
+      res.json(reservas);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  }
+
+  async cancelarReserva(req: Request, res: Response): Promise<void> {
+    try {
+      const locatarioId = parseInt(req.params.locatarioId);
+      const reservaId = parseInt(req.params.reservaId);
+      const reserva = await this.locatarioService.cancelarReserva(locatarioId, reservaId);
+      res.json(reserva);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  }
+}

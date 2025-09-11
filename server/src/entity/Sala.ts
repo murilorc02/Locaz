@@ -1,35 +1,60 @@
-import 'reflect-metadata';
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
-import { Horario } from './Horario';
+import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import { Predio } from './Predio';
+import { Reserva } from './Reserva';
+import { Proprietario } from './Proprietario';
+import { Horario } from './Horario';
+import { Empresa } from './Empresa';
 
-@Entity()
+@Entity('Sala')
 export class Sala {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column()
-    nomeSala!: string
+    @Column({ type: 'varchar', length: 255, nullable: false })
+    nomeSala!: string;
 
-    @Column()
-    capacidade!: number
+    @Column({ type: 'int', default: 0 })
+    capacidade?: number;
 
-    @Column()
-    categoria!: string
+    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
+    preco!: number;
 
-    @Column()
-    disponibilidade!: boolean
+    @Column({ type: 'text', nullable: false })
+    descricao?: string;
 
-    @Column()
-    quantCadeiras!: number;
+    @Column({ type: 'simple-json', nullable: true })
+    pontosDeDestaque?: string[];
 
-    @Column()
-    destaques!: boolean;
+    @Column('simple-array', { nullable: true }) 
+    imagem?: string[];
 
-    @ManyToOne(() => Predio, Predio => Predio.salas)
+    @Column({ type: 'boolean', default: true })
+    ativo?: boolean;
+
+    @Column({ type: 'boolean', default: false })
+    privado?: boolean;
+
+    @CreateDateColumn()
+    createdAt!: Date;
+
+    @UpdateDateColumn()
+    updatedAt!: Date;
+
+    @ManyToOne(() => Predio, predio => predio.salas)
+    @JoinColumn({ name: 'predio_id' })
     predio!: Predio;
 
-    @OneToMany(() => Horario, horario => horario.sala)
-    horarios!: Horario[];
+    @ManyToOne(() => Empresa)
+    @JoinColumn({ name: 'empresa_id' })
+    empresa!: Empresa;
 
+    @ManyToOne(() => Proprietario)
+    @JoinColumn({ name: 'proprietario_id' })
+    proprietario!: Proprietario;
+
+    @OneToMany(() => Reserva, reserva => reserva.sala)
+    reservas!: Reserva[];
+
+    @OneToOne(() => Horario, horario => horario.sala)
+    horario!: Horario;
 }

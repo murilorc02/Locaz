@@ -1,39 +1,64 @@
-import { Repository, ILike } from 'typeorm';
 import { AppDataSource } from '../data-source';
 import { Sala } from '../entity/Sala';
-import { createSalaDto } from '../dto/sala/createSala.dto';
 
-export class SalaRepository {
-    private ormRepository: Repository<Sala>;
+export const SalaRepository = AppDataSource.getRepository(Sala).extend({
+  findByProprietarioId(proprietarioId: number) {
+    return this.find({
+      where: { proprietario: { id: proprietarioId } },
+      relations: ['predio', 'proprietario']
+    });
+  },
 
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(Sala);
+  findByPredioId(predioId: number, proprietarioId?: number) {
+    const where: any = { predio: { id: predioId } };
+    if (proprietarioId) {
+      where.proprietario = { id: proprietarioId };
     }
 
-    public buscarPorId = async (id: number): Promise<Sala | null> => {
-        return this.ormRepository.findOneBy({ id });
+    return this.find({ 
+      where,
+      relations: ['predio', 'proprietario']
+    });
+  },
+
+  findAtivasEDisponiveis() {
+    return this.find({ 
+      where: { ativo: true, privado: false },
+      relations: ['predio', 'proprietario']
+    });
+  },
+
+  searchSalas(filtros: any) {
+    let query = this.createQueryBuilder('sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('sala.proprietario', 'proprietario')
+      .where('sala.ativo = :ativo', { ativo: true })
+      .andWhere('sala.disponivel = :disponivel', { disponivel: true });
+
+    if (filtros.nome) {
+      query = query.andWhere('LOWER(sala.nome) LIKE LOWER(:nome)', { nome: `%${filtros.nome}%` });
     }
 
-    public salvar = async (dadosSala: createSalaDto, usuarioId: number): Promise<Sala> => {
-        const sala = this.ormRepository.create({...dadosSala})
-        return this.ormRepository.save(sala)
+    if (filtros.capacidadeMin) {
+      query = query.andWhere('sala.capacidade >= :capacidadeMin', { capacidadeMin: filtros.capacidadeMin });
     }
 
-    public pesquisar = async (filtros: any): Promise<Sala[]> => {
-        const { cidade, precoMax, capacidadeMinima } = filtros;
-        const query = this.ormRepository.createQueryBuilder('sala')
-            .leftJoinAndSelect('sala.predio', 'predio');
-
-        if (cidade) {
-            query.where('predio.cidade ILIKE :cidade', { cidade: `%${cidade}%` });
-        }
-        if (precoMax) {
-            query.andWhere('sala.precoPorHora <= :precoMax', { precoMax });
-        }
-        if (capacidadeMinima) {
-            query.andWhere('sala.capacidade >= :capacidadeMinima', { capacidadeMinima });
-        }
-        
-        return query.getMany();
+    if (filtros.capacidadeMax) {
+      query = query.andWhere('sala.capacidade <= :capacidadeMax', { capacidadeMax: filtros.capacidadeMax });
     }
-}
+
+    if (filtros.precoMin) {
+      query = query.andWhere('sala.precoHora >= :precoMin', { precoMin: filtros.precoMin });
+    }
+
+    if (filtros.precoMax) {
+      query = query.andWhere('sala.precoHora <= :precoMax', { precoMax: filtros.precoMax });
+    }
+
+    if (filtros.predioId) {
+      query = query.andWhere('predio.id = :predioId', { predioId: filtros.predioId });
+    }
+
+    return query.getMany();
+  }
+});

@@ -1,33 +1,31 @@
-import { Repository } from 'typeorm';
 import { AppDataSource } from '../data-source';
 import { Predio } from '../entity/Predio';
-import { CreatePredioDto } from '../dto/predio/criar-predio.dto';
 
-export class PredioRepository {
-    private ormRepository: Repository<Predio>;
+export const PredioRepository = AppDataSource.getRepository(Predio).extend({
+  findByProprietarioId(proprietarioId: number) {
+    return this.find({
+      where: { proprietario: { id: proprietarioId } },
+      relations: ['salas', 'proprietario']
+    });
+  },
 
-    constructor() {
-        this.ormRepository = AppDataSource.getRepository(Predio);
+  findByNome(nome: string, proprietarioId?: number) {
+    const query = this.createQueryBuilder('predio')
+      .leftJoinAndSelect('predio.salas', 'salas')
+      .leftJoinAndSelect('predio.proprietario', 'proprietario')
+      .where('LOWER(predio.nomePredio) LIKE LOWER(:nome)', { nome: `%${nome}%` }); // Alterado para nomePredio
+
+    if (proprietarioId) {
+      query.andWhere('predio.proprietario.id = :proprietarioId', { proprietarioId });
     }
 
-    public salvar = async (dadosPredio: CreatePredioDto, usuarioId: number): Promise<Predio> => {
-        const usuario = { id: usuarioId } as any;
-        const predio = this.ormRepository.create({ ...dadosPredio, usuario });
-        return this.ormRepository.save(predio);
-    }
+    return query.getMany();
+  },
 
-    public buscarPorId = async (id: number): Promise<Predio | null> => {
-        return this.ormRepository.findOneBy({ id });
-    }
-
-    public buscarPorUsuario = async (usuarioId: number): Promise<Predio[]> => {
-        return this.ormRepository.find({
-            where: {
-                usuario: {
-                    id: usuarioId
-                }
-            },
-            relations: ['salas'] 
-        });
-    }
-}
+  findAtivosPredios() {
+    return this.find({
+      where: { ativo: true },
+      relations: ['salas']
+    });
+  }
+});
