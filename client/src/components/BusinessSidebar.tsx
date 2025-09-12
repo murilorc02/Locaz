@@ -1,5 +1,6 @@
-import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Building, Home, Users, Calendar, BarChart3, Settings, Plus } from 'lucide-react';
+
+import { NavLink, useLocation } from 'react-router-dom';
+import { Building, Home, Users, Calendar, Plus } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -11,16 +12,17 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
-} from '../components/ui/sidebar';
+} from '@/components/ui/sidebar';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuTrigger
-} from './ui/dropdown-menu';
-import { Button } from './ui/button';
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
-import { UserAvatar } from './UserAvatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const businessMenuItems = [
   {
@@ -42,7 +44,7 @@ const businessMenuItems = [
     title: 'Reservas',
     url: '/business/bookings',
     icon: Calendar,
-  }
+  },
 ];
 
 const quickActions = [
@@ -56,7 +58,6 @@ const quickActions = [
 export function BusinessSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
-  const navigate = useNavigate();
   const currentPath = location.pathname;
 
   const isActive = (path: string) => {
@@ -122,30 +123,27 @@ export function BusinessSidebar() {
         {user && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex h-auto w-full items-center justify-start gap-3 rounded-lg px-3 py-2">
-                <UserAvatar
-                  className="h-9 w-9"
-                  src={user.avatar}
-                  name={user.name}
-                />
-
-                <div className="flex flex-col items-start">
-                  <span className="font-medium">{user.name}</span>
-                  <span className="text-xs text-gray-500">Locador</span>
+              <Button variant="ghost" className="w-full h-auto p-2">
+                <div className="flex items-center space-x-3 w-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.avatar} alt={user.nome} />
+                    <AvatarFallback>{user.nome.charAt(1)}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate">{user.nome}</p>
+                    <p className="text-xs text-gray-500">Empresa</p>
+                  </div>
                 </div>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent side="right" align="start">
+            <DropdownMenuContent align="end">
               <DropdownMenuItem>
-                <Link to="/" className="w-full">Página Inicial</Link>
+                <NavLink to="/profile" className="w-full">Editar Perfil</NavLink>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Link to="/profile" className="w-full">Perfil</Link>
-              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={logout}>
                 Sair
               </DropdownMenuItem>
-
             </DropdownMenuContent>
           </DropdownMenu>
         )}

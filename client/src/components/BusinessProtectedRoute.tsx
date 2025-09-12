@@ -5,7 +5,7 @@ const BusinessProtectedRoute = () => {
   const { user, isAuthenticated } = useAuth(); // Adicione isLoading se o seu AuthContext tiver
   
   // Verifica se o usuário está autenticado e é um 'business'
-  const isBusinessUser = isAuthenticated && user?.role === 'business';
+  const isBusinessUser = isAuthenticated && user?.tipo === 'locador';
 
   // Se for um usuário de negócios, renderiza a página solicitada (o <Outlet />)
   // Se não for, redireciona para a página de login

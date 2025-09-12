@@ -2,13 +2,13 @@ export type UserRole = 'locatario' | 'locador';
 
 export type User = {
   id: number;
-  name: string;
+  nome: string;
   email: string;
-  password: string;
+  senha: string;
   tipo: UserRole;
   avatar?: string;
-  telephone?: string;
-  document: string;
+  telefone?: string;
+  cpf: string;
   predios?: Location[];
 };
 
@@ -27,27 +27,27 @@ export type Location = {
   descricao?: string;
   usuario?: User;
   salas?: Workspace[];
-  images?: string[]; // Array of image URLs
+  imagens?: string[]; // Array of image URLs
 };
 
 export type Workspace = {
   id: number;
-  name: string;
-  description: string;
-  capacity: number;
-  pricePerHour: number;
-  locationId: number;
-  images: string[];
-  amenities: string[]; // Array of amenity IDs
-  available: boolean;
+  nomeSala: string;
+  descricao: string;
+  capacidade: number;
+  precoHora: number;
+  predioId: number;
+  imagens: string[];
+  destaques: string[]; // Array of amenity IDs
+  disponibilidade: boolean;
 };
 
 export type Booking = {
   id: number;
   workspaceId: number;
   userId: number;
-  startTime: Date;
-  endTime: Date;
+  date: string;
+  schedules: string[];
   totalPrice: number;
   status: 'pendente' | 'confirmado' | 'cancelado';
 };
@@ -55,7 +55,7 @@ export type Booking = {
 // export type Proprietario = {
 //   id: number;
 //   nome: string;
-//   foto?: string; // ou string se for uma URL da imagem
+//   foto?: string;
 //   predios?: Location[];
 // };
 
@@ -64,4 +64,5 @@ export type CreatePredioPayload = {
   endereco: string;
   pontosDeDestaque: string[];
   descricao: string;
+  usuarioId: number;
 }

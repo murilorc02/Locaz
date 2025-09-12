@@ -7,7 +7,7 @@ import { Input } from '../components/ui/input';
 import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { amenities } from '../data/amenities';
 import AmenityIcon from '../components/AmenityIcon';
 import { ArrowLeft, Save, Upload, X } from 'lucide-react';
@@ -79,6 +79,7 @@ const AddLocation = () => {
       endereco: fullAddress,
       descricao: description,
       pontosDeDestaque: selectedAmenities,
+      usuarioId: user.id
     };
     
     try {
