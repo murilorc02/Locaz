@@ -1,38 +1,68 @@
-import { Column, CreateDateColumn, Entity, JoinColumn, ManyToOne, OneToMany, OneToOne, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Predio } from './Predio';
 import { Reserva } from './Reserva';
-import { Proprietario } from './Proprietario';
-import { Horario } from './Horario';
-import { Empresa } from './Empresa';
+import { HorarioSala } from './horarioSala';
 
-@Entity('Sala')
+export enum CategoriaSala {
+    REUNIAO = 'reuniao',
+    ESTACAO = 'estacao',
+    AUDITORIO = 'auditorio',
+    TREINAMENTO = 'treinamento'
+}
+
+export enum Comodidade {
+    WIFI_GRATIS = 'wifiGratis',
+    CAFE_GRATIS = 'cafeGratis',
+    CADEIRAS_ERGONOMICAS = 'cadeirasErgonomicas',
+    PROJETOR = 'projetor',
+    ESPACO_DESCOMPRESSAO = 'espacoDescompressao',
+    ESPACO_KIDS = 'espacoKids',
+    AR_CONDICIONADO = 'arCondicionado',
+    QUADRO_BRANCO = 'quadroBranco',
+    ESTACIONAMENTO = 'estacionamento',
+    COPA_COZINHA = 'copaCozinha'
+}
+
+@Entity()
 export class Sala {
     @PrimaryGeneratedColumn()
-    id!: number;
+    id!: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false })
-    nomeSala!: string;
+    @Column()
+    nome!: string;
 
-    @Column({ type: 'int', default: 0 })
-    capacidade?: number;
-
-    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
-    preco!: number;
-
-    @Column({ type: 'text', nullable: false })
+    @Column({ type: 'text', nullable: true })
     descricao?: string;
 
-    @Column({ type: 'simple-json', nullable: true })
-    pontosDeDestaque?: string[];
+    @Column()
+    capacidade!: number;
 
-    @Column('simple-array', { nullable: true }) 
-    imagem?: string[];
+    @Column({
+        type: 'enum',
+        enum: CategoriaSala
+    })
+    categoria!: CategoriaSala;
 
-    @Column({ type: 'boolean', default: true })
-    ativo?: boolean;
+    @Column({ name: 'precoHora', type: 'decimal', precision: 10, scale: 2 })
+    precoHora!: number;
 
-    @Column({ type: 'boolean', default: false })
-    privado?: boolean;
+    @Column({ default: false })
+    reservaGratuita?: boolean;
+
+    @ManyToOne(() => Predio, predio => predio.salas)
+    @JoinColumn({ name: 'predio_id' })
+    predio!: Predio;
+
+    @OneToMany(() => Reserva, reserva => reserva.sala)
+    reservas?: Reserva[];
+
+    @Column({
+        type: 'enum',
+        enum: Comodidade,
+        array: true,
+        default: '{}',
+    })
+    comodidades?: Comodidade[];
 
     @CreateDateColumn()
     createdAt!: Date;
@@ -40,21 +70,7 @@ export class Sala {
     @UpdateDateColumn()
     updatedAt!: Date;
 
-    @ManyToOne(() => Predio, predio => predio.salas)
-    @JoinColumn({ name: 'predio_id' })
-    predio!: Predio;
+    @OneToMany(() => HorarioSala, (horarioSala) => horarioSala.sala)
+    horarioSala!: HorarioSala[];
 
-    @ManyToOne(() => Empresa)
-    @JoinColumn({ name: 'empresa_id' })
-    empresa!: Empresa;
-
-    @ManyToOne(() => Proprietario)
-    @JoinColumn({ name: 'proprietario_id' })
-    proprietario!: Proprietario;
-
-    @OneToMany(() => Reserva, reserva => reserva.sala)
-    reservas!: Reserva[];
-
-    @OneToOne(() => Horario, horario => horario.sala)
-    horario!: Horario;
 }

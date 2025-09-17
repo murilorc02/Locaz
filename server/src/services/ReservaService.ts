@@ -1,204 +1,142 @@
-
-import { ReservaRepository } from '../repository/ReservaRepository';
-import { SalaRepository } from '../repository/SalaRepository';
-import { CreateReservaDto, UpdateReservaDto, ReservaResponseDto } from '../dto/ReservaDto';
+import { Repository } from 'typeorm';
+import { AppDataSource } from '../data-source';
 import { Reserva, StatusReserva } from '../entity/Reserva';
+import { Usuario } from '../entity/Usuario';
+import { Sala } from '../entity/Sala';
 
 export class ReservaService {
-  async create(createReservaDto: CreateReservaDto): Promise<ReservaResponseDto> {
-    const sala = await SalaRepository.findOne({ where: { id: createReservaDto.salaId } });
+  private reservaRepository: Repository<Reserva>;
+  private usuarioRepository: Repository<Usuario>;
+  private salaRepository: Repository<Sala>;
+
+  constructor() {
+    this.reservaRepository = AppDataSource.getRepository(Reserva);
+    this.usuarioRepository = AppDataSource.getRepository(Usuario);
+    this.salaRepository = AppDataSource.getRepository(Sala);
+  }
+
+  async criarReserva(dadosReserva: {
+    dataReserva: Date;
+    horarioInicio: string;
+    horarioFim: string;
+    observacoes?: string;
+    locatarioId: number;
+    salaId: string;
+  }): Promise<Reserva> {
+    const locatario = await this.usuarioRepository.findOne({
+      where: { id: dadosReserva.locatarioId }
+    });
+
+    if (!locatario) {
+      throw new Error('Usuário não encontrado');
+    }
+
+    const sala = await this.salaRepository.findOne({
+      where: { id: dadosReserva.salaId }
+    });
+
     if (!sala) {
       throw new Error('Sala não encontrada');
     }
 
-    // Validar se a sala está disponível no horário solicitado
+    // Verificar disponibilidade da sala
     const conflito = await this.verificarConflito(
-      createReservaDto.salaId,
-      createReservaDto.dataReserva,
-      createReservaDto.horaInicio,
-      createReservaDto.horaFim
+      dadosReserva.salaId,
+      dadosReserva.dataReserva,
+      dadosReserva.horarioInicio,
+      dadosReserva.horarioFim
     );
 
     if (conflito) {
       throw new Error('Horário não disponível para esta sala');
     }
 
-    const reserva = ReservaRepository.create({
-      clienteNome: createReservaDto.clienteNome,
-      clienteEmail: createReservaDto.clienteEmail,
-      dataReserva: createReservaDto.dataReserva,
-      horaInicio: createReservaDto.horaInicio,
-      horaFim: createReservaDto.horaFim,
-      valorTotal: createReservaDto.valorTotal,
-      observacoes: createReservaDto.observacoes,
-      status: StatusReserva.PENDENTE,
-      sala: sala
+    // Calcular valor total
+    const valorTotal = await this.calcularValorTotal(
+      sala,
+      dadosReserva.horarioInicio,
+      dadosReserva.horarioFim
+    );
+
+    const reserva = this.reservaRepository.create({
+      ...dadosReserva,
+      locatario,
+      sala,
+      valorTotal,
+      status: StatusReserva.PENDENTE
     });
 
-    const savedReserva = await ReservaRepository.save(reserva);
-    return this.toResponseDto(savedReserva);
+    return await this.reservaRepository.save(reserva);
   }
 
-  async findAll(): Promise<ReservaResponseDto[]> {
-    const reservas = await ReservaRepository.find({
-      relations: ['sala'],
-      order: { dataReserva: 'ASC', horaInicio: 'ASC' }
-    });
-    return reservas.map(reserva => this.toResponseDto(reserva));
-  }
-
-  async findOne(id: number): Promise<ReservaResponseDto> {
-    const reserva = await ReservaRepository.findOne({
+  async buscarPorId(id: string): Promise<Reserva | null> {
+    return await this.reservaRepository.findOne({
       where: { id },
-      relations: ['sala']
+      relations: ['locatario', 'sala', 'sala.predio']
     });
+  }
+
+  async buscarPorUsuario(usuarioId: number): Promise<Reserva[]> {
+    return await this.reservaRepository.find({
+      where: { locatario: { id: usuarioId } },
+      relations: ['sala', 'sala.predio']
+    });
+  }
+
+  async atualizarStatus(id: string, status: StatusReserva): Promise<Reserva | null> {
+    await this.reservaRepository.update(id, { status });
+    return await this.buscarPorId(id);
+  }
+
+  async cancelarReserva(id: string): Promise<void> {
+    const reserva = await this.buscarPorId(id);
     if (!reserva) {
       throw new Error('Reserva não encontrada');
     }
-    return this.toResponseDto(reserva);
-  }
 
-  async update(id: number, updateReservaDto: UpdateReservaDto): Promise<ReservaResponseDto> {
-    const reserva = await ReservaRepository.findOne({
-      where: { id },
-      relations: ['sala']
-    });
-    if (!reserva) {
-      throw new Error('Reserva não encontrada');
+    if (reserva.status === StatusReserva.CANCELADA) {
+      throw new Error('Reserva já foi cancelada');
     }
 
-    // Se está alterando sala, horário ou data, verificar conflitos
-    if (updateReservaDto.salaId || updateReservaDto.dataReserva ||
-      updateReservaDto.horaInicio || updateReservaDto.horaFim) {
-
-      const salaIdParaVerificar = updateReservaDto.salaId || reserva.sala?.id;
-      const dataParaVerificar = updateReservaDto.dataReserva || reserva.dataReserva;
-      const horaInicioParaVerificar = updateReservaDto.horaInicio || reserva.horaInicio;
-      const horaFimParaVerificar = updateReservaDto.horaFim || reserva.horaFim;
-
-      // Só verificar se temos dados válidos
-      if (salaIdParaVerificar && dataParaVerificar && horaInicioParaVerificar && horaFimParaVerificar) {
-        const conflito = await this.verificarConflito(
-          salaIdParaVerificar,
-          dataParaVerificar,
-          horaInicioParaVerificar,
-          horaFimParaVerificar,
-          id
-        );
-
-        if (conflito) {
-          throw new Error('Horário não disponível para esta sala');
-        }
-      }
-    }
-
-    // Atualizar campos
-    if (updateReservaDto.clienteNome !== undefined) reserva.clienteNome = updateReservaDto.clienteNome;
-    if (updateReservaDto.clienteEmail !== undefined) reserva.clienteEmail = updateReservaDto.clienteEmail;
-    if (updateReservaDto.dataReserva !== undefined) reserva.dataReserva = updateReservaDto.dataReserva;
-    if (updateReservaDto.horaInicio !== undefined) reserva.horaInicio = updateReservaDto.horaInicio;
-    if (updateReservaDto.horaFim !== undefined) reserva.horaFim = updateReservaDto.horaFim;
-    if (updateReservaDto.valorTotal !== undefined) reserva.valorTotal = updateReservaDto.valorTotal;
-    if (updateReservaDto.status !== undefined) reserva.status = updateReservaDto.status;
-    if (updateReservaDto.observacoes !== undefined) reserva.observacoes = updateReservaDto.observacoes;
-
-    if (updateReservaDto.salaId) {
-      const sala = await SalaRepository.findOne({ where: { id: updateReservaDto.salaId } });
-      if (sala) reserva.sala = sala;
-    }
-
-    const updatedReserva = await ReservaRepository.save(reserva);
-    return this.toResponseDto(updatedReserva);
-  }
-
-  async remove(id: number): Promise<void> {
-    const reserva = await ReservaRepository.findOne({ where: { id } });
-    if (!reserva) {
-      throw new Error('Reserva não encontrada');
-    }
-    await ReservaRepository.remove(reserva);
-  }
-
-  async findByStatus(status: StatusReserva): Promise<ReservaResponseDto[]> {
-    const reservas = await ReservaRepository.find({
-      where: { status },
-      relations: ['sala'],
-      order: { dataReserva: 'ASC', horaInicio: 'ASC' }
-    });
-    return reservas.map(reserva => this.toResponseDto(reserva));
-  }
-
-  async confirmarReserva(id: number): Promise<ReservaResponseDto> {
-    return this.update(id, { status: StatusReserva.CONFIRMADO });
-  }
-
-  async cancelarReserva(id: number): Promise<ReservaResponseDto> {
-    return this.update(id, { status: StatusReserva.CANCELADO });
+    await this.atualizarStatus(id, StatusReserva.CANCELADA);
   }
 
   private async verificarConflito(
-    salaId: number,
-    dataReserva: Date,
-    horaInicio: string,
-    horaFim: string,
-    excluirReservaId?: number
+    salaId: string,
+    data: Date,
+    horarioInicio: string,
+    horarioFim: string
   ): Promise<boolean> {
-    try {
-      // Fix for the 'toString' error - better type handling
-      let dataFormatada: string;
-      
-      if (dataReserva instanceof Date) {
-        dataFormatada = dataReserva.toISOString().split('T')[0];
-      } else if (typeof dataReserva === 'string') {
-        dataFormatada = dataReserva;
-      } else {
-        // Handle other possible types more safely
-        dataFormatada = new Date(dataReserva).toISOString().split('T')[0];
-      }
+    const conflitos = await this.reservaRepository.createQueryBuilder('reserva')
+      .where('reserva.salaId = :salaId', { salaId })
+      .andWhere('reserva.dataReserva = :data', { data })
+      .andWhere('reserva.status IN (:...status)', { 
+        status: [StatusReserva.CONFIRMADA, StatusReserva.PENDENTE] 
+      })
+      .andWhere(`
+        (reserva.horarioInicio < :horarioFim AND reserva.horarioFim > :horarioInicio)
+      `, { horarioInicio, horarioFim })
+      .getCount();
 
-      const query = ReservaRepository.createQueryBuilder('reserva')
-        .where('reserva.salaId = :salaId', { salaId })
-        .andWhere('DATE(reserva.dataReserva) = DATE(:dataReserva)', { dataReserva: dataFormatada })
-        .andWhere('reserva.status != :statusCancelado', { statusCancelado: StatusReserva.CANCELADO })
-        .andWhere(
-          '(reserva.horaInicio < :horaFim AND reserva.horaFim > :horaInicio)',
-          { horaInicio, horaFim }
-        );
-
-      if (excluirReservaId) {
-        query.andWhere('reserva.id != :excluirReservaId', { excluirReservaId });
-      }
-
-      const conflito = await query.getOne();
-      return !!conflito;
-    } catch (error) {
-      console.error('Erro ao verificar conflito:', error);
-      return false; // Em caso de erro, permitir a operação
-    }
+    return conflitos > 0;
   }
 
-  private toResponseDto(reserva: Reserva): ReservaResponseDto {
-    return {
-      id: reserva.id,
-      clienteNome: reserva.clienteNome,
-      clienteEmail: reserva.clienteEmail,
-      dataReserva: reserva.dataReserva,
-      horaInicio: reserva.horaInicio,
-      horaFim: reserva.horaFim,
-      valorTotal: reserva.valorTotal,
-      status: reserva.status,
-      observacoes: reserva.observacoes,
-      createdAt: reserva.createdAt,
-      updatedAt: reserva.updatedAt,
-      sala: {
-        id: reserva.sala?.id || 0,
-        nome: reserva.sala?.nomeSala || ''  
-      },
-      locatario: reserva.locatario ? {
-        id: reserva.locatario.id,
-        nome: reserva.locatario.nome,
-        email: reserva.locatario.email
-      } : undefined
-    };
+  private async calcularValorTotal(
+    sala: Sala,
+    horarioInicio: string,
+    horarioFim: string
+  ): Promise<number> {
+    if (sala.reservaGratuita) {
+      return 0;
+    }
+
+    const [horaInicio, minutoInicio] = horarioInicio.split(':').map(Number);
+    const [horaFim, minutoFim] = horarioFim.split(':').map(Number);
+
+    const inicioEmMinutos = horaInicio * 60 + minutoInicio;
+    const fimEmMinutos = horaFim * 60 + minutoFim;
+    const duracaoEmHoras = (fimEmMinutos - inicioEmMinutos) / 60;
+
+    return Number(sala.precoHora) * duracaoEmHoras;
   }
 }

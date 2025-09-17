@@ -1,62 +1,44 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Usuario } from './Usuario';
 import { Sala } from './Sala';
-import { Proprietario } from './Proprietario';
+import { HorarioPredio } from './horarioPredio';
 
 @Entity('Predio')
 export class Predio {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false })
-    nomePredio!: string; // Alterado de 'nome' para 'nomePredio'
+  @Column({ unique: true })
+  nome!: string;
 
-    @Column({ type: 'varchar', length: 500, nullable: false })
-    endereco!: string;
+  @Column()
+  endereco!: string;
 
-    @Column({ type: 'varchar', length: 100, nullable: false })
-    cidade!: string;
+  @Column()
+  cidade!: string;
 
-    @Column({ type: 'varchar', length: 100, nullable: false })
-    estado!: string;
+  @Column()
+  estado!: string;
 
-    @Column({ type: 'varchar', length: 10, nullable: true })
-    cep!: string;
+  @Column()
+  cep!: string;
 
-    @Column({ type: 'text', nullable: true })
-    descricao?: string;
+  @Column({ type: 'text', nullable: true })
+  descricao?: string;
 
-    // Adicionados os campos que estavam faltando
-    @Column({ type: 'int', nullable: true })
-    capacidade?: number;
+  @OneToMany(() => Sala, sala => sala.predio)
+  salas?: Sala[];
 
-    @Column({ type: 'varchar', length: 100, nullable: true })
-    categoria?: string;
+  @OneToMany(() => HorarioPredio, (horarioPredio) => horarioPredio.predio)
+  horarioPredio?: HorarioPredio[];
 
-    @Column('simple-array', { nullable: true })
-    imagens?: string[];
+  @ManyToOne(() => Usuario, (usuario) => usuario.predio)
+  @JoinColumn({name:"usuarioId"})
+  usuario!: Usuario
 
-    @Column('simple-array', { nullable: true })
-    comodidades?: string[];
+  @CreateDateColumn()
+  createdAt!: Date;
 
-    @Column({ type: 'boolean', default: true })
-    disponivel?: boolean;
-
-    @Column({ type: 'boolean', default: true })
-    ativo?: boolean;
-
-    @Column({ type: 'boolean', default: false })
-    privado?: boolean;
-
-    @CreateDateColumn()
-    createdAt?: Date;
-
-    @UpdateDateColumn()
-    updatedAt?: Date;
-
-    @ManyToOne(() => Proprietario, proprietario => proprietario.predios)
-    @JoinColumn({ name: 'proprietario_id' })
-    proprietario?: Proprietario;
-
-    @OneToMany(() => Sala, sala => sala.predio)
-    salas?: Sala[];
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

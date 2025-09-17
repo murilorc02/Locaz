@@ -7,8 +7,6 @@ import { AtualizarUsuarioDto } from '../dto/usuario/atualizar-usuario.dto';
 import { validationMiddleware } from '../middleware/validationMiddleware';
 import { TipoUsuario } from '../entity/Usuario';
 
-
-// Declaração de tipo local para este arquivo
 interface AuthenticatedRequest extends Request {
     user?: {
         sub: number;

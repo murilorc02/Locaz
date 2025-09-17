@@ -9,7 +9,7 @@ async function bootstrap() {
         await AppDataSource.initialize();
         console.log("Fonte de dados inicializada com sucesso!");
 
-        const app = await createServer();
+        const app = createServer();
         app.use(errorHandler)
 
         app.use('*', (req, res) => {

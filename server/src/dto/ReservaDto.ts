@@ -1,56 +1,74 @@
 import { StatusReserva } from '../entity/Reserva';
 
-export interface CreateReservaDto {
-  clienteNome: string;
-  clienteEmail: string;
+export interface CreateReservaDTO {
+  dataReserva: string; // formato: YYYY-MM-DD
+  horarioInicio: string; // formato: HH:MM
+  horarioFim: string; // formato: HH:MM
+  observacoes?: string;
+  locatarioId: number;
+  salaId: string;
+}
+
+export interface UpdateReservaStatusDTO {
+  id: string;
+  status: StatusReserva;
+}
+
+export interface UpdateReservaDTO {
+  dataReserva?: string;
+  horarioInicio?: string;
+  horarioFim?: string;
+  observacoes?: string;
+  status?: StatusReserva;
+}
+
+export interface ReservaFilterDTO {
+  usuarioId?: number;
+  salaId?: string;
+  proprietarioId?: number;
+  status?: StatusReserva;
+  dataInicio?: string;
+  dataFim?: string;
+}
+
+export interface VerificarConflitoDTO {
+  salaId: string;
+  dataReserva: string;
+  horarioInicio: string;
+  horarioFim: string;
+  excluirReservaId?: string;
+}
+
+export interface ReservaResponseDTO {
+  id: string;
   dataReserva: Date;
-  horaInicio: string;
-  horaFim: string;
+  horarioInicio: string;
+  horarioFim: string;
+  status: StatusReserva;
   valorTotal: number;
   observacoes?: string;
-  salaId: number;
-  locatarioId?: number;
-}
-
-export interface UpdateReservaDto {
-  clienteNome?: string;
-  clienteEmail?: string;
-  dataReserva?: Date;
-  horaInicio?: string;
-  horaFim?: string;
-  valorTotal?: number;
-  status?: StatusReserva;
-  observacoes?: string;
-  salaId?: number;
-  locatarioId?: number;
-}
-
-export interface ReservaResponseDto {
-  id: number;
-  clienteNome: string;
-  clienteEmail: string;
-  dataReserva: Date;
-  horaInicio: string;
-  horaFim: string;
-  valorTotal?: number;
-  status: StatusReserva;
-  observacoes?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  sala: {
+  locatario: {
     id: number;
     nome: string;
+    email: string;
   };
-  locatario?: {
-    id: number;
-    nome?: string;
-    email?: string;
+  sala: {
+    id: string;
+    nome: string;
+    capacidade: number;
+    predio: {
+      id: string;
+      nome: string;
+    };
   };
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface ReservaFilterDto {
-  status?: StatusReserva;
-  dataInicio?: Date;
-  dataFim?: Date;
-  salaId?: number;
+export interface EstatisticasReservaDTO {
+  pendentes: number;
+  confirmadas: number;
+  canceladas: number;
+  recusadas: number;
+  total: number;
 }

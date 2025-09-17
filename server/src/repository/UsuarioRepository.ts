@@ -15,7 +15,7 @@ export class UsuarioRepository {
 
     public async buscarPorId(id: number): Promise<Usuario | null> {
         return this.ormRepository.findOne({
-            where: { id, ativo: true }
+            where: { id}
         });
     }
 
@@ -24,7 +24,7 @@ export class UsuarioRepository {
     }
 
     public buscarProprietarios = async (): Promise<Usuario[]> => {
-        return this.ormRepository.find({ where: { tipo: TipoUsuario.PROPRIETARIO } });
+        return this.ormRepository.find({ where: { tipo: TipoUsuario.LOCADOR } });
     }
 
     public buscarLocatarios = async (): Promise<Usuario[]> => {
@@ -34,7 +34,7 @@ export class UsuarioRepository {
     public async buscarPorIdComSenha(id: number): Promise<Usuario | null> {
         return this.ormRepository.findOne({
             where: { id: id },
-            select: ['id', 'nome', 'email', 'senha', 'cpf', 'telefone', 'tipo', 'ativo']
+            select: ['id', 'nome', 'email', 'senha', 'cpf', 'telefone', 'tipo']
         });
     }
 
@@ -51,10 +51,6 @@ export class UsuarioRepository {
 
     public findByEmail = async (email: string): Promise<Usuario | null> => {
         return this.ormRepository.findOne({ where: { email } });
-    }
-
-    public findAtivos = async (): Promise<Usuario[]> => {
-        return this.ormRepository.find({ where: { ativo: true } });
     }
 
     public findOne = async (options: any): Promise<Usuario | null> => {

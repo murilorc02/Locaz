@@ -37,8 +37,7 @@ export class UsuarioService {
       senha: senhaHash,
       cpf: createUsuarioDto.cpf,
       telefone: createUsuarioDto.telefone,
-      tipo: createUsuarioDto.tipo as TipoUsuario,
-      ativo: true
+      tipo: createUsuarioDto.tipo as TipoUsuario
     });
 
     const usuarioSalvo = await usuarioRepositoryInstance.save(novoUsuario);
@@ -117,7 +116,7 @@ export class UsuarioService {
 
   async atualizarSenha(id: number, senhaAtual: string, novaSenha: string): Promise<void> {
     const usuario = await usuarioRepositoryInstance.buscarPorIdComSenha(id);
-    if (!usuario || !usuario.ativo) {
+    if (!usuario) {
       throw new Error('Usuário não encontrado');
     }
 

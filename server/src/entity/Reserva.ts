@@ -1,57 +1,52 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Usuario } from './Usuario';
 import { Sala } from './Sala';
-import { Locatario } from './Locatario';
 
 export enum StatusReserva {
-    PENDENTE = 'Pendente',
-    CONFIRMADO = 'Confirmado',
-    CANCELADO = 'Cancelado'
+  PENDENTE = 'pendente',
+  CONFIRMADA = 'confirmada',
+  CANCELADA = 'cancelada',
+  RECUSADA = 'recusada'
 }
 
-@Entity('Reserva')
+@Entity()
 export class Reserva {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: string;
 
-    @Column({ type: 'varchar', length: 255, nullable: false })
-    clienteNome!: string;
+  @Column({ name: 'data_reserva', type: 'date' })
+  dataReserva!: Date;
 
-    @Column({ type: 'varchar', length: 255, nullable: false })
-    clienteEmail!: string;
+  @Column({ name: 'horario_inicio', type: 'time' })
+  horarioInicio!: string;
 
-    @Column({ type: 'date', nullable: false })
-    dataReserva!: Date;
+  @Column({ name: 'horario_fim', type: 'time' })
+  horarioFim!: string;
 
-    @Column({ type: 'time', nullable: false })
-    horaInicio!: string;
+  @Column({
+    type: 'enum',
+    enum: StatusReserva,
+    default: StatusReserva.PENDENTE
+  })
+  status!: StatusReserva;
 
-    @Column({ type: 'time', nullable: false })
-    horaFim!: string;
+  @Column({ name: 'valorTotal', type: 'decimal', precision: 10, scale: 2 })
+  valorTotal!: number;
 
-    @Column({ type: 'decimal', precision: 10, scale: 2, nullable: false })
-    valorTotal?: number;
+  @Column({ type: 'text', nullable: true })
+  observacoes?: string;
 
-    @Column({
-        type: 'enum',
-        enum: StatusReserva,
-        default: StatusReserva.PENDENTE
-    })
-    status!: StatusReserva;
+  @ManyToOne(() => Usuario, (usuario) => usuario.reservas)
+  @JoinColumn({ name: 'locatarioId' })
+  locatario!: Usuario;
 
-    @Column({ type: 'text', nullable: true })
-    observacoes?: string;
+  @ManyToOne(() => Sala, (sala) => sala.reservas)
+  @JoinColumn({ name: 'salaId' })
+  sala!: Sala;
 
-    @CreateDateColumn()
-    createdAt!: Date;
+  @CreateDateColumn()
+  createdAt!: Date;
 
-    @UpdateDateColumn()
-    updatedAt!: Date;
-
-    @ManyToOne(() => Sala, sala => sala.reservas)
-    @JoinColumn({ name: 'sala_id' })
-    sala?: Sala;
-
-    @ManyToOne(() => Locatario, locatario => locatario.reservas)
-    @JoinColumn({ name: 'locatario_id' })
-    locatario?: Locatario;
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

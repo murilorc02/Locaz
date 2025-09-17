@@ -3,6 +3,9 @@ import express, { Request, Response, NextFunction, Application } from 'express';
 import cors from 'cors';
 import { HttpError } from './services/usuarioService';
 import { config } from './config';
+import usuarioController from './controller/UsuarioController';
+import predioController from './controller/PredioController';
+import salaController from './controller/SalaController';
 
 export function createServer(): Application {
   const app = express();
@@ -18,25 +21,17 @@ export function createServer(): Application {
 
   app.use(express.json());
 
-  // Importar e usar rotas - Corrigido para ES6 import
-  try {
-    const routes = require('./routes');
-    app.use('/api', routes.default || routes);
-  } catch (error) {
-    console.warn('Rotas não encontradas ou erro ao importar:', error);
-    // Rota de teste se não houver rotas configuradas
-    app.get('/api/health', (req: Request, res: Response) => {
-      res.json({ status: 'ok', message: 'API funcionando' });
-    });
-  }
-
+  app.use('/api', usuarioController)
+  app.use('/api', predioController)
+  app.use('/api', salaController)
+  
   // Middleware de tratamento de erro
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {
     if (err instanceof HttpError) {
       res.status(err.statusCode).json({ message: err.message });
       return;
     }
-    
+
     console.error("Erro não tratado:", err);
     res.status(500).json({ message: 'Erro interno do servidor.' });
   });

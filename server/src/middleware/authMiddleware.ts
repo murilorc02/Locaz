@@ -62,7 +62,7 @@ export const proprietarioMiddleware = (req: Request, res: Response, next: NextFu
     return;
   }
 
-  if (authenticatedReq.user.tipo !== TipoUsuario.PROPRIETARIO) {
+  if (authenticatedReq.user.tipo !== TipoUsuario.LOCADOR) {
     res.status(403).json({ error: 'Acesso negado. Apenas proprietários podem acessar este recurso.' });
     return;
   }

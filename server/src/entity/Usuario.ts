@@ -1,11 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany } from 'typeorm';
+import { Predio } from './Predio';
+import { Reserva } from './Reserva';
 
 export enum TipoUsuario {
-    PROPRIETARIO = 'proprietario',
+    LOCADOR = 'locador',
     LOCATARIO = 'locatario'
 }
 
-@Entity('Usuario')
+@Entity('usuario')
 export class Usuario {
     @PrimaryGeneratedColumn()
     id!: number;
@@ -32,12 +34,15 @@ export class Usuario {
     })
     tipo!: TipoUsuario;  
 
-    @Column({ name: 'ativo', default: true })
-    ativo!: boolean;  
-
-    @CreateDateColumn({ name: 'createdat' }) 
+    @CreateDateColumn() 
     createdAt!: Date;
 
-    @UpdateDateColumn({ name: 'updatedat' }) 
+    @UpdateDateColumn() 
     updatedAt!: Date;
+
+    @OneToMany(() => Predio, (predio) => predio.usuario)
+    predio?: Predio;
+
+    @OneToMany(() => Reserva, (reserva) => reserva.locatario)
+    reservas?: Reserva;
 }
