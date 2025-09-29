@@ -1,27 +1,44 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
-import { Sala } from './Sala';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Usuario } from './Usuario';
+import { Sala } from './Sala';
+import { HorarioPredio } from './horarioPredio';
 
-@Entity()
+@Entity('Predio')
 export class Predio {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: string;
 
-    @Column()
-    nomePredio!: string;
+  @Column({ unique: true })
+  nome!: string;
 
-    @Column()
-    endereco!: string;
+  @Column()
+  endereco!: string;
 
-    @Column('text', { array: true, default: () => "'{}'" })
-    pontosDeDestaque!: string[];
+  @Column()
+  cidade!: string;
 
-    @Column({ type: 'text', nullable: true })
-    descricao?: string;
+  @Column()
+  estado!: string;
 
-    @OneToMany(() => Sala, sala => sala.predio)
-    salas!: Sala[];
+  @Column()
+  cep!: string;
 
-    @ManyToOne(() => Usuario, (usuario) => usuario.predios)
-    usuario!: Usuario;
+  @Column({ type: 'text', nullable: true })
+  descricao?: string;
+
+  @OneToMany(() => Sala, sala => sala.predio)
+  salas?: Sala[];
+
+  @OneToMany(() => HorarioPredio, (horarioPredio) => horarioPredio.predio)
+  horarioPredio?: HorarioPredio[];
+
+  @ManyToOne(() => Usuario, (usuario) => usuario.predio)
+  @JoinColumn({name:"usuarioId"})
+  usuario!: Usuario
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

@@ -1,7 +1,6 @@
-import { getRepository, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Usuario, TipoUsuario } from '../entity/Usuario';
 import { AppDataSource } from '../data-source';
-import * as bcrypt from 'bcrypt';
 
 export class UsuarioRepository {
     private ormRepository: Repository<Usuario>;
@@ -11,30 +10,20 @@ export class UsuarioRepository {
     }
 
     public salvar = async (usuario: Usuario): Promise<Usuario> => {
-        return this.ormRepository.save({
-            id: usuario.id,
-            nome: usuario.nome,
-            senha: usuario.senha,
-            email: usuario.email,
-            cpf: usuario.cpf,
-            telefone: usuario.telefone,
-            tipo: usuario.tipo
-        });
-    }
+        return this.ormRepository.save(usuario);
+    }
 
     public async buscarPorId(id: number): Promise<Usuario | null> {
-        const usuario = await this.ormRepository.findOneBy({ 
-            id: id 
+        return this.ormRepository.findOne({
+            where: { id}
         });
-
-        return usuario;
     }
 
     public buscarPorEmail = async (email: string): Promise<Usuario | null> => {
         return this.ormRepository.findOne({ where: { email } });
     }
 
-    public buscarLocadores = async (): Promise<Usuario[]> => {
+    public buscarProprietarios = async (): Promise<Usuario[]> => {
         return this.ormRepository.find({ where: { tipo: TipoUsuario.LOCADOR } });
     }
 
@@ -42,17 +31,17 @@ export class UsuarioRepository {
         return this.ormRepository.find({ where: { tipo: TipoUsuario.LOCATARIO } });
     }
 
-    public buscarPorIdComSenha = async (id: number): Promise<Usuario | null> => {
+    public async buscarPorIdComSenha(id: number): Promise<Usuario | null> {
         return this.ormRepository.findOne({
-            where: { id },
-            select: ['id', 'nome', 'email', 'cpf', 'telefone', 'tipo', 'senha']
+            where: { id: id },
+            select: ['id', 'nome', 'email', 'senha', 'cpf', 'telefone', 'tipo']
         });
     }
 
-    public buscarPorEmailComSenha = async (email: string): Promise<Usuario | null> => {
+    public async buscarPorEmailComSenha(email: string): Promise<Usuario | null> {
         return this.ormRepository.findOne({
-            where: { email },
-            select: ['id', 'nome', 'email', 'cpf', 'telefone', 'tipo', 'senha']
+            where: { email: email},
+            //select: ['id', 'nome', 'email', 'senha', 'cpf', 'telefone', 'tipo', 'createdAt', 'updatedAt']
         });
     }
 
@@ -60,4 +49,30 @@ export class UsuarioRepository {
         await this.ormRepository.update(id, dados);
     }
 
+    public findByEmail = async (email: string): Promise<Usuario | null> => {
+        return this.ormRepository.findOne({ where: { email } });
+    }
+
+    public findOne = async (options: any): Promise<Usuario | null> => {
+        // Se options.where tiver ativo, remova
+        if (options.where && options.where.ativo) {
+            delete options.where.ativo;
+        }
+        return this.ormRepository.findOne(options);
+    }
+
+    public update = async (id: number, dados: Partial<Usuario>): Promise<void> => {
+        await this.ormRepository.update(id, dados);
+    }
+
+    public create = (dados: Partial<Usuario>): Usuario => {
+        return this.ormRepository.create(dados);
+    }
+
+    public save = async (usuario: Usuario): Promise<Usuario> => {
+        return this.ormRepository.save(usuario);
+    }
 }
+
+// Exporte uma instância para uso nos services
+export const usuarioRepositoryInstance = new UsuarioRepository();

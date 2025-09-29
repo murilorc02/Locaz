@@ -1,38 +1,40 @@
+
 import express, { Request, Response, NextFunction, Application } from 'express';
 import cors from 'cors';
 import { HttpError } from './services/usuarioService';
 import { config } from './config';
+import usuarioController from './controller/UsuarioController';
+import predioController from './controller/PredioController';
+import salaController from './controller/SalaController';
 
-export async function createServer(): Promise<Application> {
-    const app = express();
+export function createServer(): Application {
+  const app = express();
 
-    console.log(`[DEBUG] process.env.CORS_ORIGIN: ${process.env.CORS_ORIGIN}`);
-    console.log(`[DEBUG] config.corsOrigin: ${config.corsOrigin}`);
-    
-    app.use(cors({
-        origin: config.corsOrigin,
-        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-        optionsSuccessStatus: 204
-    }));
+  console.log(`[DEBUG] process.env.CORS_ORIGIN: ${process.env.CORS_ORIGIN}`);
+  console.log(`[DEBUG] config.corsOrigin: ${config.corsOrigin}`);
 
-    app.use(express.json());
+  app.use(cors({
+    origin: config.corsOrigin,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    optionsSuccessStatus: 204
+  }));
 
-    const usuarioController = (await import('./controller/UsuarioController')).default;
-    const locadorController = (await import('./controller/LocadorController')).default;
-    const locatarioController = (await import('./controller/LocatarioController')).default;
+  app.use(express.json());
 
-    app.use('/api', usuarioController);
-    app.use('/api/locador', locadorController);
-    app.use('/api/locatario', locatarioController);
+  app.use('/api', usuarioController)
+  app.use('/api', predioController)
+  app.use('/api', salaController)
+  
+  // Middleware de tratamento de erro
+  app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+    if (err instanceof HttpError) {
+      res.status(err.statusCode).json({ message: err.message });
+      return;
+    }
 
-    app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-        if (err instanceof HttpError) {
-            res.status(err.statusCode).json({ message: err.message });
-            return;
-        }
-        console.error("Erro não tratado:", err);
-        res.status(500).json({ message: 'Erro interno do servidor.' });
-    });
+    console.error("Erro não tratado:", err);
+    res.status(500).json({ message: 'Erro interno do servidor.' });
+  });
 
-    return app;
+  return app;
 }
