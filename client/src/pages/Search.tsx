@@ -1,15 +1,20 @@
+
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import WorkspaceCard from '../components/WorkspaceCard';
-import { Input } from '../components/ui/input';
-import { Button } from '../components/ui/button';
-import { Slider } from '../components/ui/slider';
-import { Checkbox } from '../components/ui/checkbox';
-import { Label } from '../components/ui/label';
+import CategoryNavbar from '../components/CategoryNavbar';
+import AmenityBadge from '../components/AmenityBadge';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Slider } from '@/components/ui/slider';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { amenities } from '../data/amenities';
 import { workspaces } from '../data/workspaces';
+import { locations } from '../data/locations';
 import { getLocation } from '../data/locations';
 import { MapPin, Search as SearchIcon, Filter } from 'lucide-react';
 import { Workspace } from '../types';
@@ -20,13 +25,24 @@ const Search = () => {
   
   const [filteredWorkspaces, setFilteredWorkspaces] = useState<Workspace[]>([]);
   const [searchTerm, setSearchTerm] = useState(locationQuery);
-  const [priceRange, setPriceRange] = useState([0, 100]);
-  const [capacity, setCapacity] = useState<number | null>(null);
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [capacityInput, setCapacityInput] = useState('');
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<Workspace['categoria'] | 'all'>('all');
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  // Find max price for slider
-  const maxPrice = Math.max(...workspaces.map(w => w.pricePerHour), 100);
+  // Find max price for reference
+  const workspaceMaxPrice = Math.max(...workspaces.map(w => w.precoHora), 100);
+
+  // Calculate workspace counts by category
+  const workspaceCounts = {
+    all: workspaces.length,
+    workstation: workspaces.filter(w => w.categoria === 'workstation').length,
+    'meeting-room': workspaces.filter(w => w.categoria === 'meeting-room').length,
+    'training-room': workspaces.filter(w => w.categoria === 'training-room').length,
+    auditorium: workspaces.filter(w => w.categoria === 'auditorium').length,
+  };
 
   useEffect(() => {
     // Initial filter based on URL params
@@ -37,34 +53,44 @@ const Search = () => {
   const filterWorkspaces = () => {
     let filtered = [...workspaces];
     
+    // Filter by category
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(workspace => workspace.categoria == selectedCategory);
+    }
+    
     // Filter by search term (location or workspace name)
     if (searchTerm) {
       filtered = filtered.filter(workspace => {
-        const location = getLocation(workspace.locationId.toString());
+        const location = getLocation(workspace.predioId);
         const searchLower = searchTerm.toLowerCase();
         
         return (
-          workspace.name.toLowerCase().includes(searchLower) ||
-          location?.endereco.toLowerCase().includes(searchLower)
+          workspace.nomeSala.toLowerCase().includes(searchLower) ||
+          location?.cidade.toLowerCase().includes(searchLower) ||
+          location?.estado.toLowerCase().includes(searchLower) ||
+          location?.nomePredio.toLowerCase().includes(searchLower)
         );
       });
     }
     
     // Filter by price range
+    const minPriceNum = minPrice ? parseFloat(minPrice) : 0;
+    const maxPriceNum = maxPrice ? parseFloat(maxPrice) : Infinity;
     filtered = filtered.filter(workspace => 
-      workspace.pricePerHour >= priceRange[0] && 
-      workspace.pricePerHour <= priceRange[1]
+      workspace.precoHora >= minPriceNum && 
+      workspace.precoHora <= maxPriceNum
     );
     
     // Filter by capacity
-    if (capacity) {
-      filtered = filtered.filter(workspace => workspace.capacity >= capacity);
+    const capacityNum = capacityInput ? parseInt(capacityInput) : null;
+    if (capacityNum) {
+      filtered = filtered.filter(workspace => workspace.capacidade >= capacityNum);
     }
     
     // Filter by amenities
     if (selectedAmenities.length > 0) {
       filtered = filtered.filter(workspace => 
-        selectedAmenities.every(amenityId => workspace.amenities.includes(amenityId))
+        selectedAmenities.every(amenityId => workspace.destaques.includes(amenityId))
       );
     }
     
@@ -87,34 +113,58 @@ const Search = () => {
   
   const clearFilters = () => {
     setSearchTerm('');
-    setPriceRange([0, maxPrice]);
-    setCapacity(null);
+    setMinPrice('');
+    setMaxPrice('');
+    setCapacityInput('');
     setSelectedAmenities([]);
+    setSelectedCategory('all');
     setSearchParams({});
     setFilteredWorkspaces(workspaces);
   };
+
+  const handleCategoryChange = (category: Workspace['categoria'] | 'all') => {
+    setSelectedCategory(category);
+  };
+
+  // Effect to trigger filtering only when category changes or on initial load
+  useEffect(() => {
+    filterWorkspaces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCategory]);
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <div className="bg-primary-light py-8">
+        <div className="bg-gradient-to-t from-transparent to-secondary/35 via-transparent py-8">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold mb-4">Find Your Perfect Workspace</h1>
+            <h1 className="text-3xl font-bold mb-4">Encontre seu Espaço Ideal</h1>
             
-            <form onSubmit={handleSearch} className="flex w-full max-w-3xl">
+            <form onSubmit={handleSearch} className="flex w-full max-w-4xl gap-2">
               <div className="relative flex-grow">
-                <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
+                <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
                 <Input
-                  placeholder="Search by city, location, or workspace name"
-                  className="pl-10 h-12 rounded-l-lg rounded-r-none border-r-0"
+                  placeholder="Pesquisar por cidade, local ou nome do espaço"
+                  className="pl-10 h-12 rounded-lg"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="h-12 px-6 rounded-l-none">
+              <Select value={selectedCategory} onValueChange={(value: Workspace['categoria'] | 'all') => setSelectedCategory(value)}>
+                <SelectTrigger className="w-48 h-12">
+                  <SelectValue placeholder="Categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas Categorias</SelectItem>
+                  <SelectItem value="workstation">Estações de Trabalho</SelectItem>
+                  <SelectItem value="meeting-room">Salas de Reunião</SelectItem>
+                  <SelectItem value="training-room">Salas de Treinamento</SelectItem>
+                  <SelectItem value="auditorium">Auditórios</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button type="submit" className="h-12 px-6">
                 <SearchIcon className="h-5 w-5 mr-2" />
-                Search
+                Buscar
               </Button>
             </form>
           </div>
@@ -130,7 +180,7 @@ const Search = () => {
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
               >
                 <Filter className="h-5 w-5 mr-2" />
-                {isFilterOpen ? 'Hide Filters' : 'Show Filters'}
+                {isFilterOpen ? 'Ocultar Filtros' : 'Mostrar Filtros'}
               </Button>
             </div>
 
@@ -138,63 +188,70 @@ const Search = () => {
             <div className={`${isFilterOpen ? 'block' : 'hidden'} md:block md:w-64 lg:w-80 flex-shrink-0`}>
               <div className="bg-white rounded-lg border p-6 sticky top-4">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-lg font-semibold">Filters</h2>
+                  <h2 className="text-lg font-semibold">Filtros</h2>
                   <Button 
                     variant="ghost" 
                     className="text-sm h-auto p-0" 
                     onClick={clearFilters}
                   >
-                    Clear All
+                    Limpar Tudo
                   </Button>
                 </div>
                 
                 {/* Price Range */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Price Range ($/hour)</h3>
-                  <div className="mb-2">
-                    <Slider 
-                      defaultValue={[0, maxPrice]} 
-                      min={0} 
-                      max={maxPrice} 
-                      step={5} 
-                      value={priceRange}
-                      onValueChange={(value) => setPriceRange(value as [number, number])}
-                    />
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>${priceRange[0]}</span>
-                    <span>${priceRange[1]}</span>
+                  <h3 className="font-medium mb-2">Faixa de Preço (R$/hora)</h3>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Label htmlFor="min-price" className="text-xs">Mínimo</Label>
+                      <Input
+                        id="min-price"
+                        type="number"
+                        placeholder="0"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="max-price" className="text-xs">Máximo</Label>
+                      <Input
+                        id="max-price"
+                        type="number"
+                        placeholder="1000"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        className="h-8"
+                      />
+                    </div>
                   </div>
                 </div>
                 
                 {/* Capacity */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Minimum Capacity</h3>
-                  <div className="flex space-x-2 flex-wrap">
-                    {[1, 2, 4, 8, 12].map((cap) => (
-                      <Button
-                        key={cap}
-                        variant={capacity === cap ? "default" : "outline"}
-                        onClick={() => setCapacity(capacity === cap ? null : cap)}
-                        className="mt-1"
-                        size="sm"
-                      >
-                        {cap}+ people
-                      </Button>
-                    ))}
-                  </div>
+                  <h3 className="font-medium mb-2">Capacidade Desejada</h3>
+                  <Input
+                    type="number"
+                    placeholder="Ex: 4 pessoas"
+                    value={capacityInput}
+                    onChange={(e) => setCapacityInput(e.target.value)}
+                    className="h-8"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Número mínimo de pessoas que o espaço deve comportar
+                  </p>
                 </div>
                 
                 {/* Amenities */}
                 <div>
-                  <h3 className="font-medium mb-2">Amenities</h3>
+                  <h3 className="font-medium mb-2">Comodidades</h3>
                   <div className="space-y-2">
                     {amenities.map((amenity) => (
                       <div key={amenity.id} className="flex items-center">
                         <Checkbox
                           id={`amenity-${amenity.id}`}
-                          checked={selectedAmenities.includes(amenity.id.toString())}
-                          onCheckedChange={() => handleAmenityToggle(amenity.id.toString())}
+                          checked={selectedAmenities.includes(amenity.id)}
+                          onCheckedChange={() => handleAmenityToggle(amenity.id)}
                         />
                         <Label
                           htmlFor={`amenity-${amenity.id}`}
@@ -211,35 +268,44 @@ const Search = () => {
                   className="w-full mt-6" 
                   onClick={filterWorkspaces}
                 >
-                  Apply Filters
+                  Aplicar Filtros
                 </Button>
               </div>
             </div>
 
             {/* Results */}
             <div className="flex-grow">
-              <div className="mb-4 flex items-center justify-between">
-                <h2 className="text-xl font-semibold">
-                  {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'Workspace' : 'Workspaces'} Available
-                </h2>
-                <div className="text-sm text-gray-500">
-                  Sort by: <span className="font-medium">Price (Low to High)</span>
+              {/* Category Navigation */}
+              <CategoryNavbar 
+                activeCategory={selectedCategory}
+                onCategoryChange={handleCategoryChange}
+                workspaceCounts={workspaceCounts}
+              />
+              
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold">
+                    {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'Espaço' : 'Espaços'} Disponíve{filteredWorkspaces.length === 1 ? 'l' : 'is'}
+                  </h2>
+                  <div className="text-sm text-text-muted">
+                    Ordenar por: <span className="font-medium">Preço (Menor para Maior)</span>
+                  </div>
                 </div>
-              </div>
 
-              {filteredWorkspaces.length === 0 ? (
-                <div className="text-center py-16 bg-gray-50 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-2">No workspaces found</h3>
-                  <p className="text-gray-500 mb-4">Try adjusting your filters or search term</p>
-                  <Button onClick={clearFilters}>Clear Filters</Button>
-                </div>
-              ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {filteredWorkspaces.map((workspace) => (
-                    <WorkspaceCard key={workspace.id} workspace={workspace} />
-                  ))}
-                </div>
-              )}
+                {filteredWorkspaces.length === 0 ? (
+                  <div className="text-center py-16 bg-bg-muted rounded-lg">
+                    <h3 className="text-xl font-semibold mb-2">Nenhum espaço encontrado</h3>
+                    <p className="text-text-muted mb-4">Tente ajustar seus filtros ou termo de busca</p>
+                    <Button onClick={clearFilters}>Limpar Filtros</Button>
+                  </div>
+                ) : (
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {filteredWorkspaces.map((workspace) => (
+                      <WorkspaceCard key={workspace.id} workspace={workspace} />
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

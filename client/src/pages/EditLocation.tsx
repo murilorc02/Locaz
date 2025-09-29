@@ -1,49 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Button } from '../components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
-import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
-import { Label } from '../components/ui/label';
-import { getLocation } from '../data/locations';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import { ArrowLeft, Save, Upload, X, Clock, User, MapPin } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import WeeklySchedule from '../components/WeeklySchedule';
-
-type TimeSlot = { start: string; end: string };
-type DaySchedule = { active: boolean; timeSlots: TimeSlot[] };
-type Schedule = {
-  monday: DaySchedule;
-  tuesday: DaySchedule;
-  wednesday: DaySchedule;
-  thursday: DaySchedule;
-  friday: DaySchedule;
-  saturday: DaySchedule;
-  sunday: DaySchedule;
-};
-type Owner = { name: string; photo: string; description: string };
-type FormData = {
-  name: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  description: string;
-  images: string[];
-  schedule: Schedule;
-  owner: Owner;
-};
+import DefaultScheduleEditor from '../components/DefaultScheduleEditor';
+import { useLocations } from '@/contexts/LocationsContext';
 
 const EditLocation = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
-  
-  const location = id ? getLocation(id) : null;
-  
-  const [formData, setFormData] = useState<FormData>({
+  const [isLocationLoading, setIsLocationLoading] = useState(true);
+  const { locations: businessLocations} = useLocations();
+
+  const filteredLocation = businessLocations.find(item => item.id == id); // TODO: Rota para pegar um local específico
+
+  const [formData, setFormData] = useState({
     name: '',
     address: '',
     city: '',
@@ -66,30 +45,57 @@ const EditLocation = () => {
       description: ''
     }
   });
-  
-  // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-    navigate('/login');
-    return null;
-  }
 
-  if (!location) {
-    navigate('/business/locations');
-    return null;
+  const fetchLocation = async () => {
+    try {
+      console.log('Fetched location:', filteredLocation);
+
+      let cep = '';
+      const endereco = filteredLocation.endereco;
+      const enderecoParts = endereco.split(',');
+
+      const address = enderecoParts[0]?.trim() || '';
+      const city = enderecoParts[1]?.trim() || '';
+
+      // State: get after second comma, but stop before first '-'
+      let state = enderecoParts[2]?.trim() || '';
+      const dashIndex = state.indexOf('-');
+      if (dashIndex !== -1) {
+        state = state.substring(0, dashIndex).trim();
+      }
+
+      let fullDashIndex = endereco.indexOf('-');
+      if (fullDashIndex !== -1) {
+        cep = endereco.substring(fullDashIndex + 1).trim();
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        name: filteredLocation.nomePredio,
+        address: address,
+        city: city,
+        state: state,
+        zipCode: cep,
+        description: filteredLocation.descricao,
+        images: filteredLocation.imagens
+      }));
+    } catch (err) {
+      throw (`Location not fetched. Error: ${err}`);
+    } finally {
+      setIsLocationLoading(false);
+    }
   }
 
   useEffect(() => {
-    if (location) {
-      setFormData(prev => ({
-        ...prev,
-        name: location.nomePredio,
-        endereco: location.endereco,
-        descricao: location.descricao ?? '',
-        pontosDeDestaque: location.pontosDeDestaque,
-        imagens: location.imagens || [],
-      }));
+    fetchLocation();
+  }, [id]);
+
+  useEffect(() => {
+    if (isLocationLoading) return;
+    if (!isAuthenticated || (user && user.tipo !== 'locador')) {
+      navigate('/login');
     }
-  }, [location]);
+  }, [isLocationLoading, isAuthenticated, user, location, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,8 +137,8 @@ const EditLocation = () => {
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => navigate('/business/locations')}
               >
@@ -145,7 +151,7 @@ const EditLocation = () => {
               </div>
             </div>
           </header>
-          
+
           <main className="flex-1 p-6">
             <div className="max-w-4xl mx-auto space-y-6">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -235,10 +241,10 @@ const EditLocation = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      {formData.images.map((image, index) => (
+                      {/* {formData.images.map((image, index) => (
                         <div key={index} className="relative group">
-                          <img 
-                            src={image} 
+                          <img
+                            src={image}
                             alt={`Local ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg border"
                           />
@@ -250,8 +256,8 @@ const EditLocation = () => {
                             <X className="h-3 w-3" />
                           </button>
                         </div>
-                      ))}
-                      
+                      ))} */}
+
                       <button
                         type="button"
                         onClick={addImage}
@@ -282,6 +288,14 @@ const EditLocation = () => {
                     />
                   </CardContent>
                 </Card>
+
+                {/* Default Schedule Settings */}
+                <DefaultScheduleEditor
+                  onSave={(category, schedule) => {
+                    console.log('Configuração salva:', { category, schedule });
+                    // Here you would typically save to a backend or local storage
+                  }}
+                />
 
                 {/* Owner Information */}
                 <Card>
@@ -330,9 +344,9 @@ const EditLocation = () => {
 
                 {/* Actions */}
                 <div className="flex gap-4 pt-6">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     className="flex-1"
                     onClick={() => navigate('/business/locations')}
                   >

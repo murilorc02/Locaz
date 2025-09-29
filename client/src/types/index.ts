@@ -13,16 +13,18 @@ export type User = {
 };
 
 export type Amenity = {
-  id: number;
+  id: string;
   name: string;
   icon: string;
   description?: string;
 };
 
 export type Location = {
-  id: number;
+  id: string;
   nomePredio: string;
   endereco: string;
+  cidade: string;
+  estado: string;
   pontosDeDestaque: string[]; // Array of amenity IDs
   descricao?: string;
   usuario?: User;
@@ -36,10 +38,11 @@ export type Workspace = {
   descricao: string;
   capacidade: number;
   precoHora: number;
-  predioId: number;
+  predioId: string;
   imagens: string[];
   destaques: string[]; // Array of amenity IDs
   disponibilidade: boolean;
+  categoria: 'workstation' | 'meeting-room' | 'training-room' | 'auditorium';
 };
 
 export type Booking = {

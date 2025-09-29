@@ -26,14 +26,14 @@ export default {
 				background: 'hsl(var(--background))',
 				foreground: 'hsl(var(--foreground))',
 				primary: {
-					DEFAULT: '#F0C34B',
-					foreground: '#ffffff',
-					light: '#FFE799',
-					dark: '#876B22'
+					DEFAULT: 'hsl(var(--primary))',
+					foreground: 'hsl(var(--primary-foreground))',
+					light: 'hsl(var(--primary-light))',
+					dark: 'hsl(var(--primary-dark))'
 				},
 				secondary: {
-					DEFAULT: '#D99D00',
-					foreground: '#ffffff'
+					DEFAULT: 'hsl(var(--secondary))',
+					foreground: 'hsl(var(--secondary-foreground))'
 				},
 				destructive: {
 					DEFAULT: 'hsl(var(--destructive))',
@@ -66,15 +66,11 @@ export default {
 					ring: 'hsl(var(--sidebar-ring))'
 				},
 				amenities: {
-					wifi: '#375B27',
-					coffee: '#654E38',
-					park: '#00B728',
-					store: '#CDCD00',
-					city: '#0092BA',
-					centralLocation: '#47199c',
-					chairs: '#BE0000',
-					comfort: '#DD6903',
-					airConditioning: '#0bc6db',
+					wifi: '#f59e0b',
+					coffee: '#d97706',
+					park: '#10B981',
+					store: '#facc15',
+					city: '#f59e0b'
 				}
 			},
 			borderRadius: {
