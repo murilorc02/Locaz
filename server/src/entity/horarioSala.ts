@@ -23,10 +23,10 @@ export class HorarioSala {
   })
   diaSemana!: DiaSemana;
 
-  @Column({ name: 'horario_inicio', type: 'time' , default: 8})
+  @Column({ name: 'horario_inicio', type: 'time' , default: '08:00'})
   horarioInicio!: string;
 
-  @Column({ name: 'horario_fim', type: 'time' , default: 18})
+  @Column({ name: 'horario_fim', type: 'time' , default: '18:00'})
   horarioFim!: string;
 
   @Column({ default: true })

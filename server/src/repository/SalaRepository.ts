@@ -1,6 +1,6 @@
 import { Repository, In } from 'typeorm';
 import { AppDataSource } from '../data-source';
-import { Sala, CategoriaSala, Comodidade } from '../entity/Sala';
+import { Sala } from '../entity/Sala';
 
 export class SalaRepository {
     private repository: Repository<Sala>;
@@ -61,7 +61,7 @@ export class SalaRepository {
     async buscarComFiltros(filtros: {
         cidade?: string;
         capacidade?: number;
-        categoria?: CategoriaSala;
+        categoria?: string;
         precoMaximo?: number;
         comodidades?: string[];
         predioId?: string;
@@ -124,7 +124,7 @@ export class SalaRepository {
         filtrosAdicionais?: {
             cidade?: string;
             capacidade?: number;
-            categoria?: CategoriaSala;
+            categoria?: string;
             precoMaximo?: number;
         }
     ): Promise<Sala[]> {
@@ -223,7 +223,7 @@ export class SalaRepository {
             .getCount();
     }
 
-    async buscarPorCategoria(categoria: CategoriaSala): Promise<Sala[]> {
+    async buscarPorCategoria(categoria: string): Promise<Sala[]> {
         return await this.repository.find({
             where: { categoria },
             relations: ['predio', 'predio.usuario'],
@@ -233,7 +233,7 @@ export class SalaRepository {
         });
     }
 
-    async buscarPorComodidades(comodidades: Comodidade[]): Promise<Sala[]> {
+    async buscarPorComodidades(comodidades: string[]): Promise<Sala[]> {
         return await this.repository.createQueryBuilder('sala')
             .leftJoinAndSelect('sala.predio', 'predio')
             .where('sala.comodidades && :comodidades', { comodidades })
@@ -260,7 +260,7 @@ export class SalaRepository {
             .getMany();
     }
 
-    async estatisticasPorCategoria(): Promise<Array<{ categoria: CategoriaSala; total: number }>> {
+    async estatisticasPorCategoria(): Promise<Array<{ categoria: string; total: number }>> {
         const result = await this.repository.createQueryBuilder('sala')
             .select('sala.categoria', 'categoria')
             .addSelect('COUNT(*)', 'total')

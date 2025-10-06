@@ -1,5 +1,4 @@
 import { IsString, IsNumber, IsEnum, IsOptional, IsBoolean, IsArray, IsNotEmpty, Min, Max } from 'class-validator';
-import { CategoriaSala, Comodidade } from '../entity/Sala';
 
 export class CreateSalaDto {
   @IsNotEmpty({ message: 'Nome é obrigatório' })
@@ -17,8 +16,7 @@ export class CreateSalaDto {
   capacidade!: number;
 
   @IsNotEmpty({ message: 'Categoria é obrigatória' })
-  @IsEnum(CategoriaSala, { message: 'Categoria deve ser uma das opções válidas' })
-  categoria!: CategoriaSala;
+  categoria!: string;
 
   @IsNotEmpty({ message: 'Preço por hora é obrigatório' })
   @IsNumber({}, { message: 'Preço por hora deve ser um número' })
@@ -35,8 +33,7 @@ export class CreateSalaDto {
 
   @IsOptional()
   @IsArray({ message: 'Comodidades deve ser um array' })
-  @IsEnum(Comodidade, { each: true, message: 'Cada comodidade deve ser uma das opções válidas' })
-  comodidades?: Comodidade[];
+  comodidades?: string[];
 }
 
 export class AtualizarSalaDto {
@@ -55,8 +52,7 @@ export class AtualizarSalaDto {
   capacidade?: number;
 
   @IsOptional()
-  @IsEnum(CategoriaSala, { message: 'Categoria deve ser uma das opções válidas' })
-  categoria?: CategoriaSala;
+  categoria?: string;
 
   @IsOptional()
   @IsNumber({}, { message: 'Preço por hora deve ser um número' })
@@ -69,8 +65,7 @@ export class AtualizarSalaDto {
 
   @IsOptional()
   @IsArray({ message: 'Comodidades deve ser um array' })
-  @IsEnum(Comodidade, { each: true, message: 'Cada comodidade deve ser uma das opções válidas' })
-  comodidades?: Comodidade[];
+  comodidades?: string[];
 }
 
 export class BuscarSalaDto {
@@ -84,8 +79,7 @@ export class BuscarSalaDto {
   capacidade?: number;
 
   @IsOptional()
-  @IsEnum(CategoriaSala, { message: 'Categoria deve ser uma das opções válidas' })
-  categoria?: CategoriaSala;
+  categoria?: string;
 
   @IsOptional()
   @IsNumber({}, { message: 'Preço máximo deve ser um número' })
@@ -94,8 +88,7 @@ export class BuscarSalaDto {
 
   @IsOptional()
   @IsArray({ message: 'Comodidades deve ser um array' })
-  @IsEnum(Comodidade, { each: true, message: 'Cada comodidade deve ser uma das opções válidas' })
-  comodidades?: Comodidade[];
+  comodidades?: string[];
 
   @IsOptional()
   @IsString({ message: 'Data da reserva deve ser uma string' })
@@ -115,11 +108,11 @@ export interface CreateSalaDTO {
   nome: string;
   descricao?: string;
   capacidade: number;
-  categoria: CategoriaSala;
+  categoria: string;
   precoHora: number;
   reservaGratuita?: boolean;
   predioId: string;
-  comodidades?: Comodidade[];
+  comodidades?: string[];
 }
 
 export interface UpdateSalaDTO {
@@ -127,18 +120,18 @@ export interface UpdateSalaDTO {
   nome?: string;
   descricao?: string;
   capacidade?: number;
-  categoria?: CategoriaSala;
+  categoria?: string;
   precoHora?: number;
   reservaGratuita?: boolean;
-  comodidades?: Comodidade[];
+  comodidades?: string[];
 }
 
 export interface SearchSalaDTO {
   cidade?: string;
   capacidade?: number;
-  categoria?: CategoriaSala;
+  categoria?: string;
   precoMaximo?: number;
-  comodidades?: Comodidade[];
+  comodidades?: string[];
   dataReserva?: string;
   horarioInicio?: string;
   horarioFim?: string;

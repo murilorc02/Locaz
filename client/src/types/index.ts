@@ -1,4 +1,4 @@
-export type UserRole = 'locatario' | 'locador';
+export type UserRole = "locatario" | "locador";
 
 export type User = {
   id: number;
@@ -19,30 +19,52 @@ export type Amenity = {
   description?: string;
 };
 
+export type Workspace = {
+  id: number;
+  nome: string;
+  descricao: string;
+  capacidade: number;
+  categoria: "workstation" | "meeting-room" | "training-room" | "auditorium";
+  precoHora: number;
+  reservaGratuita: boolean;
+  comodidades: string[];
+  imagens?: string[];
+  predioId: number; 
+};
+
 export type Location = {
-  id: string;
-  nomePredio: string;
+  id: number;
+  nome: string;
   endereco: string;
   cidade: string;
   estado: string;
-  pontosDeDestaque: string[]; // Array of amenity IDs
-  descricao?: string;
-  usuario?: User;
-  salas?: Workspace[];
-  imagens?: string[]; // Array of image URLs
+  cep: string;
+  descricao: string;
+  salas: Workspace[];
+  horarioPredio: OpeningHours[];
+  usuario: User;
+  imagens?: string[];
+  createdAt: string;
+  updatedAt: string;
 };
 
-export type Workspace = {
+export type LocationApiResponse = {
+  data: Location;
+};
+
+export type LocationsApiResponse = {
+  data: Location[];
+};
+
+export type OpeningHours = {
   id: number;
-  nomeSala: string;
-  descricao: string;
-  capacidade: number;
-  precoHora: number;
-  predioId: string;
-  imagens: string[];
-  destaques: string[]; // Array of amenity IDs
-  disponibilidade: boolean;
-  categoria: 'workstation' | 'meeting-room' | 'training-room' | 'auditorium';
+  diaSemana: string;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  ativo: boolean;
+  predio?: {
+    id: number;
+  };
 };
 
 export type Booking = {
@@ -52,7 +74,7 @@ export type Booking = {
   date: string;
   schedules: string[];
   totalPrice: number;
-  status: 'pendente' | 'confirmado' | 'cancelado';
+  status: "pendente" | "confirmado" | "cancelado";
 };
 
 // export type Proprietario = {
@@ -62,10 +84,21 @@ export type Booking = {
 //   predios?: Location[];
 // };
 
-export type CreatePredioPayload = {
-  nomePredio: string;
-  endereco: string;
-  pontosDeDestaque: string[];
-  descricao: string;
-  usuarioId: number;
+export type HorarioPayload = {
+  diaSemana: string;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  ativo: boolean;
 }
+
+export type CreatePredioPayload = {
+  nome: string;
+  endereco: string;
+  cidade: string;
+  estado: string;
+  cep: string;
+  comodidades?: string[];
+  descricao: string;
+  horariosFuncionamento: HorarioPayload[];
+  usuarioId: number;
+};

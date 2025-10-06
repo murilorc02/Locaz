@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../data-source';
-import { Sala, CategoriaSala, Comodidade } from '../entity/Sala';
+import { Sala } from '../entity/Sala';
 import { Predio } from '../entity/Predio';
 import { CreateSalaDTO, UpdateSalaDTO } from '../dto/SalaDto';
 
@@ -130,7 +130,7 @@ export class SalaService {
   async buscarPorFiltros(filtros: {
     cidade?: string;
     capacidade?: number;
-    categoria?: CategoriaSala;
+    categoria?: string;
     precoMaximo?: number;
     comodidades?: string[];
     predioId?: string;
@@ -225,7 +225,7 @@ export class SalaService {
     });
   }
 
-  async buscarPorCategoria(categoria: CategoriaSala): Promise<Sala[]> {
+  async buscarPorCategoria(categoria: string): Promise<Sala[]> {
     return await this.salaRepository.find({
       where: { categoria },
       relations: ['predio', 'predio.usuario']

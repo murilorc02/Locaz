@@ -3,26 +3,6 @@ import { Predio } from './Predio';
 import { Reserva } from './Reserva';
 import { HorarioSala } from './horarioSala';
 
-export enum CategoriaSala {
-    REUNIAO = 'reuniao',
-    ESTACAO = 'estacao',
-    AUDITORIO = 'auditorio',
-    TREINAMENTO = 'treinamento'
-}
-
-export enum Comodidade {
-    WIFI_GRATIS = 'wifiGratis',
-    CAFE_GRATIS = 'cafeGratis',
-    CADEIRAS_ERGONOMICAS = 'cadeirasErgonomicas',
-    PROJETOR = 'projetor',
-    ESPACO_DESCOMPRESSAO = 'espacoDescompressao',
-    ESPACO_KIDS = 'espacoKids',
-    AR_CONDICIONADO = 'arCondicionado',
-    QUADRO_BRANCO = 'quadroBranco',
-    ESTACIONAMENTO = 'estacionamento',
-    COPA_COZINHA = 'copaCozinha'
-}
-
 @Entity()
 export class Sala {
     @PrimaryGeneratedColumn()
@@ -37,11 +17,8 @@ export class Sala {
     @Column()
     capacidade!: number;
 
-    @Column({
-        type: 'enum',
-        enum: CategoriaSala
-    })
-    categoria!: CategoriaSala;
+    @Column({ type: 'text' })
+    categoria!: string;
 
     @Column({ name: 'precoHora', type: 'decimal', precision: 10, scale: 2 })
     precoHora!: number;
@@ -56,13 +33,8 @@ export class Sala {
     @OneToMany(() => Reserva, reserva => reserva.sala)
     reservas?: Reserva[];
 
-    @Column({
-        type: 'enum',
-        enum: Comodidade,
-        array: true,
-        default: '{}',
-    })
-    comodidades?: Comodidade[];
+    @Column({ type: 'text', array: true })
+    comodidades!: string[];
 
     @CreateDateColumn()
     createdAt!: Date;

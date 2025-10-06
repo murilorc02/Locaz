@@ -1,14 +1,14 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { CreatePredioPayload, Location, User } from '../types';
+import { CreatePredioPayload, LocationsApiResponse, User } from '../types';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
 // Define o tipo para o valor do contexto
 interface LocationsContextType {
-  locations: Location[];
+  locations: LocationsApiResponse;
   isLoading: boolean;
   error: string | null;
-  addLocation: (payload: CreatePredioPayload, user: User) => Promise<any>;
+  addLocation: (payload: CreatePredioPayload) => Promise<any>;
   fetchLocations: () => void;
 }
 
@@ -18,7 +18,7 @@ const LocationsContext = createContext<LocationsContextType | undefined>(undefin
 // Define o provedor do contexto
 export default function LocationsProvider ({ children }: { children: ReactNode }) {
   const { user, isLoading: isAuthLoading, isAuthenticated } = useAuth();
-  const [locations, setLocations] = useState<Location[]>([]);
+  const [locations, setLocations] = useState<LocationsApiResponse>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,7 +32,7 @@ export default function LocationsProvider ({ children }: { children: ReactNode }
     setIsLoading(true);
     setError(null);
     try {
-      const response = await api.get<Location[]>(`/locador/predios`);
+      const response = await api.get<LocationsApiResponse>(`/predio/getByAll`);
       setLocations(response.data);
     } catch (err) {
       console.error("Erro ao buscar locais:", err);
@@ -46,15 +46,15 @@ export default function LocationsProvider ({ children }: { children: ReactNode }
     if(user && user.tipo === 'locador') {
       fetchLocations();
     } else {
-      setLocations([]);
+      setLocations(null);
       setIsLoading(false);
     }
   }, [user]);
 
-  const addLocation = async (payload: CreatePredioPayload, user: User) => {
+  const addLocation = async (payload: CreatePredioPayload) => {
     try {
       // Agora o 'payload' tem o tipo correto e pode ser enviado diretamente
-      await api.post('/locador/predios', payload);
+      await api.post('/predio/create', payload);
       await fetchLocations(); 
     } catch (err) {
       console.error("Erro ao adicionar local:", err);

@@ -10,10 +10,12 @@ import { Checkbox } from '../components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { amenities } from '../data/amenities';
 import AmenityIcon from '../components/AmenityIcon';
-import { ArrowLeft, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Clock, Save, Upload, X } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
+import WeeklySchedule from '@/components/WeeklySchedule';
+import { CreatePredioPayload, HorarioPayload } from '@/types';
 
 const AddLocation = () => {
   const { user, isAuthenticated } = useAuth();
@@ -31,6 +33,15 @@ const AddLocation = () => {
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [images, setImages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [schedule, setSchedule] = useState({
+    segunda: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
+    terca: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
+    quarta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
+    quinta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
+    sexta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
+    sabado: { active: false, timeSlots: [] },
+    domingo: { active: false, timeSlots: [] }
+  });
 
   // Redirect if not authenticated or not a business
   if (!isAuthenticated || (user && user.tipo !== 'locador')) {
@@ -39,7 +50,7 @@ const AddLocation = () => {
   }
 
   const handleAmenityToggle = (amenityId: string) => {
-    setSelectedAmenities(prev => 
+    setSelectedAmenities(prev =>
       prev.includes(amenityId)
         ? prev.filter(id => id !== amenityId)
         : [...prev, amenityId]
@@ -56,12 +67,12 @@ const AddLocation = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!user) {
       toast({ title: "Erro de Autenticação", description: "Usuário não encontrado.", variant: "destructive" });
       return;
     }
-    
+
     if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0) {
       toast({
         title: "Informações Incompletas",
@@ -70,21 +81,36 @@ const AddLocation = () => {
       });
       return;
     }
-    
+
     setIsLoading(true);
 
-    const fullAddress = `${address}, ${city}, ${state} - ${zipCode}`;
-    const payload = {
-      nomePredio: locationName,
-      endereco: fullAddress,
+    const horariosPayload: HorarioPayload[] = convertScheduleToPayload(schedule);
+
+    if (horariosPayload.length === 0) {
+      toast({
+        title: "Horários de funcionamento incompletos",
+        description: "Defina o horário de funcionamento para ao menos um dia",
+        variant: "destructive"
+      });
+      setIsLoading(false);
+      return;
+    }
+
+    const payload: CreatePredioPayload = {
+      nome: locationName,
+      endereco: address,
+      cidade: city,
+      estado: state,
+      cep: zipCode,
       descricao: description,
-      pontosDeDestaque: selectedAmenities,
+      // comodidades: selectedAmenities,
+      horariosFuncionamento: horariosPayload,
       usuarioId: user.id
     };
-    
+
     try {
-      await addLocation(payload, user);
-      
+      await addLocation(payload);
+
       toast({
         title: "Local Adicionado!",
         description: "Seu novo local foi salvo com sucesso.",
@@ -103,6 +129,29 @@ const AddLocation = () => {
 
   };
 
+  const convertScheduleToPayload = (scheduleData: typeof schedule) => {
+    const payload = [];
+
+    // Transforma o objeto de dias em um array para podermos iterar
+    for (const [day, dayData] of Object.entries(scheduleData)) {
+      // Apenas processa os dias que estão marcados como ativos
+      if (dayData.timeSlots.length > 0) {
+        // Para cada intervalo de tempo, cria um objeto no formato da API
+        for (const slot of dayData.timeSlots) {
+          payload.push({
+            diaSemana: day, // ex: "segunda"
+            horarioAbertura: slot.start, // ex: "08:00"
+            horarioFechamento: slot.end, // ex: "18:00"
+            ativo: dayData.active
+          });
+        }
+      }
+    }
+
+    return payload;
+  };
+
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -111,8 +160,8 @@ const AddLocation = () => {
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => navigate('/business/locations')}
               >
@@ -125,7 +174,7 @@ const AddLocation = () => {
               </div>
             </div>
           </header>
-          
+
           <main className="flex-1 p-6">
             <div className="max-w-3xl mx-auto">
               <form onSubmit={handleSubmit} className="space-y-6">
@@ -140,32 +189,32 @@ const AddLocation = () => {
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="locationName">Nome do Local</Label>
-                      <Input 
-                        id="locationName" 
-                        value={locationName} 
+                      <Input
+                        id="locationName"
+                        value={locationName}
                         onChange={(e) => setLocationName(e.target.value)}
                         placeholder="Ex: Hub Criativo Centro"
                         required
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="address">Endereço</Label>
-                      <Input 
-                        id="address" 
-                        value={address} 
+                      <Input
+                        id="address"
+                        value={address}
                         onChange={(e) => setAddress(e.target.value)}
                         placeholder="Ex: Rua Principal, 123"
                         required
                       />
                     </div>
-                    
+
                     <div className="grid grid-cols-3 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="city">Cidade</Label>
-                        <Input 
-                          id="city" 
-                          value={city} 
+                        <Input
+                          id="city"
+                          value={city}
                           onChange={(e) => setCity(e.target.value)}
                           placeholder="Ex: São Paulo"
                           required
@@ -173,9 +222,9 @@ const AddLocation = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="state">Estado</Label>
-                        <Input 
-                          id="state" 
-                          value={state} 
+                        <Input
+                          id="state"
+                          value={state}
                           onChange={(e) => setState(e.target.value)}
                           placeholder="Ex: SP"
                           required
@@ -183,21 +232,21 @@ const AddLocation = () => {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="zipCode">CEP</Label>
-                        <Input 
-                          id="zipCode" 
-                          value={zipCode} 
+                        <Input
+                          id="zipCode"
+                          value={zipCode}
                           onChange={(e) => setZipCode(e.target.value)}
                           placeholder="Ex: 01234-567"
                           required
                         />
                       </div>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor="description">Descrição</Label>
-                      <Textarea 
-                        id="description" 
-                        value={description} 
+                      <Textarea
+                        id="description"
+                        value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         placeholder="Descreva o local, incluindo o ambiente, localização e características especiais."
                         rows={4}
@@ -206,7 +255,7 @@ const AddLocation = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 {/* Amenities */}
                 <Card>
                   <CardHeader>
@@ -219,13 +268,13 @@ const AddLocation = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {amenities.map((amenity) => (
                         <div key={amenity.id} className="flex items-center space-x-2">
-                          <Checkbox 
-                            id={`amenity-${amenity.id}`} 
+                          <Checkbox
+                            id={`amenity-${amenity.id}`}
                             checked={selectedAmenities.includes(amenity.id.toString())}
                             onCheckedChange={() => handleAmenityToggle(amenity.id.toString())}
                           />
-                          <Label 
-                            htmlFor={`amenity-${amenity.id}`} 
+                          <Label
+                            htmlFor={`amenity-${amenity.id}`}
                             className="flex items-center cursor-pointer"
                           >
                             <AmenityIcon type={amenity.icon} className="mr-2 text-primary" />
@@ -241,7 +290,7 @@ const AddLocation = () => {
                     </div>
                   </CardContent>
                 </Card>
-                
+
                 {/* Photos */}
                 <Card>
                   <CardHeader>
@@ -254,12 +303,12 @@ const AddLocation = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                       {images.map((image, index) => (
                         <div key={index} className="relative group">
-                          <img 
-                            src={image} 
+                          <img
+                            src={image}
                             alt={`Local ${index + 1}`}
                             className="w-full h-32 object-cover rounded-lg border"
                           />
-                          <button 
+                          <button
                             type="button"
                             className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                             onClick={() => removeImage(index)}
@@ -268,7 +317,7 @@ const AddLocation = () => {
                           </button>
                         </div>
                       ))}
-                      
+
                       <button
                         type="button"
                         onClick={handleImageUpload}
@@ -278,23 +327,41 @@ const AddLocation = () => {
                         <span className="text-sm text-gray-500">Adicionar Foto</span>
                       </button>
                     </div>
-                    
+
                     <p className="text-xs text-gray-400 mt-3">
                       Para demonstração, uma imagem de exemplo será adicionada ao clicar em "Adicionar Foto"
                     </p>
                   </CardContent>
                 </Card>
-                
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center">
+                      <Clock className="h-5 w-5 mr-2" />
+                      Horários de Funcionamento
+                    </CardTitle>
+                    <CardDescription>
+                      Configure os dias e horários em que este local está disponível
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <WeeklySchedule
+                      schedule={schedule}
+                      onChange={setSchedule}
+                    />
+                  </CardContent>
+                </Card>
+
                 <div className="flex gap-4 pt-6">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     className="flex-1"
                     onClick={() => navigate('/business/locations')}
                   >
                     Cancelar
                   </Button>
-                  <Button 
+                  <Button
                     type="submit"
                     className="flex-1"
                     disabled={isLoading}

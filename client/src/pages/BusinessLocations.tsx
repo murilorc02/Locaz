@@ -24,8 +24,8 @@ const BusinessLocations = () => {
     return null;
   }
 
-  const filteredLocations = businessLocations.filter(location =>
-    location.nomePredio.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  const filteredLocations = businessLocations.data.filter(location =>
+    location.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
     location.endereco.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -75,7 +75,7 @@ const BusinessLocations = () => {
               </div>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  {location.nomePredio}
+                  {location.nome}
                   <div className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => navigate(`/business/edit-location/${location.id}`)}>
                       <Edit className="h-4 w-4" />
@@ -91,13 +91,12 @@ const BusinessLocations = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow flex flex-col justify-between">
-                <div>
+                { /* <div>
                   <div className="flex items-center justify-between mb-4">
                     <Badge className="bg-primary-light text-primary-dark">{workspaceCount} Espaços</Badge>
-                    {/* Badge de 'pontosDeDestaque' corrigido para exibir apenas se for true */}
                     {location.pontosDeDestaque && <Badge variant="secondary">Destaque</Badge>}
                   </div>
-                </div>
+                </div> */}
                 <div className="flex gap-2 mt-4">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate(`/location/${location.id}`)}>
                     Visualizar
