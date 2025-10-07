@@ -4,7 +4,7 @@ export interface UsuarioResponseDto {
   id: number;
   nome: string;
   email: string;
-  cpf: string;
+  cpfcnpj: string;
   tipo: TipoUsuario; 
   telefone: string;
   ativo: boolean;
@@ -16,7 +16,7 @@ export interface CreateUsuarioDto {
   nome: string;
   email: string;
   senha: string;
-  cpf: string;
+  cpfcnpj: string;
   telefone: string;
   tipo: TipoUsuario; 
 }

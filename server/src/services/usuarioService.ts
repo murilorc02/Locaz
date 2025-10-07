@@ -35,7 +35,7 @@ export class UsuarioService {
       nome: createUsuarioDto.nome,
       email: createUsuarioDto.email, // Normalizar email
       senha: senhaHash,
-      cpf: createUsuarioDto.cpf,
+      cpfcnpj: createUsuarioDto.cpfcnpj,
       telefone: createUsuarioDto.telefone,
       tipo: createUsuarioDto.tipo as TipoUsuario
     });
@@ -148,7 +148,7 @@ export class UsuarioService {
       id: usuario.id,
       nome: usuario.nome,
       email: usuario.email,
-      cpf: usuario.cpf,
+      cpfcnpj: usuario.cpfcnpj,
       tipo: usuario.tipo,
       telefone: usuario.telefone,
       ativo: usuario.ativo,

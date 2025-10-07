@@ -22,7 +22,7 @@ export class Usuario {
     senha!: string;
 
     @Column()
-    cpf!: string;
+    cpfcnpj!: string;
 
     @Column()
     telefone!: string;

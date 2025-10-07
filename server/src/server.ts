@@ -6,6 +6,7 @@ import { config } from './config';
 import usuarioController from './controller/UsuarioController';
 import predioController from './controller/PredioController';
 import salaController from './controller/SalaController';
+import reservaController from './controller/ReservaController';
 
 export function createServer(): Application {
   const app = express();
@@ -24,6 +25,7 @@ export function createServer(): Application {
   app.use('/api', usuarioController)
   app.use('/api', predioController)
   app.use('/api', salaController)
+  app.use('/api', reservaController)
   
   // Middleware de tratamento de erro
   app.use((err: any, req: Request, res: Response, next: NextFunction) => {

@@ -34,7 +34,7 @@ export class UsuarioRepository {
     public async buscarPorIdComSenha(id: number): Promise<Usuario | null> {
         return this.ormRepository.findOne({
             where: { id: id },
-            select: ['id', 'nome', 'email', 'senha', 'cpf', 'telefone', 'tipo']
+            select: ['id', 'nome', 'email', 'senha', 'cpfcnpj', 'telefone', 'tipo']
         });
     }
 

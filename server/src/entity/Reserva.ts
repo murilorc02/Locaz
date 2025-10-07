@@ -4,9 +4,9 @@ import { Sala } from './Sala';
 
 export enum StatusReserva {
   PENDENTE = 'pendente',
-  CONFIRMADA = 'confirmada',
+  ACEITA = 'aceita',
+  RECUSADA = 'recusada',
   CANCELADA = 'cancelada',
-  RECUSADA = 'recusada'
 }
 
 @Entity()
