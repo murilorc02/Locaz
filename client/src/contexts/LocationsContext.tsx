@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { CreatePredioPayload, LocationsApiResponse, User } from '../types';
+import { CreatePredioPayload, LocationApiResponse, LocationsApiResponse } from '../types';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -10,6 +10,7 @@ interface LocationsContextType {
   error: string | null;
   addLocation: (payload: CreatePredioPayload) => Promise<any>;
   fetchLocations: () => void;
+  getLocationById: (locationId: number) => Promise<LocationApiResponse>;
 }
 
 // Cria o contexto
@@ -62,12 +63,22 @@ export default function LocationsProvider ({ children }: { children: ReactNode }
     }
   };
 
+  const getLocationById = async (locationId: number) => {
+    try {
+      const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
+      return response.data
+    } catch (err) {
+      throw new Error("Não foi possível encontrar o local")
+    }
+  }
+
   const contextValue = {
     locations,
     isLoading,
     error,
     addLocation,
-    fetchLocations
+    fetchLocations,
+    getLocationById
   };
 
   return (

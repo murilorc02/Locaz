@@ -18,10 +18,8 @@ const EditLocation = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [isLocationLoading, setIsLocationLoading] = useState(true);
-  const { locations: businessLocations} = useLocations();
-
-  const filteredLocation = businessLocations.find(item => item.id == id); // TODO: Rota para pegar um local específico
-
+  const { getLocationById } = useLocations()
+  
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -31,13 +29,13 @@ const EditLocation = () => {
     description: '',
     images: [] as string[],
     schedule: {
-      monday: { active: true, timeSlots: [{ start: '07:00', end: '18:00' }] },
-      tuesday: { active: true, timeSlots: [{ start: '07:00', end: '18:00' }] },
-      wednesday: { active: true, timeSlots: [{ start: '07:00', end: '18:00' }] },
-      thursday: { active: true, timeSlots: [{ start: '07:00', end: '18:00' }] },
-      friday: { active: true, timeSlots: [{ start: '07:00', end: '18:00' }] },
-      saturday: { active: false, timeSlots: [] },
-      sunday: { active: false, timeSlots: [] }
+      segunda: { active: false, timeSlots: [] },
+      terca: { active: false, timeSlots: [] },
+      quarta: { active: false, timeSlots: [] },
+      quinta: { active: false, timeSlots: [] },
+      sexta: { active: false, timeSlots: [] },
+      sabado: { active: false, timeSlots: [] },
+      domingo: { active: false, timeSlots: [] }
     },
     owner: {
       name: '',
@@ -45,39 +43,19 @@ const EditLocation = () => {
       description: ''
     }
   });
-
+  
   const fetchLocation = async () => {
     try {
-      console.log('Fetched location:', filteredLocation);
-
-      let cep = '';
-      const endereco = filteredLocation.endereco;
-      const enderecoParts = endereco.split(',');
-
-      const address = enderecoParts[0]?.trim() || '';
-      const city = enderecoParts[1]?.trim() || '';
-
-      // State: get after second comma, but stop before first '-'
-      let state = enderecoParts[2]?.trim() || '';
-      const dashIndex = state.indexOf('-');
-      if (dashIndex !== -1) {
-        state = state.substring(0, dashIndex).trim();
-      }
-
-      let fullDashIndex = endereco.indexOf('-');
-      if (fullDashIndex !== -1) {
-        cep = endereco.substring(fullDashIndex + 1).trim();
-      }
-
+      const filteredLocation = await getLocationById(id as unknown as number);
       setFormData(prev => ({
         ...prev,
-        name: filteredLocation.nomePredio,
-        address: address,
-        city: city,
-        state: state,
-        zipCode: cep,
-        description: filteredLocation.descricao,
-        images: filteredLocation.imagens
+        name: filteredLocation.data.nome,
+        address: filteredLocation.data.endereco,
+        city: filteredLocation.data.cidade,
+        state: filteredLocation.data.estado,
+        zipCode: filteredLocation.data.cep,
+        description: filteredLocation.data.descricao,
+        images: filteredLocation.data.imagens
       }));
     } catch (err) {
       throw (`Location not fetched. Error: ${err}`);
