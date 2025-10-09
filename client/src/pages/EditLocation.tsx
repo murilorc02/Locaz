@@ -12,14 +12,26 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import WeeklySchedule from '../components/WeeklySchedule';
 import DefaultScheduleEditor from '../components/DefaultScheduleEditor';
 import { useLocations } from '@/contexts/LocationsContext';
+import { Location, OpeningHours } from '@/types';
 
 const EditLocation = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
   const [isLocationLoading, setIsLocationLoading] = useState(true);
-  const { getLocationById } = useLocations()
-  
+  const [originalData, setOriginalData] = useState<Location | null>(null);
+  const { getLocationById, editLocation } = useLocations();
+
+  const getDefaultOpeningDays = () => ({     
+      segunda: { active: false, timeSlots: [] },
+      terca: { active: false, timeSlots: [] },
+      quarta: { active: false, timeSlots: [] },
+      quinta: { active: false, timeSlots: [] },
+      sexta: { active: false, timeSlots: [] },
+      sabado: { active: false, timeSlots: [] },
+      domingo: { active: false, timeSlots: [] }
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     address: '',
@@ -28,25 +40,53 @@ const EditLocation = () => {
     zipCode: '',
     description: '',
     images: [] as string[],
-    schedule: {
-      segunda: { active: false, timeSlots: [] },
-      terca: { active: false, timeSlots: [] },
-      quarta: { active: false, timeSlots: [] },
-      quinta: { active: false, timeSlots: [] },
-      sexta: { active: false, timeSlots: [] },
-      sabado: { active: false, timeSlots: [] },
-      domingo: { active: false, timeSlots: [] }
-    },
+    schedule: getDefaultOpeningDays(),
     owner: {
       name: '',
       photo: '',
       description: ''
     }
   });
-  
+
+  function openingHoursToWeeklySchedule(openingHours: OpeningHours[]) {
+    const days = getDefaultOpeningDays();
+    if (!Array.isArray(openingHours)) return days;
+
+    openingHours.forEach((oh) => {
+      const key = oh.diaSemana?.toLowerCase();
+      if (key) {
+        days[key].active = oh.ativo;
+        days[key].timeSlots.push({
+          start: oh.horarioAbertura,
+          end: oh.horarioFechamento
+        });
+      }
+    });
+
+    return days;
+  }
+
+  function weeklyScheduleToOpeningHours(schedule: typeof formData.schedule, locationId: number): OpeningHours[] {
+    const result: OpeningHours[] = [];
+    Object.entries(schedule).forEach(([diaSemana, day]) => {
+      day.timeSlots.forEach(slot => {
+        result.push({
+          id: id as unknown as number,
+          diaSemana,
+          horarioAbertura: slot.start,
+          horarioFechamento: slot.end,
+          ativo: day.active,
+          predio: {id: locationId}
+        })
+      })
+    });
+    return result;
+  }
+
   const fetchLocation = async () => {
     try {
       const filteredLocation = await getLocationById(id as unknown as number);
+      console.log("Filtered: ", filteredLocation.data)
       setFormData(prev => ({
         ...prev,
         name: filteredLocation.data.nome,
@@ -55,7 +95,8 @@ const EditLocation = () => {
         state: filteredLocation.data.estado,
         zipCode: filteredLocation.data.cep,
         description: filteredLocation.data.descricao,
-        images: filteredLocation.data.imagens
+        images: filteredLocation.data.imagens,
+        schedule: openingHoursToWeeklySchedule(filteredLocation.data.horarioPredio)
       }));
     } catch (err) {
       throw (`Location not fetched. Error: ${err}`);
@@ -77,6 +118,19 @@ const EditLocation = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const locationId = Number(id);
+    const locationPayload: Partial<Location> = {
+      id: locationId,
+      nome: formData.name,
+      endereco: formData.address,
+      cidade: formData.city,
+      estado: formData.state,
+      cep: formData.zipCode,
+      descricao: formData.description,
+      horarioPredio: weeklyScheduleToOpeningHours(formData.schedule, locationId),
+      usuario: user
+    }
+    editLocation(locationPayload);
     console.log('Updated location data:', formData);
     navigate('/business/locations');
   };
@@ -259,11 +313,11 @@ const EditLocation = () => {
                       Configure os dias e horários disponíveis para reserva
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent>{
                     <WeeklySchedule
                       schedule={formData.schedule}
                       onChange={(schedule) => setFormData(prev => ({ ...prev, schedule }))}
-                    />
+                    />}
                   </CardContent>
                 </Card>
 

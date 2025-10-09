@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { CreatePredioPayload, LocationApiResponse, LocationsApiResponse } from '../types';
+import { CreatePredioPayload, Location, LocationApiResponse, LocationsApiResponse } from '../types';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
 
@@ -11,6 +11,7 @@ interface LocationsContextType {
   addLocation: (payload: CreatePredioPayload) => Promise<any>;
   fetchLocations: () => void;
   getLocationById: (locationId: number) => Promise<LocationApiResponse>;
+  editLocation: (location: Partial<Location>) => Promise<any>
 }
 
 // Cria o contexto
@@ -68,7 +69,16 @@ export default function LocationsProvider ({ children }: { children: ReactNode }
       const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
       return response.data
     } catch (err) {
-      throw new Error("Não foi possível encontrar o local")
+      throw new Error("Não foi possível encontrar o local");
+    }
+  }
+
+  const editLocation = async (location: Partial<Location>) => {
+    try {
+      await api.patch<LocationApiResponse>(`predio/${location.id}`, location);
+      await fetchLocations();
+    } catch (err) {
+      throw new Error("Não foi possível editar o local");
     }
   }
 
@@ -78,7 +88,8 @@ export default function LocationsProvider ({ children }: { children: ReactNode }
     error,
     addLocation,
     fetchLocations,
-    getLocationById
+    getLocationById,
+    editLocation
   };
 
   return (

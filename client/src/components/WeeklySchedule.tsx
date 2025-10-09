@@ -177,7 +177,7 @@ const WeeklySchedule = ({ schedule, onChange, showTemplates = true }: WeeklySche
       )}
       
       {daysOfWeek.map(({ key, label }) => {
-        const daySchedule = schedule[key as keyof WeeklyScheduleData];
+        const daySchedule = schedule[key as keyof WeeklyScheduleData] ??{ active: false, timeSlots: [] };
         const currentNewSlot = newTimeSlot[key] || { start: '', end: '' };
 
         return (
