@@ -13,13 +13,13 @@ interface DaySchedule {
 }
 
 interface WeeklyScheduleData {
-  monday: DaySchedule;
-  tuesday: DaySchedule;
-  wednesday: DaySchedule;
-  thursday: DaySchedule;
-  friday: DaySchedule;
-  saturday: DaySchedule;
-  sunday: DaySchedule;
+  segunda: DaySchedule;
+  terca: DaySchedule;
+  quarta: DaySchedule;
+  quinta: DaySchedule;
+  sexta: DaySchedule;
+  sabado: DaySchedule;
+  domingo: DaySchedule;
 }
 
 interface DefaultScheduleEditorProps {
@@ -28,40 +28,40 @@ interface DefaultScheduleEditorProps {
 
 const DEFAULT_SCHEDULES: Record<WorkspaceCategory, WeeklyScheduleData> = {
   workstation: {
-    monday: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
-    tuesday: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
-    wednesday: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
-    thursday: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
-    friday: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
-    saturday: { active: false, timeSlots: [] },
-    sunday: { active: false, timeSlots: [] }
+    segunda: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
+    terca: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
+    quarta: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
+    quinta: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
+    sexta: { active: true, timeSlots: [{ start: '07:00', end: '11:00' }, { start: '13:00', end: '18:00' }] },
+    sabado: { active: false, timeSlots: [] },
+    domingo: { active: false, timeSlots: [] }
   },
   'meeting-room': {
-    monday: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
-    tuesday: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
-    wednesday: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
-    thursday: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
-    friday: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
-    saturday: { active: true, timeSlots: [{ start: '09:00', end: '11:00' }, { start: '14:00', end: '16:00' }] },
-    sunday: { active: false, timeSlots: [] }
+    segunda: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
+    terca: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
+    quarta: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
+    quinta: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
+    sexta: { active: true, timeSlots: [{ start: '08:00', end: '10:00' }, { start: '10:00', end: '12:00' }, { start: '14:00', end: '16:00' }, { start: '16:00', end: '18:00' }] },
+    sabado: { active: true, timeSlots: [{ start: '09:00', end: '11:00' }, { start: '14:00', end: '16:00' }] },
+    domingo: { active: false, timeSlots: [] }
   },
   'training-room': {
-    monday: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
-    tuesday: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
-    wednesday: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
-    thursday: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
-    friday: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
-    saturday: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }] },
-    sunday: { active: false, timeSlots: [] }
+    segunda: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+    terca: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+    quarta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+    quinta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+    sexta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '14:00', end: '18:00' }] },
+    sabado: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }] },
+    domingo: { active: false, timeSlots: [] }
   },
   auditorium: {
-    monday: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
-    tuesday: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
-    wednesday: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
-    thursday: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
-    friday: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
-    saturday: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }] },
-    sunday: { active: false, timeSlots: [] }
+    segunda: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
+    terca: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
+    quarta: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
+    quinta: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
+    sexta: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }, { start: '14:00', end: '17:00' }] },
+    sabado: { active: true, timeSlots: [{ start: '09:00', end: '12:00' }] },
+    domingo: { active: false, timeSlots: [] }
   }
 };
 
