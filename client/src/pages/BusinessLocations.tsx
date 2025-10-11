@@ -25,8 +25,9 @@ const BusinessLocations = () => {
   }
 
   const filteredLocations = businessLocations.data.filter(location =>
-    location.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.endereco.toLowerCase().includes(searchTerm.toLowerCase())
+    location.usuario.id === user.id &&
+    (location.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    location.endereco.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const renderContent = () => {

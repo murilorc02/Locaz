@@ -24,13 +24,15 @@ export type Workspace = {
   nome: string;
   descricao: string;
   capacidade: number;
-  categoria: "workstation" | "meeting-room" | "training-room" | "auditorium";
+  categoria: WorkspaceCategory;
   precoHora: number;
   reservaGratuita: boolean;
   comodidades: string[];
   imagens?: string[];
   predioId: number; 
 };
+
+export type WorkspaceCategory = "workstation" | "meeting-room" | "training-room" | "auditorium";
 
 export type Location = {
   id: number;

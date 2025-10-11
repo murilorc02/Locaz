@@ -32,9 +32,10 @@ const Login = () => {
       await login(email, password);
       navigate('/business/dashboard');
     } catch (error) {
-      console.log('A operação de login falhou:', error);
+      throw new Error('A operação de login falhou:', error);
     } finally {
       setIsLoading(false);
+      return
     }
   };
 
