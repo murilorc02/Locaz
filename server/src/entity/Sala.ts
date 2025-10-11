@@ -44,5 +44,4 @@ export class Sala {
 
     @OneToMany(() => HorarioSala, (horarioSala) => horarioSala.sala)
     horarioSala!: HorarioSala[];
-
 }

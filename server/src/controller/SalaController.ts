@@ -137,7 +137,7 @@ salaController.get('/sala/getByAll', async (req: Request, res: Response, next: N
     try {
         const salas = await salaService.buscarTodas();
 
-        const salasFormatadas = (sala: any) => {
+        const salasFormatadas = salas.map((sala: any) => {
             return {
                 ...sala,
                 predio: {
@@ -148,7 +148,7 @@ salaController.get('/sala/getByAll', async (req: Request, res: Response, next: N
                     }
                 }
             };
-        };
+        });
 
         res.json({
             message: 'Salas encontradas com sucesso',
@@ -161,22 +161,149 @@ salaController.get('/sala/getByAll', async (req: Request, res: Response, next: N
     }
 });
 
-// GET /api/sala/search - Nova rota para busca com filtros
-salaController.get('/search', async (req: Request, res: Response, next: NextFunction) => {
+// GET /api/sala/search - Rota principal para busca com filtros avançados
+salaController.get('/sala/search', async (req: Request, res: Response, next: NextFunction) => {
     try {
+        const {
+            nome,
+            cidade,
+            capacidade,
+            categoria,
+            precoMinimo,
+            precoMaximo,
+            comodidades,
+            dataReserva,
+            horarioInicio,
+            horarioFim,
+            ordenarPor,
+            ordem
+        } = req.query;
+
         const filtros = {
-            cidade: req.query.cidade as string,
-            capacidade: req.query.capacidade ? parseInt(req.query.capacidade as string) : undefined,
-            categoria: req.query.categoria as any,
-            precoMaximo: req.query.precoMaximo ? parseFloat(req.query.precoMaximo as string) : undefined,
-            comodidades: req.query.comodidades ? (req.query.comodidades as string).split(',') : undefined
+            nome: nome as string,
+            cidade: cidade as string,
+            capacidade: capacidade ? parseInt(capacidade as string) : undefined,
+            categoria: categoria as string,
+            precoMinimo: precoMinimo ? parseFloat(precoMinimo as string) : undefined,
+            precoMaximo: precoMaximo ? parseFloat(precoMaximo as string) : undefined,
+            comodidades: comodidades 
+                ? (Array.isArray(comodidades) ? comodidades as string[] : (comodidades as string).split(','))
+                : undefined,
+            dataReserva: dataReserva as string,
+            horarioInicio: horarioInicio as string,
+            horarioFim: horarioFim as string,
+            ordenarPor: ordenarPor as 'preco' | 'capacidade' | 'nome',
+            ordem: (ordem as 'ASC' | 'DESC') || 'ASC'
         };
 
         const salas = await salaService.buscarPorFiltros(filtros);
 
+        const salasFormatadas = salas.map((sala: any) => ({
+            id: sala.id,
+            nome: sala.nome,
+            descricao: sala.descricao,
+            capacidade: sala.capacidade,
+            categoria: sala.categoria,
+            precoHora: sala.precoHora,
+            reservaGratuita: sala.reservaGratuita,
+            comodidades: sala.comodidades,
+            predio: {
+                id: sala.predio.id,
+                nome: sala.predio.nome,
+                cidade: sala.predio.cidade,
+                estado: sala.predio.estado,
+                endereco: sala.predio.endereco,
+                usuario: {
+                    id: sala.predio.usuario.id,
+                    nome: sala.predio.usuario.nome
+                }
+            }
+        }));
+
         res.json({
             message: 'Salas encontradas com sucesso',
-            data: salas,
+            total: salasFormatadas.length,
+            data: salasFormatadas,
+            statusCode: 200,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/sala/comodidades - Obter todas as comodidades disponíveis
+salaController.get('/sala/comodidades', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const comodidades = await salaService.obterComodidadesDisponiveis();
+
+        res.json({
+            message: 'Comodidades encontradas com sucesso',
+            data: comodidades,
+            statusCode: 200,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/sala/categorias - Obter todas as categorias disponíveis
+salaController.get('/sala/categorias', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const categorias = await salaService.obterCategoriasDisponiveis();
+
+        res.json({
+            message: 'Categorias encontradas com sucesso',
+            data: categorias,
+            statusCode: 200,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// GET /api/sala/estatisticas - Obter estatísticas gerais
+salaController.get('/sala/estatisticas', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const estatisticas = await salaService.obterEstatisticas();
+
+        res.json({
+            message: 'Estatísticas obtidas com sucesso',
+            data: estatisticas,
+            statusCode: 200,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+// POST /api/sala/verificar-disponibilidade - Verificar disponibilidade de uma sala
+salaController.post('/sala/verificar-disponibilidade', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { salaId, dataReserva, horarioInicio, horarioFim } = req.body;
+
+        if (!salaId || !dataReserva || !horarioInicio || !horarioFim) {
+            return res.status(400).json({
+                message: 'Campos obrigatórios: salaId, dataReserva, horarioInicio, horarioFim',
+                statusCode: 400,
+                timestamp: new Date().toISOString(),
+                path: req.path
+            });
+        }
+
+        const disponivel = await salaService.verificarDisponibilidade(
+            salaId,
+            new Date(dataReserva),
+            horarioInicio,
+            horarioFim
+        );
+
+        res.json({
+            message: disponivel ? 'Sala disponível' : 'Sala não disponível',
+            disponivel,
             statusCode: 200,
             timestamp: new Date().toISOString()
         });

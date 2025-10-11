@@ -56,7 +56,7 @@ predioController.post('/predio/create',
     }
 );
 
-// PUT /api/predio/editar
+// PATCH /api/predio/editar
 predioController.patch('/predio/:id',
     authMiddleware,
     validationMiddleware(PatchPredioDto),

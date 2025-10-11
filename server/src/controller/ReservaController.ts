@@ -3,8 +3,13 @@ import reservaService from '../services/ReservaService';
 
 const reservaController = Router();
 
-// 1. POST /api/reservas - Criar nova reserva
-reservaController.post('/', async (req: Request, res: Response, next: NextFunction) => {
+// ==================== ENDPOINTS DO LOCATÁRIO ====================
+
+/**
+ * 1. POST /api/reservas/locatario/create
+ * Criar nova reserva com status PENDENTE
+ */
+reservaController.post('/locatario/create', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
 
@@ -17,7 +22,7 @@ reservaController.post('/', async (req: Request, res: Response, next: NextFuncti
 
     const reserva = await reservaService.criar({
       ...req.body,
-      idLocatario,
+      locatarioId: idLocatario,
     });
 
     res.status(201).json({
@@ -30,46 +35,11 @@ reservaController.post('/', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
-// 2. GET /api/reservas - Listar todas as reservas
-reservaController.get('/', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const reservas = await reservaService.listarTodas();
-
-    res.status(200).json({
-      success: true,
-      count: reservas.length,
-      data: reservas,
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// 3. GET /api/reservas/:id - Buscar reserva por ID
-reservaController.get('/:id', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const id = req.params.id;
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID inválido',
-      });
-    }
-
-    const reserva = await reservaService.buscarPorId(id);
-
-    res.status(200).json({
-      success: true,
-      data: reserva,
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// 4. DELETE /api/reservas/:id - Deletar reserva
-reservaController.delete('/:id', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 2. GET /api/reservas/locatario/:id
+ * Buscar reserva por ID (apenas reservas do próprio locatário)
+ */
+reservaController.get('/locatario/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = req.params.id;
     const idLocatario = (req as any).user?.id;
@@ -88,47 +58,10 @@ reservaController.delete('/:id', async (req: Request, res: Response, next: NextF
       });
     }
 
-    await reservaService.deletar(id, idLocatario);
+    const reserva = await reservaService.buscarPorIdLocatario(id, idLocatario);
 
     res.status(200).json({
       success: true,
-      message: 'Reserva deletada com sucesso',
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// ==================== AÇÕES DO LOCADOR (2 endpoints) ====================
-
-// 5. PATCH /api/reservas/:id/aceitar - Locador aceita a reserva
-reservaController.patch('/:id/aceitar', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idLocador = (req as any).user?.id;
-    const idReserva = req.params.id;
-
-    if (!idReserva) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID da reserva inválido',
-      });
-    }
-
-    if (!idLocador) {
-      return res.status(401).json({
-        success: false,
-        message: 'Usuário não autenticado',
-      });
-    }
-
-    const reserva = await reservaService.aceitar({
-      idReserva,
-      idLocador,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Reserva aceita com sucesso',
       data: reserva,
     });
   } catch (error: any) {
@@ -136,48 +69,271 @@ reservaController.patch('/:id/aceitar', async (req: Request, res: Response, next
   }
 });
 
-// 6. PATCH /api/reservas/:id/recusar - Locador recusa a reserva
-reservaController.patch('/:id/recusar', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 3. GET /api/reservas/locatario/predio/:idPredio
+ * Buscar reservas por ID de prédio
+ */
+reservaController.get('/locatario/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idLocador = (req as any).user?.id;
-    const idReserva = req.params.id;
+    const idPredio = req.params.idPredio;
+    const idLocatario = (req as any).user?.id;
 
-    if (!idReserva) {
+    if (!idPredio) {
       return res.status(400).json({
         success: false,
-        message: 'ID da reserva inválido',
+        message: 'ID do prédio inválido',
       });
     }
 
-    if (!idLocador) {
+    if (!idLocatario) {
       return res.status(401).json({
         success: false,
         message: 'Usuário não autenticado',
       });
     }
 
-    const reserva = await reservaService.recusar({
-      idReserva,
-      idLocador,
-    });
+    const reservas = await reservaService.buscarPorPredioLocatario(idPredio, idLocatario);
 
     res.status(200).json({
       success: true,
-      message: 'Reserva recusada',
-      data: reserva,
+      count: reservas.length,
+      data: reservas,
     });
   } catch (error: any) {
     next(error);
   }
 });
 
-// ==================== AÇÕES DO LOCATÁRIO (5 endpoints) ====================
+/**
+ * 4. GET /api/reservas/locatario/predio/nome/:nomePredio
+ * Buscar reservas por nome de prédio (busca com LIKE)
+ */
+reservaController.get('/locatario/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const nomePredio = req.params.nomePredio;
+    const idLocatario = (req as any).user?.id;
 
-// 7. PATCH /api/reservas/:id/cancelar - Locatário cancela a reserva
-reservaController.patch('/:id/cancelar', async (req: Request, res: Response, next: NextFunction) => {
+    if (!nomePredio) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome do prédio inválido',
+      });
+    }
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.buscarPorNomePredioLocatario(nomePredio, idLocatario);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 5. GET /api/reservas/locatario/sala/:idSala
+ * Buscar reservas por ID de sala
+ */
+reservaController.get('/locatario/:idSala', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idSala = req.params.idSala;
+    const idLocatario = (req as any).user?.id;
+
+    if (!idSala) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da sala inválido',
+      });
+    }
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.buscarPorSalaLocatario(idSala, idLocatario);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/*
+ * 6. GET /api/reservas/locatario/:nomeSala
+ * Buscar reservas por nome de sala (busca com LIKE)
+ */
+reservaController.get('/locatario/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const nomeSala = req.params.nomeSala;
+    const idLocatario = (req as any).user?.id;
+
+    if (!nomeSala) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome da sala inválido',
+      });
+    }
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.buscarPorNomeSalaLocatario(nomeSala, idLocatario);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 7. GET /api/reservas/locatario/all
+ * Buscar todas as reservas do locatário
+ */
+reservaController.get('/locatario/all', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.listarTodasLocatario(idLocatario);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 8. GET /api/reservas/locatario/:status
+ * Buscar reservas por status (pendente, aceita, recusada, cancelada)
+ */
+reservaController.get('/locatario/:status', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const status = req.params.status;
+    const idLocatario = (req as any).user?.id;
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.listarPorStatusLocatario(idLocatario, status as any);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 9. GET /api/reservas/locatario/ordenarData?ordem=asc|desc
+ * Ordenar reservas por data (mais recente ao mais antigo ou vice-versa)
+ */
+reservaController.get('/locatario/ordenarData', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idLocatario = (req as any).user?.id;
+    const ordem = req.query.ordem as string;
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    if (!ordem || !['asc', 'desc'].includes(ordem)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parâmetro ordem inválido. Use "asc" (mais antigo ao mais recente) ou "desc" (mais recente ao mais antigo)',
+      });
+    }
+
+    const reservas = await reservaService.listarOrdenadoPorDataLocatario(idLocatario, ordem);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 10. GET /api/reservas/locatario/ordenarValor
+ * Ordenar reservas por valor total (do menor para o maior)
+ */
+reservaController.get('/locatario/ordenarValor', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idLocatario = (req as any).user?.id;
+
+    if (!idLocatario) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.listarOrdenadoPorValorLocatario(idLocatario);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 11. PATCH /api/reservas/locatario/:id/cancelar
+ * Cancelar reserva (atualiza status para CANCELADA)
+ */
+reservaController.patch('/locatario/:id/cancelar', async (req: Request, res: Response, next: NextFunction) => {
+  try {
     const idReserva = req.params.id;
+    const idLocatario = (req as any).user?.id;
 
     if (!idReserva) {
       return res.status(400).json({
@@ -208,19 +364,108 @@ reservaController.patch('/:id/cancelar', async (req: Request, res: Response, nex
   }
 });
 
-// 8. GET /api/reservas/locatario/minhas - Listar todas as reservas do locatário
-reservaController.get('/locatario/minhas', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idLocatario = (req as any).user?.id;
+// ==================== ENDPOINTS DO LOCADOR ====================
 
-    if (!idLocatario) {
+/**
+ * 12. PATCH /api/reservas/locador/:id/aceitar
+ * Aceitar solicitação de reserva (muda status de PENDENTE para ACEITA)
+ */
+reservaController.patch('/locador/:id/aceitar', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idReserva = req.params.id;
+    const idLocador = (req as any).user?.id;
+
+    if (!idReserva) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da reserva inválido',
+      });
+    }
+
+    if (!idLocador) {
       return res.status(401).json({
         success: false,
         message: 'Usuário não autenticado',
       });
     }
 
-    const reservas = await reservaService.listarPorLocatario(idLocatario);
+    const reserva = await reservaService.aceitar({
+      idReserva,
+      idLocador,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Reserva aceita com sucesso',
+      data: reserva,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 13. PATCH /api/reservas/locador/:id/recusar
+ * Recusar solicitação de reserva (muda status de PENDENTE para RECUSADA)
+ */
+reservaController.patch('/locador/:id/recusar', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idReserva = req.params.id;
+    const idLocador = (req as any).user?.id;
+
+    if (!idReserva) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da reserva inválido',
+      });
+    }
+
+    if (!idLocador) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reserva = await reservaService.recusar({
+      idReserva,
+      idLocador,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Reserva recusada',
+      data: reserva,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 14. GET /api/reservas/locador/:idPredio
+ * Buscar reservas por ID de prédio (apenas prédios do locador)
+ */
+reservaController.get('/locador/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idPredio = req.params.idPredio;
+    const idLocador = (req as any).user?.id;
+
+    if (!idPredio) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID do prédio inválido',
+      });
+    }
+
+    if (!idLocador) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.buscarPorPredioLocador(idPredio, idLocador);
 
     res.status(200).json({
       success: true,
@@ -232,19 +477,30 @@ reservaController.get('/locatario/minhas', async (req: Request, res: Response, n
   }
 });
 
-// 9. GET /api/reservas/locatario/futuras - Listar reservas futuras do locatário
-reservaController.get('/locatario/futuras', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 15. GET /api/reservas/locador/:nomePredio
+ * Buscar reservas por nome de prédio (apenas prédios do locador)
+ */
+reservaController.get('/locador/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idLocatario = (req as any).user?.id;
+    const nomePredio = req.params.nomePredio;
+    const idLocador = (req as any).user?.id;
 
-    if (!idLocatario) {
+    if (!nomePredio) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome do prédio inválido',
+      });
+    }
+
+    if (!idLocador) {
       return res.status(401).json({
         success: false,
         message: 'Usuário não autenticado',
       });
     }
 
-    const reservas = await reservaService.listarReservasFuturas(idLocatario);
+    const reservas = await reservaService.buscarPorNomePredioLocador(nomePredio, idLocador);
 
     res.status(200).json({
       success: true,
@@ -256,19 +512,30 @@ reservaController.get('/locatario/futuras', async (req: Request, res: Response, 
   }
 });
 
-// 10. GET /api/reservas/locatario/historico - Listar histórico de reservas do locatário
-reservaController.get('/locatario/historico', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 16. GET /api/reservas/locador/sala/:idSala
+ * Buscar reservas por ID de sala (apenas salas do locador)
+ */
+reservaController.get('/locador/:idSala', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idLocatario = (req as any).user?.id;
+    const idSala = req.params.idSala;
+    const idLocador = (req as any).user?.id;
 
-    if (!idLocatario) {
+    if (!idSala) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da sala inválido',
+      });
+    }
+
+    if (!idLocador) {
       return res.status(401).json({
         success: false,
         message: 'Usuário não autenticado',
       });
     }
 
-    const reservas = await reservaService.listarHistorico(idLocatario);
+    const reservas = await reservaService.buscarPorSalaLocador(idSala, idLocador);
 
     res.status(200).json({
       success: true,
@@ -280,23 +547,85 @@ reservaController.get('/locatario/historico', async (req: Request, res: Response
   }
 });
 
-// 11. GET /api/reservas/locatario/status/:status - Listar reservas do locatário por status
-reservaController.get('/locatario/status/:status', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 17. GET /api/reservas/locador/:nomeSala
+ * Buscar reservas por nome de sala (apenas salas do locador)
+ */
+reservaController.get('/locador/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idLocatario = (req as any).user?.id;
+    const nomeSala = req.params.nomeSala;
+    const idLocador = (req as any).user?.id;
+
+    if (!nomeSala) {
+      return res.status(400).json({
+        success: false,
+        message: 'Nome da sala inválido',
+      });
+    }
+
+    if (!idLocador) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.buscarPorNomeSalaLocador(nomeSala, idLocador);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 18. GET /api/reservas/locador/all
+ * Buscar todas as reservas de todos os prédios/salas do locador
+ */
+reservaController.get('/locador/all', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idLocador = (req as any).user?.id;
+
+    if (!idLocador) {
+      return res.status(401).json({
+        success: false,
+        message: 'Usuário não autenticado',
+      });
+    }
+
+    const reservas = await reservaService.listarTodasLocador(idLocador);
+
+    res.status(200).json({
+      success: true,
+      count: reservas.length,
+      data: reservas,
+    });
+  } catch (error: any) {
+    next(error);
+  }
+});
+
+/**
+ * 19. GET /api/reservas/locador/:status
+ * Buscar reservas por status (apenas das salas do locador)
+ */
+reservaController.get('/locador/:status', async (req: Request, res: Response, next: NextFunction) => {
+  try {
     const status = req.params.status;
+    const idLocador = (req as any).user?.id;
 
-    if (!idLocatario) {
+    if (!idLocador) {
       return res.status(401).json({
         success: false,
         message: 'Usuário não autenticado',
       });
     }
 
-    const reservas = await reservaService.listarPorLocatarioEStatus(
-      idLocatario,
-      status as any,
-    );
+    const reservas = await reservaService.listarPorStatusLocador(idLocador, status as any);
 
     res.status(200).json({
       success: true,
@@ -308,21 +637,30 @@ reservaController.get('/locatario/status/:status', async (req: Request, res: Res
   }
 });
 
-// ==================== CONSULTAS POR SALA (4 endpoints) ====================
-
-// 12. GET /api/reservas/sala/:idSala/pendentes - Listar reservas pendentes de uma sala
-reservaController.get('/sala/:idSala/pendentes', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 20. GET /api/reservas/locador/ordenarData?ordem=asc|desc
+ * Ordenar reservas por data (mais recente ao mais antigo ou vice-versa)
+ */
+reservaController.get('/locador/ordenarData', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idSala = req.params.idSala;
+    const idLocador = (req as any).user?.id;
+    const ordem = req.query.ordem as string;
 
-    if (!idSala) {
-      return res.status(400).json({
+    if (!idLocador) {
+      return res.status(401).json({
         success: false,
-        message: 'ID da sala inválido',
+        message: 'Usuário não autenticado',
       });
     }
 
-    const reservas = await reservaService.listarPendentesPorSala(idSala);
+    if (!ordem || !['asc', 'desc'].includes(ordem)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Parâmetro ordem inválido. Use "asc" (mais antigo ao mais recente) ou "desc" (mais recente ao mais antigo)',
+      });
+    }
+
+    const reservas = await reservaService.listarOrdenadoPorDataLocador(idLocador, ordem);
 
     res.status(200).json({
       success: true,
@@ -334,152 +672,27 @@ reservaController.get('/sala/:idSala/pendentes', async (req: Request, res: Respo
   }
 });
 
-// 13. GET /api/reservas/sala/:idSala/status/:status - Listar reservas de uma sala por status
-reservaController.get('/sala/:idSala/status/:status', async (req: Request, res: Response, next: NextFunction) => {
+/**
+ * 21. GET /api/reservas/locador/ordenar/valor
+ * Ordenar reservas por valor total (do menor para o maior)
+ */
+reservaController.get('/locador/ordenarValor', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idSala = req.params.idSala;
-    const status = req.params.status;
+    const idLocador = (req as any).user?.id;
 
-    if (!idSala) {
-      return res.status(400).json({
+    if (!idLocador) {
+      return res.status(401).json({
         success: false,
-        message: 'ID da sala inválido',
+        message: 'Usuário não autenticado',
       });
     }
 
-    const reservas = await reservaService.listarPorSalaEStatus(idSala, status as any);
+    const reservas = await reservaService.listarOrdenadoPorValorLocador(idLocador);
 
     res.status(200).json({
       success: true,
       count: reservas.length,
       data: reservas,
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// 14. GET /api/reservas/sala/:idSala/data/:data - Listar reservas de uma sala em uma data específica
-reservaController.get('/sala/:idSala/data/:data', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idSala = req.params.idSala;
-    const data = req.params.data;
-
-    if (!idSala) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID da sala inválido',
-      });
-    }
-
-    const reservas = await reservaService.listarPorSalaEData(idSala, data);
-
-    res.status(200).json({
-      success: true,
-      count: reservas.length,
-      data: reservas,
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// 15. GET /api/reservas/sala/:idSala/periodo - Listar reservas de uma sala em um período
-reservaController.get('/sala/:idSala/periodo', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idSala = req.params.idSala;
-    const { dataInicio, dataFim } = req.query;
-
-    if (!idSala) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID da sala inválido',
-      });
-    }
-
-    if (!dataInicio || !dataFim) {
-      return res.status(400).json({
-        success: false,
-        message: 'Os parâmetros dataInicio e dataFim são obrigatórios',
-      });
-    }
-
-    const reservas = await reservaService.listarPorSalaEPeriodo(
-      idSala,
-      dataInicio as string,
-      dataFim as string,
-    );
-
-    res.status(200).json({
-      success: true,
-      count: reservas.length,
-      data: reservas,
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// ==================== VERIFICAÇÕES (1 endpoint) ====================
-
-// 16. GET /api/reservas/verificar/disponibilidade - Verificar disponibilidade de horário
-reservaController.get('/verificar/disponibilidade', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { idSala, data, horarioInicio, horarioFim } = req.query;
-
-    if (!idSala || !data || !horarioInicio || !horarioFim) {
-      return res.status(400).json({
-        success: false,
-        message: 'Todos os parâmetros são obrigatórios: idSala, data, horarioInicio, horarioFim',
-      });
-    }
-
-    const disponivel = await reservaService.verificarDisponibilidade(
-      idSala as string,
-      data as string,
-      horarioInicio as string,
-      horarioFim as string,
-    );
-
-    res.status(200).json({
-      success: true,
-      disponivel,
-      message: disponivel ? 'Horário disponível' : 'Horário indisponível',
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// ==================== FILTROS GERAIS (1 endpoint) ====================
-
-// 17. GET /api/reservas/filtro/status/:status - Listar todas as reservas por status
-reservaController.get('/filtro/status/:status', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const status = req.params.status;
-
-    const reservas = await reservaService.listarPorStatus(status as any);
-
-    res.status(200).json({
-      success: true,
-      count: reservas.length,
-      data: reservas,
-    });
-  } catch (error: any) {
-    next(error);
-  }
-});
-
-// ==================== JOB AUTOMÁTICO (1 endpoint) ====================
-
-// 18. POST /api/reservas/job/cancelar-expiradas - Job para cancelar reservas expiradas
-reservaController.post('/job/cancelar-expiradas', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    await reservaService.cancelarExpiradas();
-
-    res.status(200).json({
-      success: true,
-      message: 'Reservas expiradas canceladas com sucesso',
     });
   } catch (error: any) {
     next(error);

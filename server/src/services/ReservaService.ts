@@ -8,13 +8,12 @@ import {
 } from '../dto/ReservaDto';
 
 class ReservaService {
-  // ==================== CRUD BÁSICO (5 métodos) ====================
+  // ==================== MÉTODOS DO LOCATÁRIO ====================
 
   /**
    * 1. Criar nova reserva
    */
   async criar(dto: CriarReservaDto): Promise<Reserva> {
-    // Validações
     this.validarCamposObrigatorios(dto);
     this.validarFormatoData(dto.dataReservada);
     this.validarFormatoHorario(dto.horarioInicio);
@@ -23,7 +22,6 @@ class ReservaService {
     this.validarPrazoMinimo(dto.dataReservada, dto.horarioInicio);
     this.validarPrazoMaximo(dto.dataReservada);
 
-    // Verificar disponibilidade
     const disponivel = await reservaRepository.verificarDisponibilidade(
       dto.salaId,
       new Date(dto.dataReservada),
@@ -35,7 +33,6 @@ class ReservaService {
       throw new Error('Horário já está reservado');
     }
 
-    // Criar a reserva
     const reserva = await reservaRepository.criar({
       sala: { id: dto.salaId } as any,
       locatario: { id: dto.locatarioId! } as any,
@@ -51,16 +48,9 @@ class ReservaService {
   }
 
   /**
-   * 2. Listar todas as reservas
+   * 2. Buscar reserva por ID (locatário)
    */
-  async listarTodas(): Promise<Reserva[]> {
-    return await reservaRepository.buscarTodos();
-  }
-
-  /**
-   * 3. Buscar reserva por ID
-   */
-  async buscarPorId(id: string): Promise<Reserva> {
+  async buscarPorIdLocatario(id: string, idLocatario: string): Promise<Reserva> {
     if (!id) {
       throw new Error('ID inválido');
     }
@@ -71,46 +61,191 @@ class ReservaService {
       throw new Error('Reserva não encontrada');
     }
 
+    if (reserva.locatario.id !== Number(idLocatario)) {
+      throw new Error('Você não tem permissão para visualizar esta reserva');
+    }
+
     return reserva;
   }
 
   /**
-   * 5. Deletar reserva
+   * 3. Buscar reservas por ID de prédio (locatário)
    */
-  async deletar(id: string, locatarioId: number): Promise<void> {
-    const reserva = await this.buscarPorId(id);
-
-    // Verificar permissão
-    if (reserva.locatario.id !== locatarioId) {
-      throw new Error('Você não tem permissão para deletar esta reserva');
+  async buscarPorPredioLocatario(idPredio: string, idLocatario: string): Promise<Reserva[]> {
+    if (!idPredio) {
+      throw new Error('ID do prédio inválido');
     }
 
-    // Não pode deletar reserva aceita
-    if (reserva.status === StatusReserva.ACEITA) {
-      throw new Error('Não é possível deletar uma reserva aceita. Cancele-a primeiro.');
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
     }
 
-    await reservaRepository.deletar(id);
+    return await reservaRepository.buscarPorPredioLocatario(idPredio, idLocatario);
   }
 
-  // ==================== AÇÕES DO LOCADOR (2 métodos) ====================
+  /**
+   * 4. Buscar reservas por nome de prédio (locatário)
+   */
+  async buscarPorNomePredioLocatario(nomePredio: string, idLocatario: string): Promise<Reserva[]> {
+    if (!nomePredio) {
+      throw new Error('Nome do prédio inválido');
+    }
+
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    return await reservaRepository.buscarPorNomePredioLocatario(nomePredio, idLocatario);
+  }
 
   /**
-   * 6. Aceitar reserva
+   * 5. Buscar reservas por ID de sala (locatário)
+   */
+  async buscarPorSalaLocatario(idSala: string, idLocatario: string): Promise<Reserva[]> {
+    if (!idSala) {
+      throw new Error('ID da sala inválido');
+    }
+
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    return await reservaRepository.buscarPorSalaLocatario(idSala, idLocatario);
+  }
+
+  /**
+   * 6. Buscar reservas por nome de sala (locatário)
+   */
+  async buscarPorNomeSalaLocatario(nomeSala: string, idLocatario: string): Promise<Reserva[]> {
+    if (!nomeSala) {
+      throw new Error('Nome da sala inválido');
+    }
+
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    return await reservaRepository.buscarPorNomeSalaLocatario(nomeSala, idLocatario);
+  }
+
+  /**
+   * 7. Listar todas as reservas do locatário
+   */
+  async listarTodasLocatario(idLocatario: string): Promise<Reserva[]> {
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    return await reservaRepository.buscarPorLocatario(idLocatario);
+  }
+
+  /**
+   * 8. Listar reservas por status (locatário)
+   */
+  async listarPorStatusLocatario(idLocatario: string, status: StatusReserva): Promise<Reserva[]> {
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    this.validarStatus(status);
+    return await reservaRepository.buscarPorLocatarioEStatus(idLocatario, status);
+  }
+
+  /**
+   * 9. Listar reservas ordenadas por data (locatário)
+   */
+  async listarOrdenadoPorDataLocatario(idLocatario: string, ordem: string): Promise<Reserva[]> {
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    if (!ordem || !['asc', 'desc'].includes(ordem)) {
+      throw new Error('Ordem inválida. Use "asc" ou "desc"');
+    }
+
+    return await reservaRepository.buscarOrdenadoPorDataLocatario(idLocatario, ordem);
+  }
+
+  /**
+   * 10. Listar reservas ordenadas por valor total (locatário)
+   */
+  async listarOrdenadoPorValorLocatario(idLocatario: string): Promise<Reserva[]> {
+    if (!idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    return await reservaRepository.buscarOrdenadoPorValorLocatario(idLocatario);
+  }
+
+  /**
+   * 11. Cancelar reserva por locatário
+   */
+  async cancelarPorLocatario(dto: CancelarReservaDto): Promise<Reserva> {
+    if (!dto.idReserva) {
+      throw new Error('ID da reserva inválido');
+    }
+
+    if (!dto.idLocatario) {
+      throw new Error('ID do locatário inválido');
+    }
+
+    const reserva = await reservaRepository.buscarPorId(dto.idReserva);
+
+    if (!reserva) {
+      throw new Error('Reserva não encontrada');
+    }
+
+    if (reserva.locatario.id !== Number(dto.idLocatario)) {
+      throw new Error('Você não tem permissão para cancelar esta reserva');
+    }
+
+    if (reserva.status === StatusReserva.CANCELADA) {
+      throw new Error('Reserva já está cancelada');
+    }
+
+    if (reserva.status === StatusReserva.RECUSADA) {
+      throw new Error('Reserva já foi recusada');
+    }
+
+    return await reservaRepository.atualizar(reserva.id, {
+      status: StatusReserva.CANCELADA,
+    });
+  }
+
+  // ==================== MÉTODOS DO LOCADOR ====================
+
+  /**
+   * 12. Aceitar reserva
    */
   async aceitar(dto: AceitarReservaDto): Promise<Reserva> {
     if (!dto.idReserva) {
       throw new Error('ID da reserva inválido');
     }
 
-    const reserva = await this.buscarPorId(dto.idReserva);
+    if (!dto.idLocador) {
+      throw new Error('ID do locador inválido');
+    }
 
-    // Só pode aceitar reservas pendentes
+    const reserva = await reservaRepository.buscarPorId(dto.idReserva);
+
+    if (!reserva) {
+      throw new Error('Reserva não encontrada');
+    }
+
+    // Verificar se o locador é o proprietário da sala
+    const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(
+      reserva.sala.id,
+      dto.idLocador
+    );
+
+    if (!pertenceAoLocador) {
+      throw new Error('Você não tem permissão para aceitar esta reserva');
+    }
+
     if (reserva.status !== StatusReserva.PENDENTE) {
       throw new Error('Apenas reservas pendentes podem ser aceitas');
     }
 
-    // Verificar prazo de 72 horas
     const prazoLimite = new Date(reserva.createdAt);
     prazoLimite.setHours(prazoLimite.getHours() + 72);
 
@@ -121,249 +256,162 @@ class ReservaService {
       throw new Error('Prazo de 72 horas expirado. Reserva cancelada automaticamente');
     }
 
-    // TODO: Verificar se idLocador é o proprietário da sala
-    // const sala = await salaRepository.buscarPorId(reserva.sala.id);
-    // if (sala.proprietarioId !== dto.idLocador) {
-    //   throw new Error('Você não tem permissão para aceitar esta reserva');
-    // }
-
     return await reservaRepository.atualizar(reserva.id, {
       status: StatusReserva.ACEITA,
     });
   }
 
   /**
-   * 7. Recusar reserva
+   * 13. Recusar reserva
    */
   async recusar(dto: RecusarReservaDto): Promise<Reserva> {
     if (!dto.idReserva) {
       throw new Error('ID da reserva inválido');
     }
 
-    const reserva = await this.buscarPorId(dto.idReserva);
+    if (!dto.idLocador) {
+      throw new Error('ID do locador inválido');
+    }
 
-    // Só pode recusar reservas pendentes
+    const reserva = await reservaRepository.buscarPorId(dto.idReserva);
+
+    if (!reserva) {
+      throw new Error('Reserva não encontrada');
+    }
+
+    // Verificar se o locador é o proprietário da sala
+    const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(
+      reserva.sala.id,
+      dto.idLocador
+    );
+
+    if (!pertenceAoLocador) {
+      throw new Error('Você não tem permissão para recusar esta reserva');
+    }
+
     if (reserva.status !== StatusReserva.PENDENTE) {
       throw new Error('Apenas reservas pendentes podem ser recusadas');
     }
-
-    // TODO: Verificar se idLocador é o proprietário da sala
-    // const sala = await salaRepository.buscarPorId(reserva.sala.id);
-    // if (sala.proprietarioId !== dto.idLocador) {
-    //   throw new Error('Você não tem permissão para recusar esta reserva');
-    // }
 
     return await reservaRepository.atualizar(reserva.id, {
       status: StatusReserva.RECUSADA,
     });
   }
 
-  // ==================== AÇÕES DO LOCATÁRIO (5 métodos) ====================
-
   /**
-   * 8. Cancelar reserva por locatário
+   * 14. Buscar reservas por ID de prédio (locador)
    */
-  async cancelarPorLocatario(dto: CancelarReservaDto): Promise<Reserva> {
-    if (!dto.idReserva) {
-      throw new Error('ID da reserva inválido');
+  async buscarPorPredioLocador(idPredio: string, idLocador: string): Promise<Reserva[]> {
+    if (!idPredio) {
+      throw new Error('ID do prédio inválido');
     }
 
-    const reserva = await this.buscarPorId(dto.idReserva);
-
-    // Verificar permissão
-    if (reserva.locatario.id !== Number(dto.idLocatario)) {
-      throw new Error('Você não tem permissão para cancelar esta reserva');
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
     }
 
-    // Verificar se já está cancelada
-    if (reserva.status === StatusReserva.CANCELADA) {
-      throw new Error('Reserva já está cancelada');
-    }
-
-    // Verificar se já foi recusada
-    if (reserva.status === StatusReserva.RECUSADA) {
-      throw new Error('Reserva já foi recusada');
-    }
-
-    return await reservaRepository.atualizar(reserva.id, {
-      status: StatusReserva.CANCELADA,
-    });
+    return await reservaRepository.buscarPorPredioLocador(idPredio, idLocador);
   }
 
   /**
-   * 9. Listar reservas por locatário
+   * 15. Buscar reservas por nome de prédio (locador)
    */
-  async listarPorLocatario(locatarioId: string): Promise<Reserva[]> {
-    if (!locatarioId) {
-      throw new Error('ID do locatário inválido');
+  async buscarPorNomePredioLocador(nomePredio: string, idLocador: string): Promise<Reserva[]> {
+    if (!nomePredio) {
+      throw new Error('Nome do prédio inválido');
     }
 
-    return await reservaRepository.buscarPorLocatario(locatarioId);
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
+    }
+
+    return await reservaRepository.buscarPorNomePredioLocador(nomePredio, idLocador);
   }
 
   /**
-   * 10. Listar reservas futuras do locatário
+   * 16. Buscar reservas por ID de sala (locador)
    */
-  async listarReservasFuturas(locatarioId: string): Promise<Reserva[]> {
-    if (!locatarioId) {
-      throw new Error('ID do locatário inválido');
+  async buscarPorSalaLocador(idSala: string, idLocador: string): Promise<Reserva[]> {
+    if (!idSala) {
+      throw new Error('ID da sala inválido');
     }
 
-    return await reservaRepository.buscarReservasFuturas(locatarioId);
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
+    }
+
+    // Verificar se a sala pertence ao locador
+    const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(idSala, idLocador);
+    
+    if (!pertenceAoLocador) {
+      throw new Error('Você não tem permissão para visualizar reservas desta sala');
+    }
+
+    return await reservaRepository.buscarPorSalaLocador(idSala, idLocador);
   }
 
   /**
-   * 11. Listar histórico de reservas do locatário
+   * 17. Buscar reservas por nome de sala (locador)
    */
-  async listarHistorico(locatarioId: string): Promise<Reserva[]> {
-    if (!locatarioId) {
-      throw new Error('ID do locatário inválido');
+  async buscarPorNomeSalaLocador(nomeSala: string, idLocador: string): Promise<Reserva[]> {
+    if (!nomeSala) {
+      throw new Error('Nome da sala inválido');
     }
 
-    return await reservaRepository.buscarHistorico(locatarioId);
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
+    }
+
+    return await reservaRepository.buscarPorNomeSalaLocador(nomeSala, idLocador);
   }
 
   /**
-   * 12. Listar reservas do locatário por status
+   * 18. Listar todas as reservas do locador
    */
-  async listarPorLocatarioEStatus(
-    locatarioId: string,
-    status: StatusReserva,
-  ): Promise<Reserva[]> {
-    if (!locatarioId) {
-      throw new Error('ID do locatário inválido');
+  async listarTodasLocador(idLocador: string): Promise<Reserva[]> {
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
+    }
+
+    return await reservaRepository.buscarTodasLocador(idLocador);
+  }
+
+  /**
+   * 19. Listar reservas por status (locador)
+   */
+  async listarPorStatusLocador(idLocador: string, status: StatusReserva): Promise<Reserva[]> {
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
     }
 
     this.validarStatus(status);
-
-    return await reservaRepository.buscarPorLocatarioEStatus(locatarioId, status);
-  }
-
-  // ==================== CONSULTAS POR SALA (4 métodos) ====================
-
-  /**
-   * 13. Listar reservas pendentes por sala
-   */
-  async listarPendentesPorSala(salaId: string): Promise<Reserva[]> {
-    if (!salaId) {
-      throw new Error('ID da sala inválido');
-    }
-
-    return await reservaRepository.buscarPendentesPorSala(salaId);
+    return await reservaRepository.buscarPorLocadorEStatus(idLocador, status);
   }
 
   /**
-   * 14. Listar reservas por sala e status
+   * 20. Listar reservas ordenadas por data (locador)
    */
-  async listarPorSalaEStatus(salaId: string, status: StatusReserva): Promise<Reserva[]> {
-    if (!salaId) {
-      throw new Error('ID da sala inválido');
+  async listarOrdenadoPorDataLocador(idLocador: string, ordem: string): Promise<Reserva[]> {
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
     }
 
-    this.validarStatus(status);
+    if (!ordem || !['asc', 'desc'].includes(ordem)) {
+      throw new Error('Ordem inválida. Use "asc" ou "desc"');
+    }
 
-    return await reservaRepository.buscarPorSalaEStatus(salaId, status);
+    return await reservaRepository.buscarOrdenadoPorDataLocador(idLocador, ordem);
   }
 
   /**
-   * 15. Listar reservas por sala e data
+   * 21. Listar reservas ordenadas por valor total (locador)
    */
-  async listarPorSalaEData(salaId: string, data: string): Promise<Reserva[]> {
-    if (!salaId) {
-      throw new Error('ID da sala inválido');
+  async listarOrdenadoPorValorLocador(idLocador: string): Promise<Reserva[]> {
+    if (!idLocador) {
+      throw new Error('ID do locador inválido');
     }
 
-    this.validarFormatoData(data);
-
-    return await reservaRepository.buscarPorSalaEData(salaId, new Date(data));
-  }
-
-  /**
-   * 16. Listar reservas por sala e período
-   */
-  async listarPorSalaEPeriodo(
-    salaId: string,
-    dataInicio: string,
-    dataFim: string,
-  ): Promise<Reserva[]> {
-    if (!salaId) {
-      throw new Error('ID da sala inválido');
-    }
-
-    this.validarFormatoData(dataInicio);
-    this.validarFormatoData(dataFim);
-
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFim);
-
-    if (inicio > fim) {
-      throw new Error('A data inicial deve ser anterior à data final');
-    }
-
-    return await reservaRepository.buscarPorSalaEPeriodo(salaId, inicio, fim);
-  }
-
-  // ==================== VERIFICAÇÕES (1 método) ====================
-
-  /**
-   * 17. Verificar disponibilidade de horário
-   */
-  async verificarDisponibilidade(
-    salaId: string,
-    data: string,
-    horarioInicio: string,
-    horarioFim: string,
-  ): Promise<boolean> {
-    if (!salaId) {
-      throw new Error('ID da sala inválido');
-    }
-
-    this.validarFormatoData(data);
-    this.validarFormatoHorario(horarioInicio);
-    this.validarFormatoHorario(horarioFim);
-
-    return await reservaRepository.verificarDisponibilidade(
-      salaId,
-      new Date(data),
-      horarioInicio,
-      horarioFim,
-    );
-  }
-
-  // ==================== FILTROS GERAIS (1 método) ====================
-
-  /**
-   * 18. Listar reservas por status
-   */
-  async listarPorStatus(status: StatusReserva): Promise<Reserva[]> {
-    this.validarStatus(status);
-
-    return await reservaRepository.buscarPorStatus(status);
-  }
-
-  // ==================== JOB DE CANCELAMENTO (1 método) ====================
-
-  /**
-   * 19. Cancelar reservas expiradas
-   * Este método deve ser executado por um cron job
-   */
-  async cancelarExpiradas(): Promise<void> {
-    const reservasExpiradas = await reservaRepository.buscarPendentesExpiradas();
-
-    let canceladas = 0;
-
-    for (const reserva of reservasExpiradas) {
-      try {
-        await reservaRepository.atualizar(reserva.id, {
-          status: StatusReserva.CANCELADA,
-        });
-        canceladas++;
-      } catch (error) {
-        console.error(`Erro ao cancelar reserva ${reserva.id}:`, error);
-      }
-    }
-
-    console.log(`[RESERVA SERVICE] ${canceladas} de ${reservasExpiradas.length} reservas expiradas canceladas`);
+    return await reservaRepository.buscarOrdenadoPorValorLocador(idLocador);
   }
 
   // ==================== VALIDAÇÕES PRIVADAS ====================

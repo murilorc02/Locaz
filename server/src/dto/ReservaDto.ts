@@ -8,7 +8,6 @@ export interface CriarReservaDto {
   observacoes?: string;
 }
 
-// DTO para atualizar reserva
 export interface AtualizarReservaDto {
   dataReservada?: string;
   horarioInicio?: string;
@@ -17,19 +16,16 @@ export interface AtualizarReservaDto {
   observacoes?: string;
 }
 
-// DTO para aceitar reserva
 export interface AceitarReservaDto {
   idReserva: string;  
   idLocador: string;  
 }
 
-// DTO para recusar reserva
 export interface RecusarReservaDto {
   idReserva: string;  
   idLocador: string;  
 }
 
-// DTO para cancelar reserva
 export interface CancelarReservaDto {
   idReserva: string;  
   idLocatario: string; 

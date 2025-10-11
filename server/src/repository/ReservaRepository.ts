@@ -9,18 +9,17 @@ class ReservaRepository {
     this.repository = AppDataSource.getRepository(Reserva);
   }
 
+  // ==================== MÉTODOS BÁSICOS ====================
+
   async criar(reserva: Partial<Reserva>): Promise<Reserva> {
     const novaReserva = this.repository.create(reserva);
     return await this.repository.save(novaReserva);
   }
 
   async buscarPorId(id: string): Promise<Reserva | null> {
-    return await this.repository.findOne({ where: { id } });
-  }
-
-  async buscarTodos(): Promise<Reserva[]> {
-    return await this.repository.find({
-      order: { createdAt: 'DESC' },
+    return await this.repository.findOne({ 
+      where: { id },
+      relations: ['locatario', 'sala', 'sala.predio'],
     });
   }
 
@@ -35,47 +34,6 @@ class ReservaRepository {
 
   async deletar(id: string): Promise<void> {
     await this.repository.delete(id);
-  }
-
-  async buscarPendentesExpiradas(): Promise<Reserva[]> {
-    const setentaEDuasHorasAtras = new Date();
-    setentaEDuasHorasAtras.setHours(setentaEDuasHorasAtras.getHours() - 72);
-
-    return await this.repository.find({
-      where: {
-        status: StatusReserva.PENDENTE,
-        createdAt: LessThan(setentaEDuasHorasAtras),
-      },
-    });
-  }
-
-  async buscarPorSalaEData(
-    salaId: string,
-    dataReserva: Date,
-  ): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: {
-        sala: { id: salaId },
-        dataReserva,
-        status: In([StatusReserva.ACEITA, StatusReserva.PENDENTE]),
-      },
-      order: { horarioInicio: 'ASC' },
-    });
-  }
-
-  async buscarPorSalaEPeriodo(
-    salaId: string,
-    dataInicio: Date,
-    dataFim: Date,
-  ): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: {
-        sala: { id: salaId },
-        dataReserva: Between(dataInicio, dataFim),
-        status: In([StatusReserva.ACEITA, StatusReserva.PENDENTE]),
-      },
-      order: { dataReserva: 'ASC', horarioInicio: 'ASC' },
-    });
   }
 
   async verificarDisponibilidade(
@@ -97,12 +55,66 @@ class ReservaRepository {
     return !reservaExistente;
   }
 
+  // ==================== MÉTODOS DO LOCATÁRIO ====================
+
   async buscarPorLocatario(locatarioId: string): Promise<Reserva[]> {
     return await this.repository.find({
       where: { locatario: { id: locatarioId } } as any,
       order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
-      relations: ['locatario', 'sala'],
+      relations: ['locatario', 'sala', 'sala.predio'],
     });
+  }
+
+  async buscarPorPredioLocatario(idPredio: string, idLocatario: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('predio.id = :idPredio', { idPredio })
+      .andWhere('locatario.id = :idLocatario', { idLocatario })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorNomePredioLocatario(nomePredio: string, idLocatario: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('LOWER(predio.nome) LIKE LOWER(:nomePredio)', { nomePredio: `%${nomePredio}%` })
+      .andWhere('locatario.id = :idLocatario', { idLocatario })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorSalaLocatario(idSala: string, idLocatario: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('sala.id = :idSala', { idSala })
+      .andWhere('locatario.id = :idLocatario', { idLocatario })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorNomeSalaLocatario(nomeSala: string, idLocatario: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('LOWER(sala.nome) LIKE LOWER(:nomeSala)', { nomeSala: `%${nomeSala}%` })
+      .andWhere('locatario.id = :idLocatario', { idLocatario })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
   }
 
   async buscarPorLocatarioEStatus(
@@ -115,67 +127,168 @@ class ReservaRepository {
         status 
       } as any,
       order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
-      relations: ['locatario', 'sala'],
+      relations: ['locatario', 'sala', 'sala.predio'],
     });
   }
 
-  async buscarPendentesPorSala(salaId: string): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: {
-        sala: { id: salaId },
-        status: StatusReserva.PENDENTE,
-      },
-      order: { createdAt: 'ASC' },
-    });
-  }
-
-  async buscarPorSalaEStatus(
-    salaId: string,
-    status: StatusReserva,
-  ): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: {
-        sala: { id: salaId },
-        status,
-      },
-      order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
-    });
-  }
-
-  async buscarPorStatus(status: StatusReserva): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: { status },
-      order: { createdAt: 'DESC' },
-    });
-  }
-
-  async buscarReservasFuturas(locatarioId: string): Promise<Reserva[]> {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
+  async buscarOrdenadoPorDataLocatario(idLocatario: string, ordem: string): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
-      .leftJoin('reserva.locatario', 'locatario')
-      .where('locatario.id = :locatarioId', { locatarioId })
-      .andWhere('reserva.dataReserva >= :hoje', { hoje })
-      .andWhere('reserva.status = :status', { status: StatusReserva.ACEITA })
-      .orderBy('reserva.dataReserva', 'ASC')
-      .addOrderBy('reserva.horarioInicio', 'ASC')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('locatario.id = :idLocatario', { idLocatario })
+      .orderBy('reserva.dataReserva', ordem === 'asc' ? 'ASC' : 'DESC')
+      .addOrderBy('reserva.horarioInicio', ordem === 'asc' ? 'ASC' : 'DESC')
       .getMany();
   }
 
-  async buscarHistorico(locatarioId: string): Promise<Reserva[]> {
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-
+  async buscarOrdenadoPorValorLocatario(idLocatario: string): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
-      .leftJoin('reserva.locatario', 'locatario')
-      .where('locatario.id = :locatarioId', { locatarioId })
-      .andWhere('reserva.dataReserva < :hoje', { hoje })
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('locatario.id = :idLocatario', { idLocatario })
+      .orderBy('reserva.valorTotal', 'ASC')
+      .getMany();
+  }
+
+  // ==================== MÉTODOS DO LOCADOR ====================
+
+  async verificarProprietarioSala(idSala: string, idLocador: string): Promise<boolean> {
+    const sala = await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .where('sala.id = :idSala', { idSala })
+      .andWhere('locador.id = :idLocador', { idLocador })
+      .getOne();
+
+    return !!sala;
+  }
+
+  async buscarTodasLocador(idLocador: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('locador.id = :idLocador', { idLocador })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
       .getMany();
+  }
+
+  async buscarPorPredioLocador(idPredio: string, idLocador: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('predio.id = :idPredio', { idPredio })
+      .andWhere('locador.id = :idLocador', { idLocador })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorNomePredioLocador(nomePredio: string, idLocador: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('LOWER(predio.nome) LIKE LOWER(:nomePredio)', { nomePredio: `%${nomePredio}%` })
+      .andWhere('locador.id = :idLocador', { idLocador })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorSalaLocador(idSala: string, idLocador: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('sala.id = :idSala', { idSala })
+      .andWhere('locador.id = :idLocador', { idLocador })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorNomeSalaLocador(nomeSala: string, idLocador: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('LOWER(sala.nome) LIKE LOWER(:nomeSala)', { nomeSala: `%${nomeSala}%` })
+      .andWhere('locador.id = :idLocador', { idLocador })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarPorLocadorEStatus(idLocador: string, status: StatusReserva): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('locador.id = :idLocador', { idLocador })
+      .andWhere('reserva.status = :status', { status })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
+  }
+
+  async buscarOrdenadoPorDataLocador(idLocador: string, ordem: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('locador.id = :idLocador', { idLocador })
+      .orderBy('reserva.dataReserva', ordem === 'asc' ? 'ASC' : 'DESC')
+      .addOrderBy('reserva.horarioInicio', ordem === 'asc' ? 'ASC' : 'DESC')
+      .getMany();
+  }
+
+  async buscarOrdenadoPorValorLocador(idLocador: string): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('locador.id = :idLocador', { idLocador })
+      .orderBy('reserva.valorTotal', 'ASC')
+      .getMany();
+  }
+
+  // ==================== MÉTODOS AUXILIARES ====================
+
+  async buscarPendentesExpiradas(): Promise<Reserva[]> {
+    const setentaEDuasHorasAtras = new Date();
+    setentaEDuasHorasAtras.setHours(setentaEDuasHorasAtras.getHours() - 72);
+
+    return await this.repository.find({
+      where: {
+        status: StatusReserva.PENDENTE,
+        createdAt: LessThan(setentaEDuasHorasAtras),
+      },
+    });
   }
 }
 
