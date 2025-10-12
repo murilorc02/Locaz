@@ -15,7 +15,7 @@ const Profile = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.nome || '');
   const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -91,8 +91,8 @@ const Profile = () => {
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={user?.avatar} alt={user?.name} />
-                      <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user?.avatar} alt={user?.nome} />
+                      <AvatarFallback>{user?.nome.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <Button type="button" variant="outline" className="text-sm">
                       Change Avatar

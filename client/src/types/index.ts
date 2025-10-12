@@ -19,6 +19,8 @@ export type Amenity = {
   description?: string;
 };
 
+export type WorkspaceCategory = "workstation" | "meeting-room" | "training-room" | "auditorium";
+
 export type Workspace = {
   id: number;
   nome: string;
@@ -29,10 +31,16 @@ export type Workspace = {
   reservaGratuita: boolean;
   comodidades: string[];
   imagens?: string[];
-  predioId: number; 
+  predioId: number;
 };
 
-export type WorkspaceCategory = "workstation" | "meeting-room" | "training-room" | "auditorium";
+export type WorkspaceApiResponse = {
+  data: Workspace;
+};
+
+export type WorkspacesApiResponse = {
+  data: Workspace[];
+};
 
 export type Location = {
   id: number;
@@ -104,3 +112,15 @@ export type CreatePredioPayload = {
   horariosFuncionamento: HorarioPayload[];
   usuarioId: number;
 };
+
+export type CreateSalaPayload = {
+  nome: string;
+  descricao: string;
+  capacidade: number;
+  categoria: WorkspaceCategory;
+  precoHora: number;
+  reservaGratuita: boolean;
+  comodidades: string[];
+  imagens?: string[];
+  predioId: number;
+}

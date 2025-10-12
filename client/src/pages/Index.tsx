@@ -1,26 +1,31 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import LocationCard from '@/components/LocationCard';
-import { locations } from '@/data/locations';
 import { Search, MapPin } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
+import { useLocations } from '@/contexts/LocationsContext';
 
 const Index = () => {
+  const { locations, isLoading, fetchLocations } = useLocations();
   const [searchLocation, setSearchLocation] = useState('');
   const navigate = useNavigate();
   
+  useEffect(() => {
+    fetchLocations();
+  }, [])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(`/search?location=${encodeURIComponent(searchLocation)}`);
   };
 
   // Featured locations
-  const featuredLocations = locations.slice(0, 3);
+  const featuredLocations = isLoading === false ? locations.data.slice(0, 3) : [];
   
   return (
     <div className="min-h-screen flex flex-col">

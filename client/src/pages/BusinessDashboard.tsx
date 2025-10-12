@@ -4,16 +4,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { getWorkspacesByLocation } from '../data/workspaces';
 import { Building, Calendar, Clock, MapPin, Plus, TrendingUp, Users, Link } from 'lucide-react';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { Skeleton } from '../components/ui/skeleton';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useWorkspaces } from '@/contexts/WorkspacesContext';
+import { Workspace } from '@/types';
 
 const BusinessDashboard = () => {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
   const { locations, isLoading: isLocationsLoading, error } = useLocations();
+  const { workspaces: fetchedWorkspaces, fetchWorkspaces } = useWorkspaces();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,6 +37,14 @@ const BusinessDashboard = () => {
 
   const totalBookings = 45; // Mock data
   const monthlyRevenue = 12500; // Mock data
+
+  const getWorkspacesByLocationId = (id: number) => {
+    fetchWorkspaces();
+    const locatedWorkspaces = fetchedWorkspaces.data.filter(
+      (workspace) => workspace.predioId === id
+    );
+    return locatedWorkspaces;
+  };
 
   const renderContent = () => {
     // Tratamento de erro
@@ -137,7 +147,7 @@ const BusinessDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {locations.data.slice(0, 3).map(location => (
+                  {locations.data.map(location => (
                     <div key={location.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary-light rounded-lg flex items-center justify-center">
@@ -152,7 +162,7 @@ const BusinessDashboard = () => {
                         </div>
                       </div>
                       <Badge variant="outline">
-                        {getWorkspacesByLocation(location.id).length} espaços
+                        {getWorkspacesByLocationId(location.id).length} espaços
                       </Badge>
                     </div>
                   ))}

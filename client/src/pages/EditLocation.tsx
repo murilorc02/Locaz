@@ -19,17 +19,16 @@ const EditLocation = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [isLocationLoading, setIsLocationLoading] = useState(true);
-  const [originalData, setOriginalData] = useState<Location | null>(null);
   const { getLocationById, editLocation } = useLocations();
 
-  const getDefaultOpeningDays = () => ({     
-      segunda: { active: false, timeSlots: [] },
-      terca: { active: false, timeSlots: [] },
-      quarta: { active: false, timeSlots: [] },
-      quinta: { active: false, timeSlots: [] },
-      sexta: { active: false, timeSlots: [] },
-      sabado: { active: false, timeSlots: [] },
-      domingo: { active: false, timeSlots: [] }
+  const getDefaultOpeningDays = () => ({
+    segunda: { active: false, timeSlots: [] },
+    terca: { active: false, timeSlots: [] },
+    quarta: { active: false, timeSlots: [] },
+    quinta: { active: false, timeSlots: [] },
+    sexta: { active: false, timeSlots: [] },
+    sabado: { active: false, timeSlots: [] },
+    domingo: { active: false, timeSlots: [] }
   });
 
   const [formData, setFormData] = useState({
@@ -76,7 +75,7 @@ const EditLocation = () => {
           horarioAbertura: slot.start,
           horarioFechamento: slot.end,
           ativo: day.active,
-          predio: {id: locationId}
+          predio: { id: locationId }
         })
       })
     });
@@ -86,6 +85,12 @@ const EditLocation = () => {
   const fetchLocation = async () => {
     try {
       const filteredLocation = await getLocationById(id as unknown as number);
+
+      if (filteredLocation.data.usuario.id !== user.id) {
+        navigate('/');
+        return;
+      }
+
       console.log("Filtered: ", filteredLocation.data)
       setFormData(prev => ({
         ...prev,
@@ -106,15 +111,23 @@ const EditLocation = () => {
   }
 
   useEffect(() => {
-    fetchLocation();
-  }, [id]);
-
-  useEffect(() => {
     if (isLocationLoading) return;
     if (!isAuthenticated || (user && user.tipo !== 'locador')) {
       navigate('/login');
     }
   }, [isLocationLoading, isAuthenticated, user, location, navigate]);
+
+  if (isLocationLoading || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  };
+
+  useEffect(() => {
+    fetchLocation();
+  }, [id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

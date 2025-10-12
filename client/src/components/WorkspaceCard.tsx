@@ -1,18 +1,33 @@
 
 import { Link } from 'react-router-dom';
-import { Workspace } from '../types';
-import { getLocation } from '../data/locations';
+import { LocationApiResponse, Workspace } from '../types';
 import { Badge } from '@/components/ui/badge';
 import { MapPin } from 'lucide-react';
 import WorkspaceCategoryIcon from './WorkspaceCategoryIcon';
 import AmenityBadge from './AmenityBadge';
+import { useEffect, useState } from 'react';
+import { useLocations } from '@/contexts/LocationsContext';
 
 interface WorkspaceCardProps {
   workspace: Workspace;
 }
 
 const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
-  const location = getLocation(workspace.predioId);
+  const { getLocationById } = useLocations();
+  const [location, setLocation] = useState({} as LocationApiResponse);
+  
+  const getLocation = async () => {
+    try {
+      const fetchedLocation = await getLocationById(workspace.predioId);
+      setLocation(fetchedLocation)
+    } catch (err) {
+      throw new Error(err);
+    }
+  };
+
+  useEffect(() => {
+    getLocation();
+  }, []);
 
   return (
     <Link to={`/workspace/${workspace.id}`}>
@@ -20,7 +35,7 @@ const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
         <div className="relative h-48 w-full overflow-hidden">
           <img
             src={workspace.imagens[0]}
-            alt={workspace.nomeSala}
+            alt={workspace.nome}
             className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
           />
           <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
@@ -31,19 +46,19 @@ const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
           </div>
         </div>
         <div className="p-4">
-          <h3 className="font-bold text-lg">{workspace.nomeSala}</h3>
+          <h3 className="font-bold text-lg">{workspace.nome}</h3>
           <div className="flex items-center text-text-muted text-sm mt-1">
             <MapPin className="h-4 w-4 mr-1" />
-            <span>{location?.endereco}</span>
+            <span>{location?.data.endereco}</span>
           </div>
           <p className="mt-2 text-sm text-text-muted line-clamp-2">{workspace.descricao}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            {workspace.destaques.slice(0, 3).map(amenityId => (
+            {workspace.comodidades.slice(0, 3).map(amenityId => (
               <AmenityBadge key={amenityId} amenityId={amenityId} showLabel={true} />
             ))}
-            {workspace.destaques.length > 3 && (
+            {workspace.comodidades.length > 3 && (
               <Badge variant="outline" className="bg-bg-muted text-text-muted">
-                +{workspace.destaques.length - 3}
+                +{workspace.comodidades.length - 3}
               </Badge>
             )}
           </div>

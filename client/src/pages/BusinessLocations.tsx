@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { getWorkspacesByLocation } from '../data/workspaces';
 import { Building, MapPin, Plus, Search, Edit, Trash2 } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
@@ -19,15 +18,25 @@ const BusinessLocations = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-    navigate('/login');
-    return null;
+  useEffect(() => {
+    if (!isAuthenticated || user?.tipo !== 'locador') {
+      navigate('/login');
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  // Loading states
+  if (isLoading || !businessLocations?.data || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
   }
 
   const filteredLocations = businessLocations.data.filter(location =>
     location.usuario.id === user.id &&
     (location.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.endereco.toLowerCase().includes(searchTerm.toLowerCase()))
+      location.endereco.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const renderContent = () => {
@@ -62,7 +71,7 @@ const BusinessLocations = () => {
         </Card>
       );
     }
-    
+
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredLocations.map(location => {
@@ -92,12 +101,12 @@ const BusinessLocations = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex-grow flex flex-col justify-between">
-                { /* <div>
+                <div>
                   <div className="flex items-center justify-between mb-4">
                     <Badge className="bg-primary-light text-primary-dark">{workspaceCount} Espaços</Badge>
-                    {location.pontosDeDestaque && <Badge variant="secondary">Destaque</Badge>}
+                    {/* {location.pontosDeDestaque && <Badge variant="secondary">Destaque</Badge>} */}
                   </div>
-                </div> */}
+                </div>
                 <div className="flex gap-2 mt-4">
                   <Button variant="outline" size="sm" className="flex-1" onClick={() => navigate(`/location/${location.id}`)}>
                     Visualizar

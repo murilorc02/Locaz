@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
@@ -11,6 +11,8 @@ import { ArrowLeft, Save } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
+import { useWorkspaces } from '@/contexts/WorkspacesContext';
+import { CreateSalaPayload } from '@/types';
 
 const AddWorkspace = () => {
     const { user, isAuthenticated } = useAuth();
@@ -25,18 +27,31 @@ const AddWorkspace = () => {
         locationId: locationId || '',
     });
 
-    const { locations: businessLocations } = useLocations();
+    const { locations: businessLocations, isLoading } = useLocations();
+    const { addWorkspace } = useWorkspaces();
 
-    // Redirect if not authenticated or not a business
-    if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-        navigate('/login');
-        return null;
+    useEffect(() => {
+        if (!isAuthenticated || user?.tipo !== 'locador') {
+            navigate('/login');
+        }
+    }, [isAuthenticated, user, navigate]);
+
+    // Loading states
+    if (isLoading || !businessLocations?.data || !user) {
+        return (
+            <div className="flex min-h-screen items-center justify-center">
+                <p>Carregando...</p>
+            </div>
+        );
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        // In a real app, this would make an API call
-        console.log('Workspace data:', formData);
+    const userLocations = businessLocations.data.filter(
+        (location) => location.usuario.id === user?.id
+    );
+
+    const handleSubmit = async (payload: CreateSalaPayload) => {
+        addWorkspace(payload)
+        setFormData(null);
         navigate('/business/workspaces');
     };
 
@@ -77,7 +92,22 @@ const AddWorkspace = () => {
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <form onSubmit={handleSubmit} className="space-y-6">
+                                    <form
+                                        onSubmit={(e) => {
+                                            e.preventDefault()
+                                            handleSubmit({
+                                                nome: formData.name,
+                                                descricao: formData.description,
+                                                capacidade: formData.capacity as unknown as number,
+                                                categoria: formData.category,
+                                                reservaGratuita: formData.freeSchedule,
+                                                comodidades: formData.amenities,
+                                                predioId: formData.locationId,
+                                                precoHora: formData.pricePerHour
+                                            })
+
+                                        }}
+                                        className="space-y-6">
                                         <div className="space-y-2">
                                             <Label htmlFor="name">Nome do Espaço</Label>
                                             <Input
@@ -137,9 +167,9 @@ const AddWorkspace = () => {
                                                     <SelectValue placeholder="Selecione um local" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    {businessLocations.map(location => (
+                                                    {userLocations.map(location => (
                                                         <SelectItem key={location.id} value={location.id.toString()}>
-                                                            {location.nomePredio}
+                                                            {location.nome}
                                                         </SelectItem>
                                                     ))}
                                                 </SelectContent>
