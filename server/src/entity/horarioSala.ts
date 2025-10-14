@@ -29,6 +29,9 @@ export class HorarioSala {
   @Column({ name: 'horario_fim', type: 'time' , default: '18:00'})
   horarioFim!: string;
 
+  @Column({ name: 'horarioPadrao', default: false })
+  horarioPadrao!: boolean;
+
   @Column({ default: true })
   disponivel!: boolean;
 
