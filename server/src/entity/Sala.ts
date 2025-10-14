@@ -3,6 +3,26 @@ import { Predio } from './Predio';
 import { Reserva } from './Reserva';
 import { HorarioSala } from './horarioSala';
 
+export enum CategoriaSala {
+    WORKSTATION = 'workstation',
+    MEETINGROOM = 'meeting-room',
+    TRAININGROOM = 'training-room',
+    AUDITORIUM = 'auditorium'
+}
+
+/*export enum Comodidade {
+    WIFI_GRATIS = 'wifiGratis',
+    CAFE_GRATIS = 'cafeGratis',
+    CADEIRAS_ERGONOMICAS = 'cadeirasErgonomicas',
+    PROJETOR = 'projetor',
+    ESPACO_DESCOMPRESSAO = 'espacoDescompressao',
+    ESPACO_KIDS = 'espacoKids',
+    AR_CONDICIONADO = 'arCondicionado',
+    QUADRO_BRANCO = 'quadroBranco',
+    ESTACIONAMENTO = 'estacionamento',
+    COPA_COZINHA = 'copaCozinha'
+}*/
+
 @Entity()
 export class Sala {
     @PrimaryGeneratedColumn()
@@ -17,8 +37,11 @@ export class Sala {
     @Column()
     capacidade!: number;
 
-    @Column({ type: 'text' })
-    categoria!: string;
+    @Column({
+        type: 'enum',
+        enum: CategoriaSala
+    })
+    categoria!: CategoriaSala;
 
     @Column({ name: 'precoHora', type: 'decimal', precision: 10, scale: 2 })
     precoHora!: number;
