@@ -1,6 +1,6 @@
 import { Repository } from 'typeorm';
 import { AppDataSource } from '../data-source';
-import { Sala } from '../entity/Sala';
+import { CategoriaSala, Sala } from '../entity/Sala';
 import { Predio } from '../entity/Predio';
 import { CreateSalaDTO, UpdateSalaDTO } from '../dto/SalaDto';
 
@@ -40,11 +40,11 @@ export class SalaService {
       nome: dadosSala.nome,
       descricao: dadosSala.descricao,
       capacidade: dadosSala.capacidade,
-      categoria: dadosSala.categoria,
+      categoria: dadosSala.categoria as CategoriaSala,
       precoHora: dadosSala.precoHora,
       reservaGratuita: dadosSala.reservaGratuita || false,
       comodidades: dadosSala.comodidades || [],
-      predio
+      predio: predio
     });
 
     return await this.salaRepository.save(sala);
@@ -77,7 +77,12 @@ export class SalaService {
     if (dadosAtualizacao.nome !== undefined) camposParaAtualizar.nome = dadosAtualizacao.nome;
     if (dadosAtualizacao.descricao !== undefined) camposParaAtualizar.descricao = dadosAtualizacao.descricao;
     if (dadosAtualizacao.capacidade !== undefined) camposParaAtualizar.capacidade = dadosAtualizacao.capacidade;
-    if (dadosAtualizacao.categoria !== undefined) camposParaAtualizar.categoria = dadosAtualizacao.categoria;
+    
+    // Converter string para CategoriaSala
+    if (dadosAtualizacao.categoria !== undefined) {
+      camposParaAtualizar.categoria = dadosAtualizacao.categoria as CategoriaSala;
+    }
+    
     if (dadosAtualizacao.precoHora !== undefined) camposParaAtualizar.precoHora = dadosAtualizacao.precoHora;
     if (dadosAtualizacao.reservaGratuita !== undefined) camposParaAtualizar.reservaGratuita = dadosAtualizacao.reservaGratuita;
     if (dadosAtualizacao.comodidades !== undefined) camposParaAtualizar.comodidades = dadosAtualizacao.comodidades;
@@ -382,7 +387,7 @@ export class SalaService {
     });
   }
 
-  async buscarPorCategoria(categoria: string): Promise<Sala[]> {
+  async buscarPorCategoria(categoria: CategoriaSala): Promise<Sala[]> {
     return await this.salaRepository.find({
       where: { categoria },
       relations: ['predio', 'predio.usuario']

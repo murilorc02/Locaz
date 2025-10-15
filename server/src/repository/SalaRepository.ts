@@ -1,6 +1,6 @@
 import { Repository, In } from 'typeorm';
 import { AppDataSource } from '../data-source';
-import { Sala } from '../entity/Sala';
+import { CategoriaSala, Sala } from '../entity/Sala';
 
 export class SalaRepository {
     private repository: Repository<Sala>;
@@ -223,7 +223,7 @@ export class SalaRepository {
             .getCount();
     }
 
-    async buscarPorCategoria(categoria: string): Promise<Sala[]> {
+    async buscarPorCategoria(categoria: CategoriaSala): Promise<Sala[]> {
         return await this.repository.find({
             where: { categoria },
             relations: ['predio', 'predio.usuario'],
