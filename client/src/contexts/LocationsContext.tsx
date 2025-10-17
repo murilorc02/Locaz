@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { CreatePredioPayload, Location, LocationApiResponse, LocationsApiResponse } from '../types';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
@@ -24,7 +24,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -35,7 +35,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchLocations();
@@ -53,11 +53,14 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   };
 
   const getLocationById = async (locationId: number) => {
+    setIsLoading(true);
     try {
       const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
-      return response.data
+      return response.data;
     } catch (err) {
       throw new Error("Não foi possível encontrar o local");
+    } finally {
+      setIsLoading(false);
     }
   }
 

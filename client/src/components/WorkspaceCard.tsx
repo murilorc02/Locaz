@@ -18,7 +18,7 @@ const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   
   const getLocation = async () => {
     try {
-      const fetchedLocation = await getLocationById(workspace.predioId);
+      const fetchedLocation = await getLocationById(workspace.predio.id);
       setLocation(fetchedLocation)
     } catch (err) {
       throw new Error(err);

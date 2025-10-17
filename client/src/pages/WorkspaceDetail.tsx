@@ -48,7 +48,7 @@ const WorkspaceDetail = () => {
 
   useEffect(() => {
     findWorkspace(id as unknown as number);
-    findLocation(workspace.data.predioId);
+    findLocation(workspace.data.predio.id);
   }, [id])
   
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);

@@ -1,5 +1,5 @@
 import { CreateSalaPayload, LocationApiResponse, Workspace, WorkspaceApiResponse, WorkspacesApiResponse } from "@/types";
-import { createContext, ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import api from "@/services/api";
 
@@ -22,10 +22,9 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchWorkspaces = async () => {
+    const fetchWorkspaces = useCallback(async () => {
         if (!user) {
             setIsLoading(false);
-            setError("Usuário não autenticado, tente fazer o login novamente.");
             return;
         }
 
@@ -35,12 +34,12 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         try {
             const response = await api.get<WorkspacesApiResponse>('/sala/getByAll');
             setWorkspaces(response.data);
-        } catch {
-            setError("Não foi possível carregar os espaços.");
+        } catch (err) {
+            setError("Não foi possível carregar os espaços: " + err);
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [user]);
 
     useEffect(() => {
         if (user && user.tipo === 'locador') {
@@ -55,8 +54,8 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         try {
             await api.post('/sala/create', payload);
             await fetchWorkspaces();
-        } catch {
-            throw new Error("Não foi possível adicionar o novo espaço.");
+        } catch (err) {
+            throw new Error(err);
         }
     }
 

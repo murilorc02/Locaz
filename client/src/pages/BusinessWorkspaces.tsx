@@ -18,8 +18,24 @@ const BusinessWorkspaces = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const { locations: businessLocations } = useLocations();  
-  const { workspaces: businessWorkspaces } = useWorkspaces();
+  const { locations: businessLocations, fetchLocations } = useLocations();
+  const { workspaces: businessWorkspaces, fetchWorkspaces } = useWorkspaces();
+
+  useEffect(() => {
+    const reloadData = async () => {
+      if (isAuthenticated && user?.tipo === 'locador') {
+        console.log("🔄 Recarregando locations e workspaces...");
+        // Recarrega ambos em paralelo
+        await Promise.all([
+          fetchLocations(),
+          fetchWorkspaces()
+        ]);
+        console.log("✅ Dados recarregados com sucesso!");
+      }
+    };
+
+    reloadData();
+  }, [isAuthenticated, user, fetchLocations, fetchWorkspaces]);
 
   // Redirect if not authenticated or not a business
   useEffect(() => {
@@ -28,16 +44,16 @@ const BusinessWorkspaces = () => {
     }
   }, [isAuthenticated, user, navigate])
 
-  if (!businessLocations?.data || !businessWorkspaces.data) {
+  if (!businessLocations?.data || !businessWorkspaces.data || !user) {
     return <div> Carregando... </div>
   }
 
   const userLocations = businessLocations.data.filter(
-    (location) => location.usuario.id === user.id
+    (location) => location.usuario.id === user.id,
   );
 
   const userWorkspacesIds = userLocations.flatMap(
-    (location) => location.salas.map((sala) => sala.id)
+    (location) => location.salas.map((sala) => sala.id) || []
   );
 
   const userWorkspaces = businessWorkspaces.data.filter(
@@ -46,15 +62,19 @@ const BusinessWorkspaces = () => {
 
   const filteredWorkspaces = userWorkspaces.filter(workspace => {
     const matchesSearch = workspace.nome.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = selectedLocation === 'all' || workspace.predioId.toString() === selectedLocation;
+    const matchesLocation = selectedLocation === 'all' ||
+      (workspace.predio.id ? workspace.predio.id.toString() === selectedLocation : false);
     return matchesSearch && matchesLocation;
   });
 
-  const getLocationName = (locationId: string) => {
-    const location = userLocations.find(loc => loc.id.toString() === locationId);
+  const getLocationName = (locationId: number | undefined) => {
+    if (locationId == null) {
+      return 'Local não encontrado';
+    }
+    const location = userLocations.find(loc => loc.id === locationId);
     return location ? location.nome : 'Local não encontrado';
   };
-  
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -68,8 +88,8 @@ const BusinessWorkspaces = () => {
                 <p className="text-gray-600 text-sm">Visualize e gerencie todos os seus espaços de trabalho</p>
               </div>
               <div className="mt-2 md:mt-0">
-                <Button 
-                  onClick={() => navigate('/business/add-workspace')}
+                <Button
+                  onClick={() => navigate('/business/workspace-editor')}
                   disabled={userLocations.length === 0}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -78,7 +98,7 @@ const BusinessWorkspaces = () => {
               </div>
             </div>
           </header>
-          
+
           <main className="flex-1 p-6">
             <div className="mb-6 flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
@@ -133,7 +153,7 @@ const BusinessWorkspaces = () => {
                     }
                   </p>
                   {!searchTerm && selectedLocation === 'all' && (
-                    <Button onClick={() => navigate('/business/add-workspace')}>
+                    <Button onClick={() => navigate('/business/workspace-editor')}>
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Primeiro Espaço
                     </Button>
@@ -166,28 +186,30 @@ const BusinessWorkspaces = () => {
                           <TableRow key={workspace.id}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-3">
-                                <img 
+                                {/* <img 
                                   src={workspace.imagens[0]} 
                                   alt={workspace.nome}
                                   className="w-10 h-10 rounded object-cover"
-                                />
+                                /> */}
                                 <div>
                                   <p className="font-medium">{workspace.nome}</p>
                                   <p className="text-sm text-gray-500">{workspace.descricao}</p>
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>{getLocationName(workspace.predioId.toString())}</TableCell>
+                            <TableCell>
+                              {getLocationName(workspace.predio.id)}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <Users className="h-4 w-4" />
-                                {workspace.capacidade}
+                                {workspace.capacidade || 0}
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4" />
-                                R${workspace.precoHora}
+                                R${workspace.precoHora || 0}
                               </div>
                             </TableCell>
                             <TableCell>
@@ -202,15 +224,15 @@ const BusinessWorkspaces = () => {
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => navigate(`/business/edit-workspace/${workspace.id}`)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   className="text-red-600 hover:text-red-700"
                                 >

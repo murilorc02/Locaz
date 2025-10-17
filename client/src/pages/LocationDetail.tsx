@@ -33,7 +33,7 @@ const LocationDetail = () => {
     try {
       fetchWorkspaces();
       const locatedWorkspaces = fetchedWorkspaces.data.filter(
-        (workspace) => workspace.predioId === id as unknown as number
+        (workspace) => workspace.predio.id === id as unknown as number
       );
       setFilteredWorkspaces(locatedWorkspaces);
     } catch (err) {

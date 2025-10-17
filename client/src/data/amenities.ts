@@ -41,7 +41,7 @@ export const workspaceAmenities: Amenity[] = [
     id: 'cafe-gratis',
     name: 'Café Grátis',
     icon: 'coffee',
-    description: 'Café e chá cortesia para todos os usuários'
+    description: 'Café ou chá cortesia para todos os usuários'
   },
   {
     id: 'cadeiras-ergonomicas',

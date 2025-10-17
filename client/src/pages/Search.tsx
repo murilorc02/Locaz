@@ -78,7 +78,7 @@ const Search = () => {
         }
 
         try {
-          const location = await getLocationById(workspace.predioId);
+          const location = await getLocationById(workspace.predio.id);
 
           if (location) {
             const locationMatches =

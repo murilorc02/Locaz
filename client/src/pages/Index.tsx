@@ -9,14 +9,29 @@ import { Search, MapPin } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { useLocations } from '@/contexts/LocationsContext';
+import { LocationApiResponse } from '@/types';
 
 const Index = () => {
-  const { locations, isLoading, fetchLocations } = useLocations();
+  const { isLoading, getLocationById } = useLocations();
   const [searchLocation, setSearchLocation] = useState('');
+  const [featuredLocations, setFeaturedLocations] = useState([] as LocationApiResponse[]);
   const navigate = useNavigate();
-  
+
+  const getFeaturedLocations = async () => {
+    const exampleLocations: LocationApiResponse[] = []
+    try {
+      exampleLocations.push(await getLocationById(1));
+      exampleLocations.push(await getLocationById(2));
+      exampleLocations.push(await getLocationById(3));
+      setFeaturedLocations(exampleLocations);
+    } catch (e) {
+      console.log("Não foi possível encontrar os locais: ", e)
+      setFeaturedLocations([])
+    }
+  }
+
   useEffect(() => {
-    fetchLocations();
+    getFeaturedLocations();
   }, [])
 
   const handleSearch = (e: React.FormEvent) => {
@@ -24,18 +39,15 @@ const Index = () => {
     navigate(`/search?location=${encodeURIComponent(searchLocation)}`);
   };
 
-  // Featured locations
-  const featuredLocations = isLoading === false ? locations.data.slice(0, 3) : [];
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative">
-          <div 
+          <div
             className="bg-cover bg-center h-[380px] sm:h-[500px] md:h-[600px]"
-            style={{ 
+            style={{
               backgroundImage: "url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80')",
               backgroundPosition: "center 30%"
             }}
@@ -44,7 +56,7 @@ const Index = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex h-full items-center justify-center">
               <div className="max-w-3xl text-center">
                 <h1 className="text-3xl font-bold tracking-tight sm:!leading-[3.8rem] md:!leading-[4.5rem] text-white sm:text-5xl md:text-6xl">
-                  Encontre Seu Local de <br/>
+                  Encontre Seu Local de <br />
                   Trabalho
                   <span className="text-secondary text-3xl sm:text-5xl md:text-6xl bg-muted mx-1 px-2 rounded-lg center">Perfeito</span>
                 </h1>
@@ -130,9 +142,17 @@ const Index = () => {
               </Button>
             </div>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredLocations.map((location) => (
-                <LocationCard key={location.id} location={location} />
-              ))}
+              {featuredLocations ?
+                (
+                  <div>
+                    <p> Não há locais disponíveis ainda </p>
+                  </div>
+                )
+                :
+                featuredLocations.map((location) => (
+                  <LocationCard key={location.data.id} location={location.data} />
+                ))
+              }
             </div>
           </div>
         </section>
@@ -146,8 +166,8 @@ const Index = () => {
                 <p className="mt-4 text-white/90">
                   Cadastre seus espaços de trabalho em nossa plataforma e alcance centenas de profissionais que estão procurando pelo local perfeito para trabalhar!
                 </p>
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   className="mt-6 bg-white text-primary hover:bg-gray-100"
                   onClick={() => navigate('/signup')}
                 >
@@ -155,9 +175,9 @@ const Index = () => {
                 </Button>
               </div>
               <div className="w-full md:w-1/2 lg:w-2/5">
-                <img 
-                  src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80" 
-                  alt="Business workspace" 
+                <img
+                  src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
+                  alt="Business workspace"
                   className="rounded-lg shadow-lg"
                 />
               </div>

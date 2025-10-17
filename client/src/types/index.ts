@@ -31,7 +31,9 @@ export type Workspace = {
   reservaGratuita: boolean;
   comodidades: string[];
   imagens?: string[];
-  predioId: number;
+  predio: {
+    id: number;
+  };
 };
 
 export type WorkspaceApiResponse = {
@@ -122,5 +124,5 @@ export type CreateSalaPayload = {
   reservaGratuita: boolean;
   comodidades: string[];
   imagens?: string[];
-  predioId: number;
+  predioId: string;
 }

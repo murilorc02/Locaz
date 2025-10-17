@@ -18,7 +18,7 @@ import LocationDetail from "./pages/LocationDetail";
 import Bookings from "./pages/Bookings";
 import BusinessLocations from "./pages/BusinessLocations";
 import BusinessWorkspaces from "./pages/BusinessWorkspaces";
-import AddWorkspace from "./pages/AddWorkspace";
+import WorkspaceEditor from "./pages/WorkspaceEditor";
 import EditLocation from "./pages/EditLocation";
 import BusinessBookings from "./pages/BusinessBookings";
 import { WorkspacesProvider } from "./contexts/WorkspacesContext";
@@ -47,8 +47,8 @@ const App = () => (
                 <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
                 <Route path="/business/bookings" element={<BusinessBookings />} />
                 <Route path="/business/add-location" element={<AddLocation />} />
-                <Route path="/business/add-workspace" element={<AddWorkspace />} />
-                <Route path="/business/add-workspace/:locationId" element={<AddWorkspace />} />
+                <Route path="/business/workspace-editor" element={<WorkspaceEditor />} />
+                <Route path="/business/workspace-editor/:locationId" element={<WorkspaceEditor />} />
                 <Route path="/business/edit-location/:id" element={<EditLocation />} />
                 <Route path="/bookings" element={<Bookings />} />
                 {/* <Route path="*" element={<NotFound />} /> */}

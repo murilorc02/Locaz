@@ -39,9 +39,9 @@ const BusinessDashboard = () => {
   const monthlyRevenue = 12500; // Mock data
 
   const getWorkspacesByLocationId = (id: number) => {
-    fetchWorkspaces();
+    if (!fetchedWorkspaces?.data) return [];
     const locatedWorkspaces = fetchedWorkspaces.data.filter(
-      (workspace) => workspace.predioId === id
+      (workspace) => workspace.predio.id === id
     );
     return locatedWorkspaces;
   };
