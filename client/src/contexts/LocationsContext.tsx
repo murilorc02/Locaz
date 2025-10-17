@@ -41,7 +41,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     fetchLocations();
   }, [user]);
 
-  const addLocation = async (payload: CreatePredioPayload) => {
+  const addLocation = useCallback(async (payload: CreatePredioPayload) => {
     try {
       // Agora o 'payload' tem o tipo correto e pode ser enviado diretamente
       await api.post('/predio/create', payload);
@@ -50,9 +50,9 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
       console.error("Erro ao adicionar local:", err);
       throw new Error("Não foi possível adicionar o novo local.");
     }
-  };
+  }, []);
 
-  const getLocationById = async (locationId: number) => {
+  const getLocationById = useCallback(async (locationId: number) => {
     setIsLoading(true);
     try {
       const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
@@ -62,7 +62,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [])
 
   const editLocation = async (location: Partial<Location>) => {
     try {

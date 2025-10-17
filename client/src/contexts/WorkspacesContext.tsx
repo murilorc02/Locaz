@@ -23,11 +23,6 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
     const [error, setError] = useState<string | null>(null);
 
     const fetchWorkspaces = useCallback(async () => {
-        if (!user) {
-            setIsLoading(false);
-            return;
-        }
-
         setIsLoading(true);
         setError(null);
 

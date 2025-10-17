@@ -9,21 +9,19 @@ import { Search, MapPin } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { useLocations } from '@/contexts/LocationsContext';
-import { LocationApiResponse } from '@/types';
+import { Location, LocationApiResponse } from '@/types';
 
 const Index = () => {
   const { isLoading, getLocationById } = useLocations();
   const [searchLocation, setSearchLocation] = useState('');
-  const [featuredLocations, setFeaturedLocations] = useState([] as LocationApiResponse[]);
+  const [featuredLocations, setFeaturedLocations] = useState([] as Location[]);
   const navigate = useNavigate();
 
   const getFeaturedLocations = async () => {
-    const exampleLocations: LocationApiResponse[] = []
+    let loc: LocationApiResponse;
     try {
-      exampleLocations.push(await getLocationById(1));
-      exampleLocations.push(await getLocationById(2));
-      exampleLocations.push(await getLocationById(3));
-      setFeaturedLocations(exampleLocations);
+      loc = (await getLocationById(1));
+      setFeaturedLocations((prev) => [...prev, loc.data])
     } catch (e) {
       console.log("Não foi possível encontrar os locais: ", e)
       setFeaturedLocations([])
@@ -142,7 +140,7 @@ const Index = () => {
               </Button>
             </div>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredLocations ?
+              {!featuredLocations ?
                 (
                   <div>
                     <p> Não há locais disponíveis ainda </p>
@@ -150,7 +148,7 @@ const Index = () => {
                 )
                 :
                 featuredLocations.map((location) => (
-                  <LocationCard key={location.data.id} location={location.data} />
+                  <LocationCard key={location.id} location={location} />
                 ))
               }
             </div>
