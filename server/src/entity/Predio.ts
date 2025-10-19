@@ -6,7 +6,7 @@ import { HorarioPredio } from './horarioPredio';
 @Entity('Predio')
 export class Predio {
   @PrimaryGeneratedColumn()
-  id!: string;
+  id!: number;
 
   @Column({ unique: true })
   nome!: string;
@@ -33,8 +33,8 @@ export class Predio {
   horarioPredio?: HorarioPredio[];
 
   @ManyToOne(() => Usuario, (usuario) => usuario.predio)
-  @JoinColumn({name:"usuarioId"})
-  usuario!: Usuario
+  @JoinColumn({ name: "usuarioId" })
+  usuario!: Usuario;
 
   @CreateDateColumn()
   createdAt!: Date;

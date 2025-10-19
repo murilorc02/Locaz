@@ -1,3 +1,4 @@
+
 import { AppDataSource } from '../data-source';
 import { Repository, Between, LessThan, In } from 'typeorm';
 import { Reserva, StatusReserva } from '../entity/Reserva';
@@ -16,14 +17,14 @@ class ReservaRepository {
     return await this.repository.save(novaReserva);
   }
 
-  async buscarPorId(id: string): Promise<Reserva | null> {
+  async buscarPorId(id: number): Promise<Reserva | null> {
     return await this.repository.findOne({ 
       where: { id },
       relations: ['locatario', 'sala', 'sala.predio'],
     });
   }
 
-  async atualizar(id: string, dados: Partial<Reserva>): Promise<Reserva> {
+  async atualizar(id: number, dados: Partial<Reserva>): Promise<Reserva> {
     await this.repository.update(id, dados);
     const reservaAtualizada = await this.buscarPorId(id);
     if (!reservaAtualizada) {
@@ -32,12 +33,12 @@ class ReservaRepository {
     return reservaAtualizada;
   }
 
-  async deletar(id: string): Promise<void> {
+  async deletar(id: number): Promise<void> {
     await this.repository.delete(id);
   }
 
   async verificarDisponibilidade(
-    salaId: string,
+    salaId: number,
     dataReserva: Date,
     horarioInicio: string,
     horarioFim: string,
@@ -57,15 +58,15 @@ class ReservaRepository {
 
   // ==================== MÉTODOS DO LOCATÁRIO ====================
 
-  async buscarPorLocatario(locatarioId: string): Promise<Reserva[]> {
+  async buscarPorLocatario(locatarioId: number): Promise<Reserva[]> {
     return await this.repository.find({
-      where: { locatario: { id: locatarioId } } as any,
+      where: { locatario: { id: locatarioId } },
       order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
       relations: ['locatario', 'sala', 'sala.predio'],
     });
   }
 
-  async buscarPorPredioLocatario(idPredio: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorPredioLocatario(idPredio: number, idLocatario: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -78,7 +79,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorNomePredioLocatario(nomePredio: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorNomePredioLocatario(nomePredio: string, idLocatario: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -91,7 +92,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorSalaLocatario(idSala: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorSalaLocatario(idSala: number, idLocatario: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -104,7 +105,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorNomeSalaLocatario(nomeSala: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorNomeSalaLocatario(nomeSala: string, idLocatario: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -118,20 +119,20 @@ class ReservaRepository {
   }
 
   async buscarPorLocatarioEStatus(
-    locatarioId: string,
+    locatarioId: number,
     status: StatusReserva,
   ): Promise<Reserva[]> {
     return await this.repository.find({
       where: { 
-        locatario: { id: locatarioId } as any, 
+        locatario: { id: locatarioId }, 
         status 
-      } as any,
+      },
       order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
       relations: ['locatario', 'sala', 'sala.predio'],
     });
   }
 
-  async buscarOrdenadoPorDataLocatario(idLocatario: string, ordem: string): Promise<Reserva[]> {
+  async buscarOrdenadoPorDataLocatario(idLocatario: number, ordem: string): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -143,7 +144,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarOrdenadoPorValorLocatario(idLocatario: string): Promise<Reserva[]> {
+  async buscarOrdenadoPorValorLocatario(idLocatario: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -156,7 +157,7 @@ class ReservaRepository {
 
   // ==================== MÉTODOS DO LOCADOR ====================
 
-  async verificarProprietarioSala(idSala: string, idLocador: string): Promise<boolean> {
+  async verificarProprietarioSala(idSala: number, idLocador: number): Promise<boolean> {
     const sala = await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -169,7 +170,7 @@ class ReservaRepository {
     return !!sala;
   }
 
-  async buscarTodasLocador(idLocador: string): Promise<Reserva[]> {
+  async buscarTodasLocador(idLocador: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -182,7 +183,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorPredioLocador(idPredio: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorPredioLocador(idPredio: number, idLocador: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -196,7 +197,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorNomePredioLocador(nomePredio: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorNomePredioLocador(nomePredio: string, idLocador: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -210,7 +211,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorSalaLocador(idSala: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorSalaLocador(idSala: number, idLocador: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -224,7 +225,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorNomeSalaLocador(nomeSala: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorNomeSalaLocador(nomeSala: string, idLocador: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -238,7 +239,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarPorLocadorEStatus(idLocador: string, status: StatusReserva): Promise<Reserva[]> {
+  async buscarPorLocadorEStatus(idLocador: number, status: StatusReserva): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -252,7 +253,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarOrdenadoPorDataLocador(idLocador: string, ordem: string): Promise<Reserva[]> {
+  async buscarOrdenadoPorDataLocador(idLocador: number, ordem: string): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
@@ -265,7 +266,7 @@ class ReservaRepository {
       .getMany();
   }
 
-  async buscarOrdenadoPorValorLocador(idLocador: string): Promise<Reserva[]> {
+  async buscarOrdenadoPorValorLocador(idLocador: number): Promise<Reserva[]> {
     return await this.repository
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')

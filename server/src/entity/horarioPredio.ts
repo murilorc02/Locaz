@@ -14,7 +14,7 @@ export enum DiaSemana {
 @Entity()
 export class HorarioPredio {
   @PrimaryGeneratedColumn()
-  id!: string;
+  id!: number;
 
   @Column({
     type: 'enum',

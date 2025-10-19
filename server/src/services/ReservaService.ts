@@ -50,7 +50,7 @@ class ReservaService {
   /**
    * 2. Buscar reserva por ID (locatário)
    */
-  async buscarPorIdLocatario(id: string, idLocatario: string): Promise<Reserva> {
+  async buscarPorIdLocatario(id: number, idLocatario: number): Promise<Reserva> {
     if (!id) {
       throw new Error('ID inválido');
     }
@@ -61,7 +61,7 @@ class ReservaService {
       throw new Error('Reserva não encontrada');
     }
 
-    if (reserva.locatario.id !== Number(idLocatario)) {
+    if (reserva.locatario.id !== idLocatario) {
       throw new Error('Você não tem permissão para visualizar esta reserva');
     }
 
@@ -71,7 +71,7 @@ class ReservaService {
   /**
    * 3. Buscar reservas por ID de prédio (locatário)
    */
-  async buscarPorPredioLocatario(idPredio: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorPredioLocatario(idPredio: number, idLocatario: number): Promise<Reserva[]> {
     if (!idPredio) {
       throw new Error('ID do prédio inválido');
     }
@@ -86,7 +86,7 @@ class ReservaService {
   /**
    * 4. Buscar reservas por nome de prédio (locatário)
    */
-  async buscarPorNomePredioLocatario(nomePredio: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorNomePredioLocatario(nomePredio: string, idLocatario: number): Promise<Reserva[]> {
     if (!nomePredio) {
       throw new Error('Nome do prédio inválido');
     }
@@ -101,7 +101,7 @@ class ReservaService {
   /**
    * 5. Buscar reservas por ID de sala (locatário)
    */
-  async buscarPorSalaLocatario(idSala: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorSalaLocatario(idSala: number, idLocatario: number): Promise<Reserva[]> {
     if (!idSala) {
       throw new Error('ID da sala inválido');
     }
@@ -116,7 +116,7 @@ class ReservaService {
   /**
    * 6. Buscar reservas por nome de sala (locatário)
    */
-  async buscarPorNomeSalaLocatario(nomeSala: string, idLocatario: string): Promise<Reserva[]> {
+  async buscarPorNomeSalaLocatario(nomeSala: string, idLocatario: number): Promise<Reserva[]> {
     if (!nomeSala) {
       throw new Error('Nome da sala inválido');
     }
@@ -131,7 +131,7 @@ class ReservaService {
   /**
    * 7. Listar todas as reservas do locatário
    */
-  async listarTodasLocatario(idLocatario: string): Promise<Reserva[]> {
+  async listarTodasLocatario(idLocatario: number): Promise<Reserva[]> {
     if (!idLocatario) {
       throw new Error('ID do locatário inválido');
     }
@@ -142,7 +142,7 @@ class ReservaService {
   /**
    * 8. Listar reservas por status (locatário)
    */
-  async listarPorStatusLocatario(idLocatario: string, status: StatusReserva): Promise<Reserva[]> {
+  async listarPorStatusLocatario(idLocatario: number, status: StatusReserva): Promise<Reserva[]> {
     if (!idLocatario) {
       throw new Error('ID do locatário inválido');
     }
@@ -154,7 +154,7 @@ class ReservaService {
   /**
    * 9. Listar reservas ordenadas por data (locatário)
    */
-  async listarOrdenadoPorDataLocatario(idLocatario: string, ordem: string): Promise<Reserva[]> {
+  async listarOrdenadoPorDataLocatario(idLocatario: number, ordem: string): Promise<Reserva[]> {
     if (!idLocatario) {
       throw new Error('ID do locatário inválido');
     }
@@ -169,7 +169,7 @@ class ReservaService {
   /**
    * 10. Listar reservas ordenadas por valor total (locatário)
    */
-  async listarOrdenadoPorValorLocatario(idLocatario: string): Promise<Reserva[]> {
+  async listarOrdenadoPorValorLocatario(idLocatario: number): Promise<Reserva[]> {
     if (!idLocatario) {
       throw new Error('ID do locatário inválido');
     }
@@ -195,7 +195,7 @@ class ReservaService {
       throw new Error('Reserva não encontrada');
     }
 
-    if (reserva.locatario.id !== Number(dto.idLocatario)) {
+    if (reserva.locatario.id !== dto.idLocatario) {
       throw new Error('Você não tem permissão para cancelar esta reserva');
     }
 
@@ -232,7 +232,6 @@ class ReservaService {
       throw new Error('Reserva não encontrada');
     }
 
-    // Verificar se o locador é o proprietário da sala
     const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(
       reserva.sala.id,
       dto.idLocador
@@ -279,7 +278,6 @@ class ReservaService {
       throw new Error('Reserva não encontrada');
     }
 
-    // Verificar se o locador é o proprietário da sala
     const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(
       reserva.sala.id,
       dto.idLocador
@@ -301,7 +299,7 @@ class ReservaService {
   /**
    * 14. Buscar reservas por ID de prédio (locador)
    */
-  async buscarPorPredioLocador(idPredio: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorPredioLocador(idPredio: number, idLocador: number): Promise<Reserva[]> {
     if (!idPredio) {
       throw new Error('ID do prédio inválido');
     }
@@ -316,7 +314,7 @@ class ReservaService {
   /**
    * 15. Buscar reservas por nome de prédio (locador)
    */
-  async buscarPorNomePredioLocador(nomePredio: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorNomePredioLocador(nomePredio: string, idLocador: number): Promise<Reserva[]> {
     if (!nomePredio) {
       throw new Error('Nome do prédio inválido');
     }
@@ -331,7 +329,7 @@ class ReservaService {
   /**
    * 16. Buscar reservas por ID de sala (locador)
    */
-  async buscarPorSalaLocador(idSala: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorSalaLocador(idSala: number, idLocador: number): Promise<Reserva[]> {
     if (!idSala) {
       throw new Error('ID da sala inválido');
     }
@@ -340,7 +338,6 @@ class ReservaService {
       throw new Error('ID do locador inválido');
     }
 
-    // Verificar se a sala pertence ao locador
     const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(idSala, idLocador);
     
     if (!pertenceAoLocador) {
@@ -353,7 +350,7 @@ class ReservaService {
   /**
    * 17. Buscar reservas por nome de sala (locador)
    */
-  async buscarPorNomeSalaLocador(nomeSala: string, idLocador: string): Promise<Reserva[]> {
+  async buscarPorNomeSalaLocador(nomeSala: string, idLocador: number): Promise<Reserva[]> {
     if (!nomeSala) {
       throw new Error('Nome da sala inválido');
     }
@@ -368,7 +365,7 @@ class ReservaService {
   /**
    * 18. Listar todas as reservas do locador
    */
-  async listarTodasLocador(idLocador: string): Promise<Reserva[]> {
+  async listarTodasLocador(idLocador: number): Promise<Reserva[]> {
     if (!idLocador) {
       throw new Error('ID do locador inválido');
     }
@@ -379,7 +376,7 @@ class ReservaService {
   /**
    * 19. Listar reservas por status (locador)
    */
-  async listarPorStatusLocador(idLocador: string, status: StatusReserva): Promise<Reserva[]> {
+  async listarPorStatusLocador(idLocador: number, status: StatusReserva): Promise<Reserva[]> {
     if (!idLocador) {
       throw new Error('ID do locador inválido');
     }
@@ -391,7 +388,7 @@ class ReservaService {
   /**
    * 20. Listar reservas ordenadas por data (locador)
    */
-  async listarOrdenadoPorDataLocador(idLocador: string, ordem: string): Promise<Reserva[]> {
+  async listarOrdenadoPorDataLocador(idLocador: number, ordem: string): Promise<Reserva[]> {
     if (!idLocador) {
       throw new Error('ID do locador inválido');
     }
@@ -406,7 +403,7 @@ class ReservaService {
   /**
    * 21. Listar reservas ordenadas por valor total (locador)
    */
-  async listarOrdenadoPorValorLocador(idLocador: string): Promise<Reserva[]> {
+  async listarOrdenadoPorValorLocador(idLocador: number): Promise<Reserva[]> {
     if (!idLocador) {
       throw new Error('ID do locador inválido');
     }

@@ -26,7 +26,7 @@ export enum CategoriaSala {
 @Entity()
 export class Sala {
     @PrimaryGeneratedColumn()
-    id!: string;
+    id!: number;
 
     @Column()
     nome!: string;
