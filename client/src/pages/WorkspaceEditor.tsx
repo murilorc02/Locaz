@@ -8,12 +8,12 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
-import { ArrowLeft, Save, Loader2, Clock } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Clock, Building } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
-import { CreateSalaPayload, WorkspaceCategory, AvailableHours } from '@/types';
+import { CreateSalaPayload, WorkspaceCategory, AvailableHours, OpeningHours } from '@/types';
 import { workspaceAmenities } from '@/data/amenities';
 import { useToast } from '@/hooks/use-toast';
 import AmenityIcon from '@/components/AmenityIcon';
@@ -52,17 +52,37 @@ const WorkspaceEditor = () => {
         locationId: '',
     });
 
-    function availableHoursToWeeklySchedule(availableHours: AvailableHours[]) {
-        const days = getDefaultOpeningDays();
-        if (!Array.isArray(availableHours)) return days;
+    const [useLocationSchedule, setUseLocationSchedule] = useState(false);
+    const [customScheduleBackup, setCustomScheduleBackup] = useState(getDefaultOpeningDays());
 
-        availableHours.forEach((ah) => {
-            const key = ah.diaSemana?.toLowerCase();
-            if (key) {
-                days[key].active = ah.ativo;
+    const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
+    const [isLoadingSchedule, setIsLoadingSchedule] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+
+    const {
+        locations: businessLocations,
+        isLoading: isLoadingLocations,
+        getLocationById
+    } = useLocations();
+
+    const {
+        addWorkspace,
+        getWorkspaceById,
+        editWorkspace,
+        fetchWorkspaces
+    } = useWorkspaces();
+
+    function scheduleToWeeklySchedule(schedule: OpeningHours[] | AvailableHours[]) {
+        const days = getDefaultOpeningDays();
+        if (!Array.isArray(schedule)) return days;
+
+        schedule.forEach((item) => {
+            const key = item.diaSemana?.toLowerCase();
+            if (key && days[key]) {
+                days[key].active = item.ativo;
                 days[key].timeSlots.push({
-                    start: ah.horarioAbertura,
-                    end: ah.horarioFechamento
+                    start: item.horarioAbertura,
+                    end: item.horarioFechamento
                 });
             }
         });
@@ -75,7 +95,7 @@ const WorkspaceEditor = () => {
         Object.entries(schedule).forEach(([diaSemana, day]) => {
             day.timeSlots.forEach(slot => {
                 result.push({
-                    id: id as unknown as number,
+                    id: workspaceId,
                     diaSemana,
                     horarioAbertura: slot.start,
                     horarioFechamento: slot.end,
@@ -87,11 +107,89 @@ const WorkspaceEditor = () => {
         return result;
     }
 
-    const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
-    const [isSaving, setIsSaving] = useState(false);
+    const applyLocationSchedule = async (locationId: string | number) => {
+        if (!locationId) return;
 
-    const { locations: businessLocations, isLoading: isLoadingLocations } = useLocations();
-    const { addWorkspace, getWorkspaceById, editWorkspace, fetchWorkspaces } = useWorkspaces();
+        setIsLoadingSchedule(true);
+
+        try {
+            // Primeiro tenta encontrar o location nos dados já carregados
+            const cachedLocation = businessLocations.data.find(
+                loc => loc.id === Number(locationId)
+            );
+
+            let locationSchedule;
+
+            if (cachedLocation?.horarioPredio) {
+                // Usa os dados em cache - sem chamada à API!
+                locationSchedule = scheduleToWeeklySchedule(cachedLocation.horarioPredio);
+            } else {
+                // Só busca da API se não tiver em cache
+                const response = await getLocationById(Number(locationId));
+                const location = response.data;
+
+                if (location.horarioPredio && Array.isArray(location.horarioPredio)) {
+                    locationSchedule = scheduleToWeeklySchedule(location.horarioPredio);
+                }
+            }
+
+            if (locationSchedule) {
+                // Salva o backup dos horários customizados antes de aplicar os do prédio
+                setCustomScheduleBackup(formData.schedule);
+
+                setFormData(prev => ({
+                    ...prev,
+                    schedule: locationSchedule
+                }));
+
+                toast({
+                    title: "Horários aplicados!",
+                    description: cachedLocation
+                        ? `Usando horários de funcionamento de "${cachedLocation.nome}".`
+                        : "Horários de funcionamento aplicados ao espaço.",
+                });
+            }
+        } catch (error) {
+            console.error("Erro ao carregar horários do location:", error);
+            toast({
+                title: "Aviso",
+                description: "Não foi possível carregar os horários do local.",
+                variant: "destructive",
+            });
+        } finally {
+            setIsLoadingSchedule(false);
+        }
+
+    };
+
+    const handleUseLocationScheduleToggle = async (checked: boolean) => {
+        setUseLocationSchedule(checked);
+
+        if (checked) {
+            // Ativa: Aplica horários do prédio
+            if (formData.locationId) {
+                await applyLocationSchedule(formData.locationId);
+            } else {
+                toast({
+                    title: "Atenção",
+                    description: "Selecione um local primeiro.",
+                    variant: "destructive",
+                });
+                setUseLocationSchedule(false);
+            }
+        } else {
+            // Desativa: Restaura horários customizados do backup
+            setFormData(prev => ({
+                ...prev,
+                schedule: customScheduleBackup
+            }));
+
+            toast({
+                title: "Horários restaurados",
+                description: "Voltando aos horários personalizados.",
+            });
+        }
+    };
 
     // Carrega dados do workspace se estiver em modo de edição
     useEffect(() => {
@@ -99,29 +197,25 @@ const WorkspaceEditor = () => {
             if (isEditMode && id) {
                 setIsLoadingWorkspace(true);
                 try {
-                    // const response = await getWorkspaceById(id);
-                    // const workspace = response.data;
+                    const response = await getWorkspaceById(id);
+                    const workspace = response.data;
+
+                    const workspaceSchedule = workspace.horarioSala
+                        ? scheduleToWeeklySchedule(workspace.horarioSala)
+                        : getDefaultOpeningDays();
 
                     setFormData({
-                        name: '',
-                        description: '',
-                        capacity: null,
-                        pricePerHour: null,
-                        category: '' as WorkspaceCategory,
-                        freeSchedule: null,
-                        schedule: getDefaultOpeningDays(),
-                        amenities: [],
-                        locationId: null,
-                        // name: workspace.nome || '',
-                        // description: workspace.descricao || '' ,
-                        // capacity: workspace.capacidade?.toString() || null,
-                        // pricePerHour: workspace.precoHora || null,
-                        // category: workspace.categoria || null,
-                        // freeSchedule: workspace.reservaGratuita || null,
-                        // schedule: availableHoursToWeeklySchedule(workspace.horarioSala)
-                        // amenities: workspace.comodidades || null,
-                        // locationId: workspace.predio?.id.toString() || null,
+                        name: workspace.nome || '',
+                        description: workspace.descricao || '',
+                        capacity: workspace.capacidade?.toString() || null,
+                        pricePerHour: workspace.precoHora || null,
+                        category: workspace.categoria || null,
+                        freeSchedule: workspace.reservaGratuita || null,
+                        schedule: workspaceSchedule || getDefaultOpeningDays(),
+                        amenities: workspace.comodidades || [],
+                        locationId: workspace.predio?.id.toString() || null,
                     });
+                    setCustomScheduleBackup(workspaceSchedule);
                 } catch (error) {
                     toast({
                         title: "Erro",
@@ -134,7 +228,6 @@ const WorkspaceEditor = () => {
                 }
             }
         };
-
         loadWorkspace();
     }, [isEditMode, id]);
 
@@ -185,7 +278,6 @@ const WorkspaceEditor = () => {
 
         try {
             if (isEditMode) {
-                // Modo de edição
                 await editWorkspace({
                     id: Number(id),
                     ...payload
@@ -204,6 +296,9 @@ const WorkspaceEditor = () => {
                     description: "Espaço criado com sucesso.",
                 });
             }
+            setCustomScheduleBackup(getDefaultOpeningDays());
+            setUseLocationSchedule(false);
+
             navigate('/business/workspaces');
         } catch (error) {
             toast({
@@ -213,7 +308,7 @@ const WorkspaceEditor = () => {
                     : "Não foi possível criar o espaço.",
                 variant: "destructive",
             });
-            console.log(error)
+            console.log(error);
         } finally {
             setIsSaving(false);
         }
@@ -230,6 +325,15 @@ const WorkspaceEditor = () => {
                 ? prev.amenities.filter(id => id !== amenityId)
                 : [...prev.amenities, amenityId]
         }));
+    };
+
+    const handleLocationChange = (locationId: string) => {
+        handleInputChange('locationId', Number(locationId));
+
+        // Se já estava usando horário do prédio, aplica automaticamente para o novo local
+        if (useLocationSchedule) {
+            applyLocationSchedule(locationId);
+        }
     };
 
     return (
@@ -365,7 +469,7 @@ const WorkspaceEditor = () => {
                                             <Label htmlFor="location">Local</Label>
                                             <Select
                                                 value={formData.locationId?.toString() || ''}
-                                                onValueChange={(value) => handleInputChange('locationId', Number(value))}
+                                                onValueChange={handleLocationChange}
                                             >
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecione um local" />
@@ -387,10 +491,7 @@ const WorkspaceEditor = () => {
                                                     <div key={amenity.id} className="flex items-center space-x-2">
                                                         <Checkbox
                                                             id={amenity.id}
-                                                            checked={
-                                                                // formData.amenities.includes(amenity.id)
-                                                                false
-                                                            }
+                                                            checked={formData.amenities.includes(amenity.id)}
                                                             onCheckedChange={() => handleAmenityToggle(amenity.id)}
                                                         />
                                                         <AmenityIcon type={amenity.icon} />
@@ -424,12 +525,47 @@ const WorkspaceEditor = () => {
                                             Configure os dias e horários disponíveis para reserva
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent>{
+                                    <CardContent className='space-y-4'>
+                                        <div className='flex items-center space-x-2 p-3 bg-muted rounded-lg'>
+                                            <Checkbox
+                                                id="useLocationSchedule"
+                                                checked={useLocationSchedule}
+                                                onCheckedChange={handleUseLocationScheduleToggle}
+                                                disabled={!formData.locationId}
+                                            />
+                                            <div className='flex items-center gap-2'>
+                                                <Building className='h-4 w-4 text-muted-foreground' />
+                                                <Label
+                                                    htmlFor='useLocationSchedule'
+                                                    className='text-sm cursor-pointer'
+                                                >
+                                                    Usar horários de funcionamento do prédio
+                                                </Label>
+                                            </div>
+                                        </div>
+
+                                        {!formData.locationId && (
+                                            <p className='text-xs text-muted-foreground'>
+                                                Selecione um local para habilitar essa opção
+                                            </p>
+                                        )}
+
                                         <WeeklySchedule
                                             schedule={formData.schedule}
-                                            onChange={(schedule) => setFormData(prev => ({ ...prev, schedule }))}
-                                            showTemplates={true}
-                                        />}
+                                            onChange={(schedule) => {
+                                                setFormData(prev => ({ ...prev, schedule }));
+                                                if (!useLocationSchedule) {
+                                                    setCustomScheduleBackup(schedule);
+                                                }
+                                            }}
+                                            showTemplates={!useLocationSchedule}
+                                        />
+
+                                        {useLocationSchedule && (
+                                            <p className='text-xs text-amber-600'>
+                                                ⚠️ Os horários estão sendo sincronizados com o prédio. Desmarque a opção acima para personalizar.
+                                            </p>
+                                        )}
                                     </CardContent>
                                 </Card>
 

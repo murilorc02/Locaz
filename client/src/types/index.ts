@@ -31,6 +31,7 @@ export type Workspace = {
   reservaGratuita: boolean;
   comodidades: string[];
   imagens?: string[];
+  horarioSala: AvailableHours[];
   predio: {
     id: number;
   };
