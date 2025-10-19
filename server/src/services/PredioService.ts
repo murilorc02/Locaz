@@ -1,119 +1,83 @@
-import { Repository } from 'typeorm';
-import { AppDataSource } from '../data-source';
+import { PredioRepository } from '../repository/PredioRepository';
+import { HorarioPredioRepository } from '../repository/HorarioPredioRepository';
 import { Predio } from '../entity/Predio';
-import { HorarioPredio, DiaSemana } from '../entity/horarioPredio';
+import { HorarioFuncionamentoDto, DiaSemana } from '../dto/PredioDto';
 import { Usuario } from '../entity/Usuario';
 
-interface HorarioFuncionamentoData {
-  diaSemana: DiaSemana;
-  horarioAbertura: string;
-  horarioFechamento: string;
-  ativo: boolean;
-}
-
 export class PredioService {
-  private predioRepository: Repository<Predio>;
-  private usuarioRepository: Repository<Usuario>;
-  private horarioPredioRepository: Repository<HorarioPredio>;
+  private predioRepository: PredioRepository;
+  private horarioPredioRepository: HorarioPredioRepository;
 
   constructor() {
-    this.predioRepository = AppDataSource.getRepository(Predio);
-    this.usuarioRepository = AppDataSource.getRepository(Usuario);
-    this.horarioPredioRepository = AppDataSource.getRepository(HorarioPredio);
+    this.predioRepository = new PredioRepository();
+    this.horarioPredioRepository = new HorarioPredioRepository();
   }
 
-  async criarPredio(dadosPredio: {
+  async criarPredio(dados: {
     nome: string;
     endereco: string;
     cidade: string;
     estado: string;
     cep: string;
     descricao?: string;
-    usuarioId: string | number; // Aceitar tanto string quanto number
-    horariosFuncionamento?: HorarioFuncionamentoData[];
+    usuarioId: number;
+    horariosFuncionamento?: HorarioFuncionamentoDto[];
   }): Promise<Predio> {
+    const { horariosFuncionamento, usuarioId, ...dadosBasicos } = dados;
 
-    // Converter usuarioId para number se for string
-    const userId = typeof dadosPredio.usuarioId === 'string'
-      ? parseInt(dadosPredio.usuarioId, 10)
-      : dadosPredio.usuarioId;
-
-    // Validar se a conversão foi bem-sucedida
-    if (isNaN(userId)) {
-      throw new Error('ID do usuário inválido');
-    }
-
-    // Buscar o usuário
-    const usuario = await this.usuarioRepository.findOne({
-      where: { id: userId }
-    });
-
-    if (!usuario) {
-      throw new Error('Usuário não encontrado');
-    }
-
-    // Verificar se já existe um prédio com o mesmo nome
-    const predioExistente = await this.predioRepository.findOne({
-      where: { nome: dadosPredio.nome }
-    });
-
+    // Validação de duplicação de nome
+    const predioExistente = await this.predioRepository.buscarPorNome(dadosBasicos.nome);
     if (predioExistente) {
       throw new Error('Já existe um prédio com este nome');
     }
 
-    const { horariosFuncionamento, usuarioId, ...dadosBasicos } = dadosPredio;
-
-    // Criar o prédio
-    const predio = this.predioRepository.create({
+    // Criar prédio com relacionamento correto
+    const predio = await this.predioRepository.criar({
       ...dadosBasicos,
-      usuario // Relacionamento com a entidade usuario
+      usuario: { id: usuarioId } as Usuario
     });
 
-    const predioSalvo = await this.predioRepository.save(predio);
-
-    // Criar os horários de funcionamento se fornecidos
+    // Criar horários se fornecidos
     if (horariosFuncionamento && horariosFuncionamento.length > 0) {
-      await this.criarHorariosFuncionamento(predioSalvo.id, horariosFuncionamento);
+      await this.horarioPredioRepository.criarMultiplos(
+        predio.id,
+        horariosFuncionamento
+      );
     }
 
-    // Retornar o prédio com os horários
-    return await this.buscarPorId(predioSalvo.id) as Predio;
+    // Retornar prédio com todas as relações
+    return (await this.predioRepository.buscarPorId(predio.id)) as Predio;
   }
 
-  async editarPredio(id: string, dadosAtualizacao: {
-    nome?: string;
-    endereco?: string;
-    cidade?: string;
-    estado?: string;
-    cep?: string;
-    descricao?: string;
-    horariosFuncionamento?: HorarioFuncionamentoData[];
-}): Promise<Predio | null> {
-    const predioExistente = await this.predioRepository.findOne({
-        where: { id },
-        relations: ['usuario']
-    });
-
+  async editarPredio(
+    id: number,
+    dados: {
+      nome?: string;
+      endereco?: string;
+      cidade?: string;
+      estado?: string;
+      cep?: string;
+      descricao?: string;
+      horariosFuncionamento?: HorarioFuncionamentoDto[];
+    }
+  ): Promise<Predio | null> {
+    const predioExistente = await this.predioRepository.buscarPorId(id);
     if (!predioExistente) {
-        throw new Error('Prédio não encontrado');
+      throw new Error('Prédio não encontrado');
     }
 
-    const { horariosFuncionamento, ...dadosBasicos } = dadosAtualizacao;
+    const { horariosFuncionamento, ...dadosBasicos } = dados;
 
-    // Verificar se o nome não está sendo usado por outro prédio (apenas se o nome foi alterado)
+    // Validar nome único (se alterado)
     if (dadosBasicos.nome && dadosBasicos.nome.trim() !== predioExistente.nome.trim()) {
-        const predioComMesmoNome = await this.predioRepository.findOne({
-            where: { nome: dadosBasicos.nome.trim() }
-        });
-
-        if (predioComMesmoNome && predioComMesmoNome.id !== id) {
-            throw new Error('Já existe um prédio com este nome');
-        }
+      const exists = await this.predioRepository.existeNome(dadosBasicos.nome.trim(), id);
+      if (exists) {
+        throw new Error('Já existe um prédio com este nome');
+      }
     }
 
-    // Atualizar apenas os campos fornecidos (não undefined)
+    // Preparar dados para atualização (apenas campos não undefined)
     const camposParaAtualizar: Partial<Predio> = {};
-
     if (dadosBasicos.nome !== undefined) camposParaAtualizar.nome = dadosBasicos.nome;
     if (dadosBasicos.endereco !== undefined) camposParaAtualizar.endereco = dadosBasicos.endereco;
     if (dadosBasicos.cidade !== undefined) camposParaAtualizar.cidade = dadosBasicos.cidade;
@@ -121,100 +85,74 @@ export class PredioService {
     if (dadosBasicos.cep !== undefined) camposParaAtualizar.cep = dadosBasicos.cep;
     if (dadosBasicos.descricao !== undefined) camposParaAtualizar.descricao = dadosBasicos.descricao;
 
-    // Apenas atualizar se houver campos para atualizar
+    // Atualizar dados básicos
     if (Object.keys(camposParaAtualizar).length > 0) {
-        await this.predioRepository.update(id, camposParaAtualizar);
+      await this.predioRepository.atualizar(id, camposParaAtualizar);
     }
 
-    // Atualizar horários de funcionamento se fornecidos
+    // Atualizar horários se fornecidos
     if (horariosFuncionamento !== undefined) {
-        // Remover horários existentes
-        await this.horarioPredioRepository.delete({ predio: { id } });
-
-        // Criar novos horários
-        if (horariosFuncionamento.length > 0) {
-            await this.criarHorariosFuncionamento(id, horariosFuncionamento);
-        }
+      await this.horarioPredioRepository.deletarPorPredio(id);
+      if (horariosFuncionamento.length > 0) {
+        await this.horarioPredioRepository.criarMultiplos(id, horariosFuncionamento);
+      }
     }
 
-    // Retornar o prédio atualizado com apenas as relações necessárias
-    return await this.predioRepository.findOne({
-        where: { id },
-        relations: ['usuario'],
-        select: {
-            id: true,
-            nome: true,
-            endereco: true,
-            cidade: true,
-            estado: true,
-            cep: true,
-            descricao: true,
-            createdAt: true,
-            updatedAt: true,
-            usuario: {
-                id: true,
-                nome: true
-            }
-        }
-    });
-}
+    return await this.predioRepository.buscarPorId(id);
+  }
 
-  async buscarPorNome(nome: string): Promise<Predio | null> {
-    return await this.predioRepository.findOne({
-      where: { nome },
-      relations: ['usuario']
-    });
+  async buscarPorId(id: number): Promise<Predio | null> {
+    return await this.predioRepository.buscarPorId(id);
   }
 
   async buscarTodos(): Promise<Predio[]> {
-    return await this.predioRepository.find({
-      relations: ['salas', 'usuario', 'horarioPredio'],
-      order: {
-        nome: 'ASC'
-      }
-    });
+    return await this.predioRepository.buscarTodos();
   }
 
-  async buscarPorId(id: string): Promise<Predio | null> {
-    return await this.predioRepository.findOne({
-      where: { id },
-      relations: ['salas', 'usuario', 'horarioPredio'],
-      order: {
-        horarioPredio: {
-          diaSemana: 'ASC'
-        }
-      }
-    });
+  async buscarPorNome(nome: string): Promise<Predio | null> {
+    return await this.predioRepository.buscarPorNome(nome);
   }
 
-  async buscarHorariosPorPredio(predioId: string): Promise<HorarioPredio[]> {
-    return await this.horarioPredioRepository.find({
-      where: { predio: { id: predioId } },
-      order: { diaSemana: 'ASC' }
-    });
+  async buscarPorUsuario(usuarioId: number): Promise<Predio[]> {
+    return await this.predioRepository.buscarPorUsuario(usuarioId);
   }
 
-  async excluirPredio(id: string): Promise<void> {
-    const predio = await this.buscarPorId(id);
-    if (!predio) {
+  async buscarPorCidade(cidade: string): Promise<Predio[]> {
+    return await this.predioRepository.buscarPorCidade(cidade);
+  }
+
+  async buscarHorariosPorPredio(predioId: number) {
+    return await this.horarioPredioRepository.buscarPorPredio(predioId);
+  }
+
+  async excluirPredio(id: number): Promise<void> {
+    const predioExistente = await this.predioRepository.buscarPorId(id);
+    if (!predioExistente) {
       throw new Error('Prédio não encontrado');
     }
 
-    // Remover horários de funcionamento primeiro (devido à foreign key)
-    await this.horarioPredioRepository.delete({ predio: { id } });
+    // Remover horários primeiro (FK constraint)
+    await this.horarioPredioRepository.deletarPorPredio(id);
 
-    // Remover o prédio
-    await this.predioRepository.delete(id);
+    // Remover prédio
+    await this.predioRepository.excluir(id);
   }
 
-  async verificarFuncionamento(predioId: string, diaSemana: DiaSemana, horario: string): Promise<boolean> {
-    const horarioPredio = await this.horarioPredioRepository.findOne({
-      where: {
-        predio: { id: predioId },
-        diaSemana,
-        ativo: true
-      }
-    });
+  async verificarFuncionamento(
+    predioId: number,
+    diaSemana: string,
+    horario: string
+  ): Promise<boolean> {
+    // Validar se o diaSemana é um valor válido do enum
+    const diaValido = Object.values(DiaSemana).includes(diaSemana as DiaSemana);
+    if (!diaValido) {
+      throw new Error(`Dia da semana inválido: ${diaSemana}`);
+    }
+
+    const horarioPredio = await this.horarioPredioRepository.buscarPorDia(
+      predioId,
+      diaSemana as DiaSemana
+    );
 
     if (!horarioPredio) {
       return false;
@@ -227,36 +165,8 @@ export class PredioService {
     return horarioFormatado >= abertura && horarioFormatado <= fechamento;
   }
 
-  private async criarHorariosFuncionamento(predioId: string, horarios: HorarioFuncionamentoData[]): Promise<void> {
-    const horariosParaCriar = horarios.map(horario =>
-      this.horarioPredioRepository.create({
-        ...horario,
-        predio: { id: predioId } as Predio
-      })
-    );
-
-    await this.horarioPredioRepository.save(horariosParaCriar);
-  }
-
   private formatarHorario(horario: string): number {
     const [horas, minutos] = horario.split(':').map(Number);
     return horas * 100 + minutos;
-  }
-
-  async buscarPrediosAbertos(diaSemana: DiaSemana, horarioAtual: string): Promise<Predio[]> {
-    const horarioFormatado = this.formatarHorario(horarioAtual);
-
-    const prediosAbertos = await this.predioRepository
-      .createQueryBuilder('predio')
-      .leftJoinAndSelect('predio.horarioPredio', 'horario')
-      .leftJoinAndSelect('predio.usuario', 'usuario')
-      .leftJoinAndSelect('predio.salas', 'salas')
-      .where('horario.diaSemana = :diaSemana', { diaSemana })
-      .andWhere('horario.ativo = :ativo', { ativo: true })
-      .andWhere('horario.horarioAbertura <= :horario', { horario: horarioAtual })
-      .andWhere('horario.horarioFechamento >= :horario', { horario: horarioAtual })
-      .getMany();
-
-    return prediosAbertos;
   }
 }

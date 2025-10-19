@@ -12,7 +12,7 @@ export enum StatusReserva {
 @Entity()
 export class Reserva {
   @PrimaryGeneratedColumn()
-  id!: string;
+  id!: number;
 
   @Column({ name: 'data_reserva', type: 'date' })
   dataReserva!: Date;

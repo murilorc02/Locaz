@@ -87,11 +87,11 @@ salaController.patch('/sala/editar/:id',
     validationMiddleware(AtualizarSalaDto),
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
-            const { id } = req.params;
+            const id = parseInt(req.params.id);
 
-            if (!id) {
+            if (isNaN(id)) {
                 return res.status(400).json({
-                    message: 'ID da sala é obrigatório',
+                    message: 'ID da sala inválido',
                     statusCode: 400,
                     timestamp: new Date().toISOString(),
                     path: req.path
@@ -176,7 +176,8 @@ salaController.get('/sala/search', async (req: Request, res: Response, next: Nex
             horarioInicio,
             horarioFim,
             ordenarPor,
-            ordem
+            ordem,
+            predioId
         } = req.query;
 
         const filtros = {
@@ -193,7 +194,8 @@ salaController.get('/sala/search', async (req: Request, res: Response, next: Nex
             horarioInicio: horarioInicio as string,
             horarioFim: horarioFim as string,
             ordenarPor: ordenarPor as 'preco' | 'capacidade' | 'nome',
-            ordem: (ordem as 'ASC' | 'DESC') || 'ASC'
+            ordem: (ordem as 'ASC' | 'DESC') || 'ASC',
+            predioId: predioId ? parseInt(predioId as string) : undefined
         };
 
         const salas = await salaService.buscarPorFiltros(filtros);
@@ -294,8 +296,18 @@ salaController.post('/sala/verificar-disponibilidade', async (req: Request, res:
             });
         }
 
+        const id = parseInt(salaId);
+        if (isNaN(id)) {
+            return res.status(400).json({
+                message: 'ID da sala inválido',
+                statusCode: 400,
+                timestamp: new Date().toISOString(),
+                path: req.path
+            });
+        }
+
         const disponivel = await salaService.verificarDisponibilidade(
-            salaId,
+            id,
             new Date(dataReserva),
             horarioInicio,
             horarioFim
@@ -312,10 +324,57 @@ salaController.post('/sala/verificar-disponibilidade', async (req: Request, res:
     }
 });
 
+// GET /api/sala/:id/horarios-disponiveis - Obter horários disponíveis de uma sala
+salaController.get('/sala/:id/horarios-disponiveis', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const id = parseInt(req.params.id);
+        const { dataReserva } = req.query;
+
+        if (isNaN(id)) {
+            return res.status(400).json({
+                message: 'ID da sala inválido',
+                statusCode: 400,
+                timestamp: new Date().toISOString(),
+                path: req.path
+            });
+        }
+
+        if (!dataReserva) {
+            return res.status(400).json({
+                message: 'Data de reserva é obrigatória',
+                statusCode: 400,
+                timestamp: new Date().toISOString(),
+                path: req.path
+            });
+        }
+
+        const horarios = await salaService.obterHorariosDisponiveis(id, dataReserva as string);
+
+        res.json({
+            message: 'Horários obtidos com sucesso',
+            data: horarios,
+            statusCode: 200,
+            timestamp: new Date().toISOString()
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
 // GET /api/sala/:id
 salaController.get('/sala/:id', async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { id } = req.params;
+        const id = parseInt(req.params.id);
+
+        if (isNaN(id)) {
+            return res.status(400).json({
+                message: 'ID da sala inválido',
+                statusCode: 400,
+                timestamp: new Date().toISOString(),
+                path: req.path
+            });
+        }
+
         const sala = await salaService.buscarPorId(id);
 
         if (!sala) {
@@ -326,6 +385,7 @@ salaController.get('/sala/:id', async (req: Request, res: Response, next: NextFu
                 path: req.path
             });
         }
+
         const salaResponse = {
             ...sala,
             predio: {
@@ -353,11 +413,11 @@ salaController.delete('/sala/delete/:id',
     authMiddleware,
     async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
         try {
-            const { id } = req.params;
+            const id = parseInt(req.params.id);
 
-            if (!id) {
+            if (isNaN(id)) {
                 return res.status(400).json({
-                    message: 'ID da sala é obrigatório',
+                    message: 'ID da sala inválido',
                     statusCode: 400,
                     timestamp: new Date().toISOString(),
                     path: req.path
@@ -397,4 +457,4 @@ salaController.delete('/sala/delete/:id',
     }
 );
 
-export default salaController;
+export default salaController

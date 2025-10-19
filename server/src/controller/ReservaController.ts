@@ -36,15 +36,15 @@ reservaController.post('/locatario/create', async (req: Request, res: Response, 
 });
 
 /**
- * 2. GET /api/reservas/locatario/:id
+ * 2. GET /api/reservas/locatario/detalhes/:id
  * Buscar reserva por ID (apenas reservas do próprio locatário)
  */
-reservaController.get('/locatario/:id', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/detalhes/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const id = req.params.id;
+    const id = parseInt(req.params.id);
     const idLocatario = (req as any).user?.id;
 
-    if (!id) {
+    if (isNaN(id)) {
       return res.status(400).json({
         success: false,
         message: 'ID inválido',
@@ -73,12 +73,12 @@ reservaController.get('/locatario/:id', async (req: Request, res: Response, next
  * 3. GET /api/reservas/locatario/predio/:idPredio
  * Buscar reservas por ID de prédio
  */
-reservaController.get('/locatario/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/predio/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idPredio = req.params.idPredio;
+    const idPredio = parseInt(req.params.idPredio);
     const idLocatario = (req as any).user?.id;
 
-    if (!idPredio) {
+    if (isNaN(idPredio)) {
       return res.status(400).json({
         success: false,
         message: 'ID do prédio inválido',
@@ -108,7 +108,7 @@ reservaController.get('/locatario/:idPredio', async (req: Request, res: Response
  * 4. GET /api/reservas/locatario/predio/nome/:nomePredio
  * Buscar reservas por nome de prédio (busca com LIKE)
  */
-reservaController.get('/locatario/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/predio/nome/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomePredio = req.params.nomePredio;
     const idLocatario = (req as any).user?.id;
@@ -143,12 +143,12 @@ reservaController.get('/locatario/:nomePredio', async (req: Request, res: Respon
  * 5. GET /api/reservas/locatario/sala/:idSala
  * Buscar reservas por ID de sala
  */
-reservaController.get('/locatario/:idSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/sala/:idSala', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idSala = req.params.idSala;
+    const idSala = parseInt(req.params.idSala);
     const idLocatario = (req as any).user?.id;
 
-    if (!idSala) {
+    if (isNaN(idSala)) {
       return res.status(400).json({
         success: false,
         message: 'ID da sala inválido',
@@ -174,11 +174,11 @@ reservaController.get('/locatario/:idSala', async (req: Request, res: Response, 
   }
 });
 
-/*
- * 6. GET /api/reservas/locatario/:nomeSala
+/**
+ * 6. GET /api/reservas/locatario/sala/nome/:nomeSala
  * Buscar reservas por nome de sala (busca com LIKE)
  */
-reservaController.get('/locatario/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/sala/nome/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomeSala = req.params.nomeSala;
     const idLocatario = (req as any).user?.id;
@@ -237,10 +237,10 @@ reservaController.get('/locatario/all', async (req: Request, res: Response, next
 });
 
 /**
- * 8. GET /api/reservas/locatario/:status
+ * 8. GET /api/reservas/locatario/status/:status
  * Buscar reservas por status (pendente, aceita, recusada, cancelada)
  */
-reservaController.get('/locatario/:status', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/status/:status', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.params.status;
     const idLocatario = (req as any).user?.id;
@@ -265,10 +265,10 @@ reservaController.get('/locatario/:status', async (req: Request, res: Response, 
 });
 
 /**
- * 9. GET /api/reservas/locatario/ordenarData?ordem=asc|desc
+ * 9. GET /api/reservas/locatario/ordenar/data?ordem=asc|desc
  * Ordenar reservas por data (mais recente ao mais antigo ou vice-versa)
  */
-reservaController.get('/locatario/ordenarData', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/ordenar/data', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
     const ordem = req.query.ordem as string;
@@ -300,10 +300,10 @@ reservaController.get('/locatario/ordenarData', async (req: Request, res: Respon
 });
 
 /**
- * 10. GET /api/reservas/locatario/ordenarValor
+ * 10. GET /api/reservas/locatario/ordenar/valor
  * Ordenar reservas por valor total (do menor para o maior)
  */
-reservaController.get('/locatario/ordenarValor', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/ordenar/valor', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
 
@@ -332,10 +332,10 @@ reservaController.get('/locatario/ordenarValor', async (req: Request, res: Respo
  */
 reservaController.patch('/locatario/:id/cancelar', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idReserva = req.params.id;
+    const idReserva = parseInt(req.params.id);
     const idLocatario = (req as any).user?.id;
 
-    if (!idReserva) {
+    if (isNaN(idReserva)) {
       return res.status(400).json({
         success: false,
         message: 'ID da reserva inválido',
@@ -372,10 +372,10 @@ reservaController.patch('/locatario/:id/cancelar', async (req: Request, res: Res
  */
 reservaController.patch('/locador/:id/aceitar', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idReserva = req.params.id;
+    const idReserva = parseInt(req.params.id);
     const idLocador = (req as any).user?.id;
 
-    if (!idReserva) {
+    if (isNaN(idReserva)) {
       return res.status(400).json({
         success: false,
         message: 'ID da reserva inválido',
@@ -410,10 +410,10 @@ reservaController.patch('/locador/:id/aceitar', async (req: Request, res: Respon
  */
 reservaController.patch('/locador/:id/recusar', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idReserva = req.params.id;
+    const idReserva = parseInt(req.params.id);
     const idLocador = (req as any).user?.id;
 
-    if (!idReserva) {
+    if (isNaN(idReserva)) {
       return res.status(400).json({
         success: false,
         message: 'ID da reserva inválido',
@@ -443,15 +443,15 @@ reservaController.patch('/locador/:id/recusar', async (req: Request, res: Respon
 });
 
 /**
- * 14. GET /api/reservas/locador/:idPredio
+ * 14. GET /api/reservas/locador/predio/:idPredio
  * Buscar reservas por ID de prédio (apenas prédios do locador)
  */
-reservaController.get('/locador/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/predio/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idPredio = req.params.idPredio;
+    const idPredio = parseInt(req.params.idPredio);
     const idLocador = (req as any).user?.id;
 
-    if (!idPredio) {
+    if (isNaN(idPredio)) {
       return res.status(400).json({
         success: false,
         message: 'ID do prédio inválido',
@@ -478,10 +478,10 @@ reservaController.get('/locador/:idPredio', async (req: Request, res: Response, 
 });
 
 /**
- * 15. GET /api/reservas/locador/:nomePredio
+ * 15. GET /api/reservas/locador/predio/nome/:nomePredio
  * Buscar reservas por nome de prédio (apenas prédios do locador)
  */
-reservaController.get('/locador/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/predio/nome/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomePredio = req.params.nomePredio;
     const idLocador = (req as any).user?.id;
@@ -516,12 +516,12 @@ reservaController.get('/locador/:nomePredio', async (req: Request, res: Response
  * 16. GET /api/reservas/locador/sala/:idSala
  * Buscar reservas por ID de sala (apenas salas do locador)
  */
-reservaController.get('/locador/:idSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/sala/:idSala', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idSala = req.params.idSala;
+    const idSala = parseInt(req.params.idSala);
     const idLocador = (req as any).user?.id;
 
-    if (!idSala) {
+    if (isNaN(idSala)) {
       return res.status(400).json({
         success: false,
         message: 'ID da sala inválido',
@@ -548,10 +548,10 @@ reservaController.get('/locador/:idSala', async (req: Request, res: Response, ne
 });
 
 /**
- * 17. GET /api/reservas/locador/:nomeSala
+ * 17. GET /api/reservas/locador/sala/nome/:nomeSala
  * Buscar reservas por nome de sala (apenas salas do locador)
  */
-reservaController.get('/locador/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/sala/nome/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomeSala = req.params.nomeSala;
     const idLocador = (req as any).user?.id;
@@ -610,10 +610,10 @@ reservaController.get('/locador/all', async (req: Request, res: Response, next: 
 });
 
 /**
- * 19. GET /api/reservas/locador/:status
+ * 19. GET /api/reservas/locador/status/:status
  * Buscar reservas por status (apenas das salas do locador)
  */
-reservaController.get('/locador/:status', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/status/:status', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.params.status;
     const idLocador = (req as any).user?.id;
@@ -638,10 +638,10 @@ reservaController.get('/locador/:status', async (req: Request, res: Response, ne
 });
 
 /**
- * 20. GET /api/reservas/locador/ordenarData?ordem=asc|desc
+ * 20. GET /api/reservas/locador/ordenar/data?ordem=asc|desc
  * Ordenar reservas por data (mais recente ao mais antigo ou vice-versa)
  */
-reservaController.get('/locador/ordenarData', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/ordenar/data', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.id;
     const ordem = req.query.ordem as string;
@@ -676,7 +676,7 @@ reservaController.get('/locador/ordenarData', async (req: Request, res: Response
  * 21. GET /api/reservas/locador/ordenar/valor
  * Ordenar reservas por valor total (do menor para o maior)
  */
-reservaController.get('/locador/ordenarValor', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/ordenar/valor', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.id;
 

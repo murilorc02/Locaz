@@ -1,6 +1,6 @@
 export interface CriarReservaDto {
-  salaId: string;
-  locatarioId?: string;
+  salaId: number;
+  locatarioId?: number;
   dataReservada: string; // Formato: YYYY-MM-DD
   horarioInicio: string; // Formato: HH:00:00
   horarioFim: string; // Formato: HH:00:00
@@ -17,16 +17,16 @@ export interface AtualizarReservaDto {
 }
 
 export interface AceitarReservaDto {
-  idReserva: string;  
-  idLocador: string;  
+  idReserva: number;  
+  idLocador: number;  
 }
 
 export interface RecusarReservaDto {
-  idReserva: string;  
-  idLocador: string;  
+  idReserva: number;  
+  idLocador: number;  
 }
 
 export interface CancelarReservaDto {
-  idReserva: string;  
-  idLocatario: string; 
+  idReserva: number;  
+  idLocatario: number; 
 }
