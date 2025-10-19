@@ -79,6 +79,17 @@ export type OpeningHours = {
   };
 };
 
+export type AvailableHours = {
+  id: number;
+  diaSemana: string;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  ativo: boolean;
+  sala?: {
+    id: number;
+  }
+};
+
 export type Booking = {
   id: number;
   workspaceId: number;
@@ -122,6 +133,7 @@ export type CreateSalaPayload = {
   categoria: WorkspaceCategory;
   precoHora: number;
   reservaGratuita: boolean;
+  horariosDisponiveis?: HorarioPayload[];
   comodidades: string[];
   imagens?: string[];
   predioId: string;

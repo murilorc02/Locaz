@@ -24,13 +24,11 @@ const BusinessWorkspaces = () => {
   useEffect(() => {
     const reloadData = async () => {
       if (isAuthenticated && user?.tipo === 'locador') {
-        console.log("🔄 Recarregando locations e workspaces...");
         // Recarrega ambos em paralelo
         await Promise.all([
           fetchLocations(),
           fetchWorkspaces()
         ]);
-        console.log("✅ Dados recarregados com sucesso!");
       }
     };
 
@@ -89,7 +87,7 @@ const BusinessWorkspaces = () => {
               </div>
               <div className="mt-2 md:mt-0">
                 <Button
-                  onClick={() => navigate('/business/workspace-editor')}
+                  onClick={() => navigate('/business/add-workspace')}
                   disabled={userLocations.length === 0}
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -153,7 +151,7 @@ const BusinessWorkspaces = () => {
                     }
                   </p>
                   {!searchTerm && selectedLocation === 'all' && (
-                    <Button onClick={() => navigate('/business/workspace-editor')}>
+                    <Button onClick={() => navigate('/business/add-workspace')}>
                       <Plus className="h-4 w-4 mr-2" />
                       Adicionar Primeiro Espaço
                     </Button>

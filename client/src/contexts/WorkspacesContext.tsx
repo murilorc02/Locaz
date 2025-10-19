@@ -9,7 +9,7 @@ interface WorkspacesContextType {
     error: string | null;
     addWorkspace: (payload: CreateSalaPayload) => Promise<any>;
     fetchWorkspaces: () => void;
-    getWorkspaceById: (workspaceId: number) => Promise<WorkspaceApiResponse>;
+    getWorkspaceById: (workspaceId: string) => Promise<WorkspaceApiResponse>;
     editWorkspace: (workspace: Partial<Workspace>) => Promise<any>
 }
 
@@ -54,7 +54,7 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    const getWorkspaceById = async (workspaceId: number) => {
+    const getWorkspaceById = async (workspaceId: string) => {
         try {
             const response = await api.get<WorkspaceApiResponse>(`/sala/${workspaceId}`);
             return response.data;

@@ -47,8 +47,8 @@ const App = () => (
                 <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
                 <Route path="/business/bookings" element={<BusinessBookings />} />
                 <Route path="/business/add-location" element={<AddLocation />} />
-                <Route path="/business/workspace-editor" element={<WorkspaceEditor />} />
-                <Route path="/business/workspace-editor/:locationId" element={<WorkspaceEditor />} />
+                <Route path="/business/add-workspace" element={<WorkspaceEditor />} />
+                <Route path="/business/edit-workspace/:id" element={<WorkspaceEditor />} />
                 <Route path="/business/edit-location/:id" element={<EditLocation />} />
                 <Route path="/bookings" element={<Bookings />} />
                 {/* <Route path="*" element={<NotFound />} /> */}

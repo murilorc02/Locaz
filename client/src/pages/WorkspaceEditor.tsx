@@ -8,15 +8,16 @@ import { Textarea } from '../components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
-import { ArrowLeft, Save, Loader2 } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, Clock } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
-import { CreateSalaPayload, WorkspaceCategory, Workspace } from '@/types';
+import { CreateSalaPayload, WorkspaceCategory, AvailableHours } from '@/types';
 import { workspaceAmenities } from '@/data/amenities';
 import { useToast } from '@/hooks/use-toast';
 import AmenityIcon from '@/components/AmenityIcon';
+import WeeklySchedule from '@/components/WeeklySchedule';
 
 const WorkspaceEditor = () => {
     const { user, isAuthenticated } = useAuth();
@@ -24,10 +25,20 @@ const WorkspaceEditor = () => {
     const { toast } = useToast();
 
     // Parâmetros da URL
-    const { workspaceId } = useParams();
+    const { id } = useParams();
 
     // Determina se é modo de edição ou criação
-    const isEditMode = !!workspaceId;
+    const isEditMode = id ? true : false;
+
+    const getDefaultOpeningDays = () => ({
+        segunda: { active: false, timeSlots: [] },
+        terca: { active: false, timeSlots: [] },
+        quarta: { active: false, timeSlots: [] },
+        quinta: { active: false, timeSlots: [] },
+        sexta: { active: false, timeSlots: [] },
+        sabado: { active: false, timeSlots: [] },
+        domingo: { active: false, timeSlots: [] }
+    });
 
     const [formData, setFormData] = useState({
         name: '',
@@ -36,9 +47,45 @@ const WorkspaceEditor = () => {
         pricePerHour: 0,
         category: '' as WorkspaceCategory,
         freeSchedule: false,
+        schedule: getDefaultOpeningDays(),
         amenities: [] as string[],
         locationId: '',
     });
+
+    function availableHoursToWeeklySchedule(availableHours: AvailableHours[]) {
+        const days = getDefaultOpeningDays();
+        if (!Array.isArray(availableHours)) return days;
+
+        availableHours.forEach((ah) => {
+            const key = ah.diaSemana?.toLowerCase();
+            if (key) {
+                days[key].active = ah.ativo;
+                days[key].timeSlots.push({
+                    start: ah.horarioAbertura,
+                    end: ah.horarioFechamento
+                });
+            }
+        });
+
+        return days;
+    }
+
+    function weeklyScheduleToAvailableHours(schedule: typeof formData.schedule, workspaceId: number): AvailableHours[] {
+        const result: AvailableHours[] = [];
+        Object.entries(schedule).forEach(([diaSemana, day]) => {
+            day.timeSlots.forEach(slot => {
+                result.push({
+                    id: id as unknown as number,
+                    diaSemana,
+                    horarioAbertura: slot.start,
+                    horarioFechamento: slot.end,
+                    ativo: day.active,
+                    sala: { id: workspaceId }
+                })
+            })
+        });
+        return result;
+    }
 
     const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -49,21 +96,31 @@ const WorkspaceEditor = () => {
     // Carrega dados do workspace se estiver em modo de edição
     useEffect(() => {
         const loadWorkspace = async () => {
-            if (isEditMode && workspaceId) {
+            if (isEditMode && id) {
                 setIsLoadingWorkspace(true);
                 try {
-                    const response = await getWorkspaceById(Number(workspaceId));
-                    const workspace = response.data;
+                    // const response = await getWorkspaceById(id);
+                    // const workspace = response.data;
 
                     setFormData({
-                        name: workspace.nome || '',
-                        description: workspace.descricao || '',
-                        capacity: workspace.capacidade?.toString() || '',
-                        pricePerHour: workspace.precoHora || 0,
-                        category: workspace.categoria || '' as WorkspaceCategory,
-                        freeSchedule: workspace.reservaGratuita || false,
-                        amenities: workspace.comodidades || [],
-                        locationId: workspace.predio?.id.toString() || null,
+                        name: '',
+                        description: '',
+                        capacity: null,
+                        pricePerHour: null,
+                        category: '' as WorkspaceCategory,
+                        freeSchedule: null,
+                        schedule: getDefaultOpeningDays(),
+                        amenities: [],
+                        locationId: null,
+                        // name: workspace.nome || '',
+                        // description: workspace.descricao || '' ,
+                        // capacity: workspace.capacidade?.toString() || null,
+                        // pricePerHour: workspace.precoHora || null,
+                        // category: workspace.categoria || null,
+                        // freeSchedule: workspace.reservaGratuita || null,
+                        // schedule: availableHoursToWeeklySchedule(workspace.horarioSala)
+                        // amenities: workspace.comodidades || null,
+                        // locationId: workspace.predio?.id.toString() || null,
                     });
                 } catch (error) {
                     toast({
@@ -79,7 +136,7 @@ const WorkspaceEditor = () => {
         };
 
         loadWorkspace();
-    }, [isEditMode, workspaceId]);
+    }, [isEditMode, id]);
 
     useEffect(() => {
         if (!isAuthenticated || user?.tipo !== 'locador') {
@@ -122,6 +179,7 @@ const WorkspaceEditor = () => {
             reservaGratuita: formData.freeSchedule,
             comodidades: formData.amenities,
             predioId: formData.locationId.toString(),
+            horariosDisponiveis: weeklyScheduleToAvailableHours(formData.schedule, Number(id)),
             precoHora: formData.pricePerHour
         };
 
@@ -129,7 +187,7 @@ const WorkspaceEditor = () => {
             if (isEditMode) {
                 // Modo de edição
                 await editWorkspace({
-                    id: Number(workspaceId),
+                    id: Number(id),
                     ...payload
                 });
                 await fetchWorkspaces();
@@ -204,18 +262,18 @@ const WorkspaceEditor = () => {
                     </header>
 
                     <main className="flex-1 p-6">
-                        <div className="max-w-3xl mx-auto">
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Informações do Espaço</CardTitle>
-                                    <CardDescription>
-                                        {isEditMode
-                                            ? 'Atualize os detalhes do espaço de trabalho'
-                                            : 'Preencha os detalhes do seu novo espaço de trabalho'}
-                                    </CardDescription>
-                                </CardHeader>
-                                <CardContent>
-                                    <form onSubmit={handleSubmit} className="space-y-6">
+                        <div className="max-w-3xl space-y-6 mx-auto">
+                            <form onSubmit={handleSubmit} className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Informações do Espaço</CardTitle>
+                                        <CardDescription>
+                                            {isEditMode
+                                                ? 'Atualize os detalhes do espaço de trabalho'
+                                                : 'Preencha os detalhes do seu novo espaço de trabalho'}
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
                                         <div className="space-y-2">
                                             <Label htmlFor="name">Nome do Espaço</Label>
                                             <Input
@@ -329,7 +387,10 @@ const WorkspaceEditor = () => {
                                                     <div key={amenity.id} className="flex items-center space-x-2">
                                                         <Checkbox
                                                             id={amenity.id}
-                                                            checked={formData.amenities.includes(amenity.id)}
+                                                            checked={
+                                                                // formData.amenities.includes(amenity.id)
+                                                                false
+                                                            }
                                                             onCheckedChange={() => handleAmenityToggle(amenity.id)}
                                                         />
                                                         <AmenityIcon type={amenity.icon} />
@@ -349,33 +410,54 @@ const WorkspaceEditor = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex gap-4 pt-6">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                className="flex-1"
-                                                onClick={() => navigate('/business/workspaces')}
-                                                disabled={isSaving}
-                                            >
-                                                Cancelar
-                                            </Button>
-                                            <Button type="submit" className="flex-1" disabled={isSaving}>
-                                                {isSaving ? (
-                                                    <>
-                                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                                                        Salvando...
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        <Save className="h-4 w-4 mr-2" />
-                                                        {isEditMode ? 'Atualizar Espaço' : 'Salvar Espaço'}
-                                                    </>
-                                                )}
-                                            </Button>
-                                        </div>
-                                    </form>
-                                </CardContent>
-                            </Card>
+                                    </CardContent>
+                                </Card>
+
+                                {/* Weekly Schedule */}
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="flex items-center">
+                                            <Clock className="h-5 w-5 mr-2" />
+                                            Horários de Funcionamento
+                                        </CardTitle>
+                                        <CardDescription>
+                                            Configure os dias e horários disponíveis para reserva
+                                        </CardDescription>
+                                    </CardHeader>
+                                    <CardContent>{
+                                        <WeeklySchedule
+                                            schedule={formData.schedule}
+                                            onChange={(schedule) => setFormData(prev => ({ ...prev, schedule }))}
+                                            showTemplates={true}
+                                        />}
+                                    </CardContent>
+                                </Card>
+
+                                <div className="flex gap-4">
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="flex-1"
+                                        onClick={() => navigate('/business/workspaces')}
+                                        disabled={isSaving}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button type="submit" className="flex-1" disabled={isSaving}>
+                                        {isSaving ? (
+                                            <>
+                                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                                Salvando...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Save className="h-4 w-4 mr-2" />
+                                                {isEditMode ? 'Atualizar Espaço' : 'Salvar Espaço'}
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
+                            </form>
                         </div>
                     </main>
                 </SidebarInset>

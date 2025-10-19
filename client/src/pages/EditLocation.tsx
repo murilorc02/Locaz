@@ -330,6 +330,7 @@ const EditLocation = () => {
                     <WeeklySchedule
                       schedule={formData.schedule}
                       onChange={(schedule) => setFormData(prev => ({ ...prev, schedule }))}
+                      showTemplates={false}
                     />}
                   </CardContent>
                 </Card>
