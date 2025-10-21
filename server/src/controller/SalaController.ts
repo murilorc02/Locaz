@@ -3,7 +3,7 @@ import { SalaService } from '../services/SalaService';
 import { PredioService } from '../services/PredioService';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { validationMiddleware } from '../middleware/validationMiddleware';
-import { CreateSalaDto, AtualizarSalaDto } from '../dto/SalaDto';
+import { CreateSalaDto, AtualizarSalaDto, AtualizarHorariosFuncionamentoSalaDto } from '../dto/SalaDto';
 import { TipoUsuario } from '../entity/Usuario';
 
 interface AuthenticatedRequest extends Request {
@@ -132,6 +132,101 @@ salaController.patch('/sala/editar/:id',
     }
 );
 
+salaController.put('/sala/:id/horarios-funcionamento',
+    authMiddleware,
+    validationMiddleware(AtualizarHorariosFuncionamentoSalaDto),
+    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+        try {
+            const id = parseInt(req.params.id);
+
+            if (isNaN(id)) {
+                return res.status(400).json({
+                    message: 'ID da sala inválido',
+                    statusCode: 400,
+                    timestamp: new Date().toISOString(),
+                    path: req.path
+                });
+            }
+
+            // Verificar se a sala existe e pertence ao usuário
+            const salaExistente = await salaService.buscarPorId(id);
+            if (!salaExistente) {
+                return res.status(404).json({
+                    message: 'Sala não encontrada',
+                    statusCode: 404,
+                    timestamp: new Date().toISOString(),
+                    path: req.path
+                });
+            }
+
+            if (salaExistente.predio.usuario.id !== req.user?.sub) {
+                return res.status(403).json({
+                    message: 'Você não tem permissão para editar horários desta sala',
+                    statusCode: 403,
+                    timestamp: new Date().toISOString(),
+                    path: req.path
+                });
+            }
+
+            const salaAtualizada = await salaService.atualizarHorariosFuncionamento(
+                id,
+                req.body.horariosFuncionamento
+            );
+
+            res.json({
+                message: 'Horários de funcionamento atualizados com sucesso',
+                data: salaAtualizada,
+                statusCode: 200,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+// GET /api/sala/:id/horarios-funcionamento - Obter horários de funcionamento
+salaController.get('/sala/:id/horarios-funcionamento',
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const id = parseInt(req.params.id);
+
+            if (isNaN(id)) {
+                return res.status(400).json({
+                    message: 'ID da sala inválido',
+                    statusCode: 400,
+                    timestamp: new Date().toISOString(),
+                    path: req.path
+                });
+            }
+
+            const sala = await salaService.buscarPorId(id);
+
+            if (!sala) {
+                return res.status(404).json({
+                    message: 'Sala não encontrada',
+                    statusCode: 404,
+                    timestamp: new Date().toISOString(),
+                    path: req.path
+                });
+            }
+
+            res.json({
+                message: 'Horários de funcionamento obtidos com sucesso',
+                data: {
+                    salaId: sala.id,
+                    nomeSala: sala.nome,
+                    horariosFuncionamento: sala.horariosFuncionamento || []
+                },
+                statusCode: 200,
+                timestamp: new Date().toISOString()
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
 // GET /api/sala/getByAll
 salaController.get('/sala/getByAll', async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -187,7 +282,7 @@ salaController.get('/sala/search', async (req: Request, res: Response, next: Nex
             categoria: categoria as string,
             precoMinimo: precoMinimo ? parseFloat(precoMinimo as string) : undefined,
             precoMaximo: precoMaximo ? parseFloat(precoMaximo as string) : undefined,
-            comodidades: comodidades 
+            comodidades: comodidades
                 ? (Array.isArray(comodidades) ? comodidades as string[] : (comodidades as string).split(','))
                 : undefined,
             dataReserva: dataReserva as string,

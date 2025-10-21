@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { PredioService } from '../services/PredioService';
 import { authMiddleware } from '../middleware/authMiddleware';
 import { validationMiddleware } from '../middleware/validationMiddleware';
-import { CriarPredioDto, PatchPredioDto } from '../dto/PredioDto';
+import { AtualizarHorariosFuncionamentoPredioDto, CriarPredioDto, PatchPredioDto } from '../dto/PredioDto';
 import { TipoUsuario } from '../entity/Usuario';
 
 interface AuthenticatedRequest extends Request {
@@ -117,6 +117,126 @@ predioController.patch('/predio/:id',
       res.json({
         message: 'Prédio atualizado com sucesso',
         data: responseData,
+        statusCode: 200,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+predioController.put('/predio/:id/horarios-funcionamento',
+  authMiddleware,
+  validationMiddleware(AtualizarHorariosFuncionamentoPredioDto),
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = Number(req.params.id);
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          message: 'ID do prédio inválido',
+          statusCode: 400,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      const predioExistente = await predioService.buscarPorId(id);
+      if (!predioExistente) {
+        return res.status(404).json({
+          message: 'Prédio não encontrado',
+          statusCode: 404,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      if (predioExistente.usuario.id !== req.user?.sub) {
+        return res.status(403).json({
+          message: 'Você não tem permissão para editar horários deste prédio',
+          statusCode: 403,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      const predioAtualizado = await predioService.atualizarHorariosFuncionamento(
+        id,
+        req.body.horariosFuncionamento
+      );
+
+      if (!predioAtualizado) {
+        return res.status(404).json({
+          message: 'Prédio não encontrado após atualização',
+          statusCode: 404,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      const responseData = {
+        id: predioAtualizado.id,
+        nome: predioAtualizado.nome,
+        endereco: predioAtualizado.endereco,
+        cidade: predioAtualizado.cidade,
+        estado: predioAtualizado.estado,
+        cep: predioAtualizado.cep,
+        descricao: predioAtualizado.descricao,
+        horariosFuncionamento: predioAtualizado.horariosFuncionamento,
+        usuario: {
+          id: predioAtualizado.usuario.id,
+          nome: predioAtualizado.usuario.nome
+        },
+        createdAt: predioAtualizado.createdAt,
+        updatedAt: predioAtualizado.updatedAt
+      };
+
+      res.json({
+        message: 'Horários de funcionamento atualizados com sucesso',
+        data: responseData,
+        statusCode: 200,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
+
+// GET /api/predio/:id/horarios-funcionamento - Obter horários de funcionamento
+predioController.get('/predio/:id/horarios-funcionamento',
+  async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const id = Number(req.params.id);
+
+      if (isNaN(id)) {
+        return res.status(400).json({
+          message: 'ID do prédio inválido',
+          statusCode: 400,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      const predio = await predioService.buscarPorId(id);
+
+      if (!predio) {
+        return res.status(404).json({
+          message: 'Prédio não encontrado',
+          statusCode: 404,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      res.json({
+        message: 'Horários de funcionamento obtidos com sucesso',
+        data: {
+          predioId: predio.id,
+          nomePredio: predio.nome,
+          horariosFuncionamento: predio.horariosFuncionamento || []
+        },
         statusCode: 200,
         timestamp: new Date().toISOString()
       });

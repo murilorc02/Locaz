@@ -1,16 +1,13 @@
 import { PredioRepository } from '../repository/PredioRepository';
-import { HorarioPredioRepository } from '../repository/HorarioPredioRepository';
 import { Predio } from '../entity/Predio';
-import { HorarioFuncionamentoDto, DiaSemana } from '../dto/PredioDto';
+import { HorarioFuncionamentoDto, DiaSemana, obterTodosDiasSemana } from '../dto/PredioDto';
 import { Usuario } from '../entity/Usuario';
 
 export class PredioService {
   private predioRepository: PredioRepository;
-  private horarioPredioRepository: HorarioPredioRepository;
 
   constructor() {
     this.predioRepository = new PredioRepository();
-    this.horarioPredioRepository = new HorarioPredioRepository();
   }
 
   async criarPredio(dados: {
@@ -25,27 +22,17 @@ export class PredioService {
   }): Promise<Predio> {
     const { horariosFuncionamento, usuarioId, ...dadosBasicos } = dados;
 
-    // Validação de duplicação de nome
     const predioExistente = await this.predioRepository.buscarPorNome(dadosBasicos.nome);
     if (predioExistente) {
       throw new Error('Já existe um prédio com este nome');
     }
 
-    // Criar prédio com relacionamento correto
     const predio = await this.predioRepository.criar({
       ...dadosBasicos,
+      horariosFuncionamento: horariosFuncionamento || [],
       usuario: { id: usuarioId } as Usuario
     });
 
-    // Criar horários se fornecidos
-    if (horariosFuncionamento && horariosFuncionamento.length > 0) {
-      await this.horarioPredioRepository.criarMultiplos(
-        predio.id,
-        horariosFuncionamento
-      );
-    }
-
-    // Retornar prédio com todas as relações
     return (await this.predioRepository.buscarPorId(predio.id)) as Predio;
   }
 
@@ -68,7 +55,6 @@ export class PredioService {
 
     const { horariosFuncionamento, ...dadosBasicos } = dados;
 
-    // Validar nome único (se alterado)
     if (dadosBasicos.nome && dadosBasicos.nome.trim() !== predioExistente.nome.trim()) {
       const exists = await this.predioRepository.existeNome(dadosBasicos.nome.trim(), id);
       if (exists) {
@@ -76,7 +62,6 @@ export class PredioService {
       }
     }
 
-    // Preparar dados para atualização (apenas campos não undefined)
     const camposParaAtualizar: Partial<Predio> = {};
     if (dadosBasicos.nome !== undefined) camposParaAtualizar.nome = dadosBasicos.nome;
     if (dadosBasicos.endereco !== undefined) camposParaAtualizar.endereco = dadosBasicos.endereco;
@@ -84,22 +69,16 @@ export class PredioService {
     if (dadosBasicos.estado !== undefined) camposParaAtualizar.estado = dadosBasicos.estado;
     if (dadosBasicos.cep !== undefined) camposParaAtualizar.cep = dadosBasicos.cep;
     if (dadosBasicos.descricao !== undefined) camposParaAtualizar.descricao = dadosBasicos.descricao;
+    if (horariosFuncionamento !== undefined) camposParaAtualizar.horariosFuncionamento = horariosFuncionamento as any;
 
-    // Atualizar dados básicos
     if (Object.keys(camposParaAtualizar).length > 0) {
       await this.predioRepository.atualizar(id, camposParaAtualizar);
     }
 
-    // Atualizar horários se fornecidos
-    if (horariosFuncionamento !== undefined) {
-      await this.horarioPredioRepository.deletarPorPredio(id);
-      if (horariosFuncionamento.length > 0) {
-        await this.horarioPredioRepository.criarMultiplos(id, horariosFuncionamento);
-      }
-    }
-
     return await this.predioRepository.buscarPorId(id);
   }
+
+
 
   async buscarPorId(id: number): Promise<Predio | null> {
     return await this.predioRepository.buscarPorId(id);
@@ -122,7 +101,13 @@ export class PredioService {
   }
 
   async buscarHorariosPorPredio(predioId: number) {
-    return await this.horarioPredioRepository.buscarPorPredio(predioId);
+    const predio = await this.predioRepository.buscarPorId(predioId);
+
+    if (!predio) {
+      throw new Error('Prédio não encontrado');
+    }
+
+    return predio.horariosFuncionamento || [];
   }
 
   async excluirPredio(id: number): Promise<void> {
@@ -131,10 +116,7 @@ export class PredioService {
       throw new Error('Prédio não encontrado');
     }
 
-    // Remover horários primeiro (FK constraint)
-    await this.horarioPredioRepository.deletarPorPredio(id);
-
-    // Remover prédio
+    // Apenas remover o prédio (horários estão no JSONB)
     await this.predioRepository.excluir(id);
   }
 
@@ -143,24 +125,23 @@ export class PredioService {
     diaSemana: string,
     horario: string
   ): Promise<boolean> {
-    // Validar se o diaSemana é um valor válido do enum
-    const diaValido = Object.values(DiaSemana).includes(diaSemana as DiaSemana);
-    if (!diaValido) {
-      throw new Error(`Dia da semana inválido: ${diaSemana}`);
+    const predio = await this.predioRepository.buscarPorId(predioId);
+
+    if (!predio || !predio.horariosFuncionamento) {
+      return false;
     }
 
-    const horarioPredio = await this.horarioPredioRepository.buscarPorDia(
-      predioId,
-      diaSemana as DiaSemana
+    const horarioDia = predio.horariosFuncionamento.find(
+      h => h.diaSemana === diaSemana && h.ativo
     );
 
-    if (!horarioPredio) {
+    if (!horarioDia) {
       return false;
     }
 
     const horarioFormatado = this.formatarHorario(horario);
-    const abertura = this.formatarHorario(horarioPredio.horarioAbertura || '08:00');
-    const fechamento = this.formatarHorario(horarioPredio.horarioFechamento || '18:00');
+    const abertura = this.formatarHorario(horarioDia.horarioAbertura);
+    const fechamento = this.formatarHorario(horarioDia.horarioFechamento);
 
     return horarioFormatado >= abertura && horarioFormatado <= fechamento;
   }
@@ -168,5 +149,48 @@ export class PredioService {
   private formatarHorario(horario: string): number {
     const [horas, minutos] = horario.split(':').map(Number);
     return horas * 100 + minutos;
+  }
+
+  async atualizarHorariosFuncionamento(
+    predioId: number,
+    horariosFuncionamento: HorarioFuncionamentoDto[]
+  ): Promise<Predio | null> {
+    const predio = await this.predioRepository.buscarPorId(predioId);
+
+    if (!predio) {
+      throw new Error('Prédio não encontrado');
+    }
+
+    // Obter todos os dias válidos do enum
+    const diasValidos = obterTodosDiasSemana();
+    
+    // Converter os dias recebidos para string
+    const diasRecebidos = horariosFuncionamento.map(h => h.diaSemana as string);
+
+    const diasFaltantes = diasValidos.filter(dia => !diasRecebidos.includes(dia));
+    if (diasFaltantes.length > 0) {
+      throw new Error(`Dias da semana faltantes: ${diasFaltantes.join(', ')}`);
+    }
+
+    // Validar horários
+    for (const horario of horariosFuncionamento) {
+      const abertura = this.converterHorarioParaMinutos(horario.horarioAbertura);
+      const fechamento = this.converterHorarioParaMinutos(horario.horarioFechamento);
+
+      if (abertura >= fechamento) {
+        throw new Error(`Horário de abertura deve ser menor que horário de fechamento para ${horario.diaSemana}`);
+      }
+    }
+
+    await this.predioRepository.atualizar(predioId, {
+      horariosFuncionamento: horariosFuncionamento as any
+    });
+
+    return await this.predioRepository.buscarPorId(predioId);
+  }
+
+  private converterHorarioParaMinutos(horario: string): number {
+    const [horas, minutos] = horario.split(':').map(Number);
+    return horas * 60 + minutos;
   }
 }

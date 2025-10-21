@@ -1,7 +1,23 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Usuario } from './Usuario';
 import { Sala } from './Sala';
-import { HorarioPredio } from './horarioPredio';
+
+export enum DiaSemana {
+  SEGUNDA = 'segunda',
+  TERCA = 'terca',
+  QUARTA = 'quarta',
+  QUINTA = 'quinta',
+  SEXTA = 'sexta',
+  SABADO = 'sabado',
+  DOMINGO = 'domingo'
+}
+
+export interface HorarioFuncionamentoPredio {
+  diaSemana: DiaSemana;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  ativo: boolean;
+}
 
 @Entity('Predio')
 export class Predio {
@@ -29,8 +45,8 @@ export class Predio {
   @OneToMany(() => Sala, sala => sala.predio)
   salas?: Sala[];
 
-  @OneToMany(() => HorarioPredio, (horarioPredio) => horarioPredio.predio)
-  horarioPredio?: HorarioPredio[];
+  @Column({ type: 'jsonb', nullable: true })
+  horariosFuncionamento?: HorarioFuncionamentoPredio[];
 
   @ManyToOne(() => Usuario, (usuario) => usuario.predio)
   @JoinColumn({ name: "usuarioId" })
