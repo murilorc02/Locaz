@@ -1,7 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Predio } from './Predio';
 import { Reserva } from './Reserva';
-import { HorarioSala } from './horarioSala';
 
 export enum CategoriaSala {
     WORKSTATION = 'workstation',
@@ -22,6 +21,23 @@ export enum CategoriaSala {
     ESTACIONAMENTO = 'estacionamento',
     COPA_COZINHA = 'copaCozinha'
 }*/
+
+export enum DiaSemana {
+    SEGUNDA = 'segunda',
+    TERCA = 'terca',
+    QUARTA = 'quarta',
+    QUINTA = 'quinta',
+    SEXTA = 'sexta',
+    SABADO = 'sabado',
+    DOMINGO = 'domingo'
+}
+
+export interface HorarioFuncionamentoSala {
+    diaSemana: DiaSemana;
+    horarioAbertura: string;
+    horarioFechamento: string;
+    ativo: boolean;
+}
 
 @Entity()
 export class Sala {
@@ -59,12 +75,13 @@ export class Sala {
     @Column({ type: 'text', array: true })
     comodidades!: string[];
 
+    @Column({ type: 'jsonb', nullable: true })
+    horariosFuncionamento?: HorarioFuncionamentoSala[];
+
     @CreateDateColumn()
     createdAt!: Date;
 
     @UpdateDateColumn()
     updatedAt!: Date;
 
-    @OneToMany(() => HorarioSala, (horarioSala) => horarioSala.sala)
-    horarioSala!: HorarioSala[];
 }

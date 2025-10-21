@@ -17,13 +17,13 @@ export class PredioRepository {
   async buscarPorId(id: number): Promise<Predio | null> {
     return await this.repository.findOne({
       where: { id },
-      relations: ['salas', 'usuario', 'horarioPredio']
+      relations: ['salas', 'usuario']
     });
   }
 
   async buscarTodos(): Promise<Predio[]> {
     return await this.repository.find({
-      relations: ['salas', 'usuario', 'horarioPredio'],
+      relations: ['salas', 'usuario'],
       order: { nome: 'ASC' }
     });
   }
@@ -38,7 +38,7 @@ export class PredioRepository {
   async buscarPorUsuario(usuarioId: number): Promise<Predio[]> {
     return await this.repository.find({
       where: { usuario: { id: usuarioId } },
-      relations: ['salas', 'horarioPredio']
+      relations: ['salas']
     });
   }
 

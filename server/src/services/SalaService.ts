@@ -1,4 +1,4 @@
-import { CategoriaSala, Sala } from '../entity/Sala';
+import { CategoriaSala, Sala, HorarioFuncionamentoSala } from '../entity/Sala';
 import { Predio } from '../entity/Predio';
 import { CreateSalaDTO, UpdateSalaDTO } from '../dto/SalaDto';
 import { SalaRepository } from '../repository/SalaRepository';
@@ -41,6 +41,7 @@ export class SalaService {
       precoHora: dadosSala.precoHora,
       reservaGratuita: dadosSala.reservaGratuita || false,
       comodidades: dadosSala.comodidades || [],
+      horariosFuncionamento: (dadosSala.horariosFuncionamento || []) as HorarioFuncionamentoSala[],
       predio: predio
     });
   }
@@ -50,20 +51,20 @@ export class SalaService {
     const salaExistente = await this.salaRepository.buscarPorId(idNumero);
 
     if (!salaExistente) {
-        throw new Error('Sala não encontrada');
+      throw new Error('Sala não encontrada');
     }
 
     if (dadosAtualizacao.nome && dadosAtualizacao.nome !== salaExistente.nome) {
-        const predioId = Number(salaExistente.predio.id);
-        
-        const salaComMesmoNome = await this.salaRepository.buscarPorNomeEPredio(
-            dadosAtualizacao.nome,
-            predioId
-        );
+      const predioId = Number(salaExistente.predio.id);
 
-        if (salaComMesmoNome && salaComMesmoNome.id !== idNumero) {
-            throw new Error('Já existe uma sala com este nome neste prédio');
-        }
+      const salaComMesmoNome = await this.salaRepository.buscarPorNomeEPredio(
+        dadosAtualizacao.nome,
+        predioId
+      );
+
+      if (salaComMesmoNome && salaComMesmoNome.id !== idNumero) {
+        throw new Error('Já existe uma sala com este nome neste prédio');
+      }
     }
 
     const camposParaAtualizar: Partial<Sala> = {};
@@ -72,18 +73,21 @@ export class SalaService {
     if (dadosAtualizacao.descricao !== undefined) camposParaAtualizar.descricao = dadosAtualizacao.descricao;
     if (dadosAtualizacao.capacidade !== undefined) camposParaAtualizar.capacidade = dadosAtualizacao.capacidade;
     if (dadosAtualizacao.categoria !== undefined) {
-        camposParaAtualizar.categoria = dadosAtualizacao.categoria as CategoriaSala;
+      camposParaAtualizar.categoria = dadosAtualizacao.categoria as CategoriaSala;
     }
     if (dadosAtualizacao.precoHora !== undefined) camposParaAtualizar.precoHora = dadosAtualizacao.precoHora;
     if (dadosAtualizacao.reservaGratuita !== undefined) camposParaAtualizar.reservaGratuita = dadosAtualizacao.reservaGratuita;
     if (dadosAtualizacao.comodidades !== undefined) camposParaAtualizar.comodidades = dadosAtualizacao.comodidades;
+    if (dadosAtualizacao.horariosFuncionamento !== undefined) {
+      camposParaAtualizar.horariosFuncionamento = dadosAtualizacao.horariosFuncionamento as HorarioFuncionamentoSala[];
+    }
 
     if (Object.keys(camposParaAtualizar).length > 0) {
-        await this.salaRepository.atualizar(idNumero, camposParaAtualizar);
+      await this.salaRepository.atualizar(idNumero, camposParaAtualizar);
     }
 
     return await this.salaRepository.buscarPorId(idNumero);
-}
+  }
 
   async buscarTodas(): Promise<Sala[]> {
     return await this.salaRepository.buscarTodas();
@@ -292,4 +296,50 @@ export class SalaService {
       horarios
     };
   }
+
+  async atualizarHorariosFuncionamento(
+  salaId: number,
+  horariosFuncionamento: Array<{
+    diaSemana: string;
+    horarioAbertura: string;
+    horarioFechamento: string;
+    ativo: boolean;
+  }>
+): Promise<Sala | null> {
+  const sala = await this.salaRepository.buscarPorId(salaId);
+
+  if (!sala) {
+    throw new Error('Sala não encontrada');
+  }
+
+  // Validar se todos os dias da semana estão presentes
+  const diasValidos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+  const diasRecebidos = horariosFuncionamento.map(h => h.diaSemana);
+  
+  const diasFaltantes = diasValidos.filter(dia => !diasRecebidos.includes(dia));
+  if (diasFaltantes.length > 0) {
+    throw new Error(`Dias da semana faltantes: ${diasFaltantes.join(', ')}`);
+  }
+
+  // Validar horários
+  for (const horario of horariosFuncionamento) {
+    const abertura = this.converterHorarioParaMinutos(horario.horarioAbertura);
+    const fechamento = this.converterHorarioParaMinutos(horario.horarioFechamento);
+
+    if (abertura >= fechamento) {
+      throw new Error(`Horário de abertura deve ser menor que horário de fechamento para ${horario.diaSemana}`);
+    }
+  }
+
+  await this.salaRepository.atualizar(salaId, {
+    horariosFuncionamento: horariosFuncionamento as any
+  });
+
+  return await this.salaRepository.buscarPorId(salaId);
+}
+
+private converterHorarioParaMinutos(horario: string): number {
+  const [horas, minutos] = horario.split(':').map(Number);
+  return horas * 60 + minutos;
+}
 }

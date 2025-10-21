@@ -11,6 +11,11 @@ export enum DiaSemana {
     DOMINGO = 'domingo'
 }
 
+// Função auxiliar para obter todos os valores do enum
+export function obterTodosDiasSemana(): string[] {
+    return Object.values(DiaSemana);
+}
+
 export class HorarioFuncionamentoDto {
     @IsEnum(DiaSemana, { message: 'Dia da semana deve ser um valor válido' })
     diaSemana!: DiaSemana;
@@ -25,6 +30,13 @@ export class HorarioFuncionamentoDto {
 
     @IsBoolean({ message: 'Ativo deve ser um valor booleano' })
     ativo!: boolean;
+}
+
+export class AtualizarHorariosFuncionamentoPredioDto {
+    @IsArray({ message: 'Horários de funcionamento deve ser um array' })
+    @ValidateNested({ each: true })
+    @Type(() => HorarioFuncionamentoDto)
+    horariosFuncionamento!: HorarioFuncionamentoDto[];
 }
 
 export class PatchPredioDto {
@@ -91,4 +103,3 @@ export class CriarPredioDto {
     @Type(() => HorarioFuncionamentoDto)
     horariosFuncionamento!: HorarioFuncionamentoDto[];
 }
-
