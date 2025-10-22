@@ -49,7 +49,7 @@ const WorkspaceEditor = () => {
         freeSchedule: false,
         schedule: getDefaultOpeningDays(),
         amenities: [] as string[],
-        locationId: '',
+        locationId: null,
     });
 
     const [useLocationSchedule, setUseLocationSchedule] = useState(false);
@@ -90,24 +90,22 @@ const WorkspaceEditor = () => {
         return days;
     }
 
-    function weeklyScheduleToAvailableHours(schedule: typeof formData.schedule, workspaceId: number): AvailableHours[] {
+    function weeklyScheduleToAvailableHours(schedule: typeof formData.schedule): AvailableHours[] {
         const result: AvailableHours[] = [];
         Object.entries(schedule).forEach(([diaSemana, day]) => {
             day.timeSlots.forEach(slot => {
                 result.push({
-                    id: workspaceId,
                     diaSemana,
                     horarioAbertura: slot.start,
                     horarioFechamento: slot.end,
                     ativo: day.active,
-                    sala: { id: workspaceId }
                 })
             })
         });
         return result;
     }
 
-    const applyLocationSchedule = async (locationId: string | number) => {
+    const applyLocationSchedule = async (locationId: number) => {
         if (!locationId) return;
 
         setIsLoadingSchedule(true);
@@ -119,20 +117,20 @@ const WorkspaceEditor = () => {
             );
 
             let locationSchedule;
-
-            if (cachedLocation?.horarioPredio) {
+            if (cachedLocation?.horariosFuncionamento) {
                 // Usa os dados em cache - sem chamada à API!
-                locationSchedule = scheduleToWeeklySchedule(cachedLocation.horarioPredio);
+                locationSchedule = scheduleToWeeklySchedule(cachedLocation.horariosFuncionamento);
             } else {
                 // Só busca da API se não tiver em cache
                 const response = await getLocationById(Number(locationId));
                 const location = response.data;
 
-                if (location.horarioPredio && Array.isArray(location.horarioPredio)) {
-                    locationSchedule = scheduleToWeeklySchedule(location.horarioPredio);
+                if (location.horariosFuncionamento && Array.isArray(location.horariosFuncionamento)) {
+                    locationSchedule = scheduleToWeeklySchedule(location.horariosFuncionamento);
                 }
             }
-
+            console.log(locationSchedule)
+            
             if (locationSchedule) {
                 // Salva o backup dos horários customizados antes de aplicar os do prédio
                 setCustomScheduleBackup(formData.schedule);
@@ -200,8 +198,8 @@ const WorkspaceEditor = () => {
                     const response = await getWorkspaceById(id);
                     const workspace = response.data;
 
-                    const workspaceSchedule = workspace.horarioSala
-                        ? scheduleToWeeklySchedule(workspace.horarioSala)
+                    const workspaceSchedule = workspace.horariosFuncionamento
+                        ? scheduleToWeeklySchedule(workspace.horariosFuncionamento)
                         : getDefaultOpeningDays();
 
                     setFormData({
@@ -210,7 +208,7 @@ const WorkspaceEditor = () => {
                         capacity: workspace.capacidade?.toString() || null,
                         pricePerHour: workspace.precoHora || null,
                         category: workspace.categoria || null,
-                        freeSchedule: workspace.reservaGratuita || null,
+                        freeSchedule: workspace.reservaGratuita || false,
                         schedule: workspaceSchedule || getDefaultOpeningDays(),
                         amenities: workspace.comodidades || [],
                         locationId: workspace.predio?.id.toString() || null,
@@ -272,16 +270,13 @@ const WorkspaceEditor = () => {
             reservaGratuita: formData.freeSchedule,
             comodidades: formData.amenities,
             predioId: formData.locationId.toString(),
-            horariosDisponiveis: weeklyScheduleToAvailableHours(formData.schedule, Number(id)),
-            precoHora: formData.pricePerHour
+            horariosFuncionamento: weeklyScheduleToAvailableHours(formData.schedule),
+            precoHora: Number(formData.pricePerHour)
         };
 
         try {
             if (isEditMode) {
-                await editWorkspace({
-                    id: Number(id),
-                    ...payload
-                });
+                await editWorkspace(Number(id), payload);
                 await fetchWorkspaces();
                 toast({
                     title: "Sucesso!",
@@ -332,7 +327,7 @@ const WorkspaceEditor = () => {
 
         // Se já estava usando horário do prédio, aplica automaticamente para o novo local
         if (useLocationSchedule) {
-            applyLocationSchedule(locationId);
+            applyLocationSchedule(Number(locationId));
         }
     };
 

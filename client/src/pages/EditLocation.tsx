@@ -83,6 +83,7 @@ const EditLocation = () => {
   }
 
   const fetchLocation = async () => {
+    setIsLocationLoading(true)
     try {
       const filteredLocation = await getLocationById(id as unknown as number);
 
@@ -101,7 +102,7 @@ const EditLocation = () => {
         zipCode: filteredLocation.data.cep,
         description: filteredLocation.data.descricao,
         images: filteredLocation.data.imagens,
-        schedule: openingHoursToWeeklySchedule(filteredLocation.data.horarioPredio)
+        schedule: openingHoursToWeeklySchedule(filteredLocation.data.horariosFuncionamento)
       }));
     } catch (err) {
       throw (`Location not fetched. Error: ${err}`);
@@ -111,23 +112,22 @@ const EditLocation = () => {
   }
 
   useEffect(() => {
-    if (isLocationLoading) return;
+    fetchLocation();
+  }, [id]);
+
+  useEffect(() => {
     if (!isAuthenticated || (user && user.tipo !== 'locador')) {
       navigate('/login');
     }
-  }, [isLocationLoading, isAuthenticated, user, location, navigate]);
+  }, [isAuthenticated, user, location, navigate]);
 
-  if (isLocationLoading || !user) {
+  if (isLocationLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>Carregando...</p>
       </div>
     );
   };
-
-  useEffect(() => {
-    fetchLocation();
-  }, [id]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -140,7 +140,7 @@ const EditLocation = () => {
       estado: formData.state,
       cep: formData.zipCode,
       descricao: formData.description,
-      horarioPredio: weeklyScheduleToOpeningHours(formData.schedule, locationId),
+      horariosFuncionamento: weeklyScheduleToOpeningHours(formData.schedule, locationId),
       usuario: user
     }
     editLocation(locationPayload);

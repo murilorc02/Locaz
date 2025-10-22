@@ -10,7 +10,7 @@ interface WorkspacesContextType {
     addWorkspace: (payload: CreateSalaPayload) => Promise<any>;
     fetchWorkspaces: () => void;
     getWorkspaceById: (workspaceId: string) => Promise<WorkspaceApiResponse>;
-    editWorkspace: (workspace: Partial<Workspace>) => Promise<any>
+    editWorkspace: (workspaceId: number, payload: Partial<CreateSalaPayload>) => Promise<any>
 }
 
 // Cria o contexto
@@ -63,9 +63,9 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         }
     }
 
-    const editWorkspace = async (workspace: Partial<Workspace>) => {
+    const editWorkspace = async (workspaceId: number, payload: Partial<CreateSalaPayload>) => {
         try {
-            await api.patch<LocationApiResponse>(`/sala/editar/${workspace.id}`, workspace);
+            await api.patch<WorkspaceApiResponse>(`/sala/editar/${workspaceId}`, payload);
             await fetchWorkspaces();
         } catch (err) {
             throw new Error("Não foi possível editar o local", err)

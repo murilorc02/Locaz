@@ -31,7 +31,7 @@ export type Workspace = {
   reservaGratuita: boolean;
   comodidades: string[];
   imagens?: string[];
-  horarioSala: AvailableHours[];
+  horariosFuncionamento: AvailableHours[];
   predio: {
     id: number;
   };
@@ -54,7 +54,7 @@ export type Location = {
   cep: string;
   descricao: string;
   salas: Workspace[];
-  horarioPredio: OpeningHours[];
+  horariosFuncionamento: OpeningHours[];
   usuario: User;
   imagens?: string[];
   createdAt: string;
@@ -81,14 +81,10 @@ export type OpeningHours = {
 };
 
 export type AvailableHours = {
-  id: number;
   diaSemana: string;
   horarioAbertura: string;
   horarioFechamento: string;
   ativo: boolean;
-  sala?: {
-    id: number;
-  }
 };
 
 export type Booking = {
@@ -134,7 +130,7 @@ export type CreateSalaPayload = {
   categoria: WorkspaceCategory;
   precoHora: number;
   reservaGratuita: boolean;
-  horariosDisponiveis?: HorarioPayload[];
+  horariosFuncionamento?: HorarioPayload[];
   comodidades: string[];
   imagens?: string[];
   predioId: string;
