@@ -125,4 +125,5 @@ export interface UpdateSalaDTO {
         horarioFechamento: string;
         ativo: boolean;
     }>;
+    predioId: number;
 }

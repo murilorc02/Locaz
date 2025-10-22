@@ -81,7 +81,7 @@ const SCHEDULE_TEMPLATES = {
   }
 };
 
-const WeeklySchedule = ({ schedule, onChange, showTemplates = true }: WeeklyScheduleProps) => {
+const WeeklySchedule = ({ schedule, onChange, showTemplates }: WeeklyScheduleProps) => {
   const [newTimeSlot, setNewTimeSlot] = useState<{ [key: string]: TimeSlot }>({});
 
   const applyTemplate = (templateKey: keyof typeof SCHEDULE_TEMPLATES) => {
