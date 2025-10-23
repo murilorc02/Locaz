@@ -11,6 +11,7 @@ interface WorkspacesContextType {
     fetchWorkspaces: () => void;
     getWorkspaceById: (workspaceId: string) => Promise<WorkspaceApiResponse>;
     editWorkspace: (workspaceId: number, payload: Partial<CreateSalaPayload>) => Promise<any>
+    deleteWorkspace: (workspaceId: number) => void
 }
 
 // Cria o contexto
@@ -68,7 +69,16 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
             await api.patch<WorkspaceApiResponse>(`/sala/editar/${workspaceId}`, payload);
             await fetchWorkspaces();
         } catch (err) {
-            throw new Error("Não foi possível editar o local", err)
+            throw Error(err)
+        }
+    }
+
+    const deleteWorkspace = async (workspaceId: number) => {
+        try {
+            await api.delete(`/sala/delete/${workspaceId}`);
+            await fetchWorkspaces();
+        } catch (err) {
+            throw Error(err)
         }
     }
 
@@ -79,7 +89,8 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         fetchWorkspaces,
         addWorkspace,
         getWorkspaceById,
-        editWorkspace
+        editWorkspace,
+        deleteWorkspace
     }
 
     return (
