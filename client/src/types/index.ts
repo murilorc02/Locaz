@@ -133,5 +133,5 @@ export type CreateSalaPayload = {
   horariosFuncionamento?: HorarioPayload[];
   comodidades: string[];
   imagens?: string[];
-  predioId: string;
+  predioId: number;
 }

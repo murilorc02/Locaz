@@ -13,7 +13,7 @@ import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
-import { CreateSalaPayload, WorkspaceCategory, AvailableHours, OpeningHours } from '@/types';
+import { CreateSalaPayload, WorkspaceCategory, AvailableHours, OpeningHours, HorarioPayload } from '@/types';
 import { workspaceAmenities } from '@/data/amenities';
 import { useToast } from '@/hooks/use-toast';
 import AmenityIcon from '@/components/AmenityIcon';
@@ -90,8 +90,8 @@ const WorkspaceEditor = () => {
         return days;
     }
 
-    function weeklyScheduleToAvailableHours(schedule: typeof formData.schedule): AvailableHours[] {
-        const result: AvailableHours[] = [];
+    function weeklyScheduleToHorarioPayload(schedule: typeof formData.schedule) {
+        const result: HorarioPayload[] = [];
         Object.entries(schedule).forEach(([diaSemana, day]) => {
             day.timeSlots.forEach(slot => {
                 result.push({
@@ -130,7 +130,7 @@ const WorkspaceEditor = () => {
                 }
             }
             console.log(locationSchedule)
-            
+
             if (locationSchedule) {
                 // Salva o backup dos horários customizados antes de aplicar os do prédio
                 setCustomScheduleBackup(formData.schedule);
@@ -269,15 +269,14 @@ const WorkspaceEditor = () => {
             categoria: formData.category,
             reservaGratuita: formData.freeSchedule,
             comodidades: formData.amenities,
-            predioId: formData.locationId.toString(),
-            horariosFuncionamento: weeklyScheduleToAvailableHours(formData.schedule),
+            predioId: Number(formData.locationId),
+            horariosFuncionamento: weeklyScheduleToHorarioPayload(formData.schedule),
             precoHora: Number(formData.pricePerHour)
         };
 
         try {
             if (isEditMode) {
                 await editWorkspace(Number(id), payload);
-                await fetchWorkspaces();
                 toast({
                     title: "Sucesso!",
                     description: "Espaço atualizado com sucesso.",
