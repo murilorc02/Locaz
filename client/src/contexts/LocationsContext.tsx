@@ -12,6 +12,7 @@ interface LocationsContextType {
   fetchLocations: () => void;
   getLocationById: (locationId: number) => Promise<LocationApiResponse>;
   editLocation: (location: Partial<Location>) => Promise<any>
+  deleteLocation: (locationId: number) => void
 }
 
 // Cria o contexto
@@ -47,8 +48,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
       await api.post('/predio/create', payload);
       await fetchLocations();
     } catch (err) {
-      console.error("Erro ao adicionar local:", err);
-      throw new Error("Não foi possível adicionar o novo local.");
+      throw Error(err);
     }
   }, []);
 
@@ -58,7 +58,7 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
       const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
       return response.data;
     } catch (err) {
-      throw new Error("Não foi possível encontrar o local");
+      throw Error(err);
     } finally {
       setIsLoading(false);
     }
@@ -66,10 +66,19 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
 
   const editLocation = async (location: Partial<Location>) => {
     try {
-      await api.patch<LocationApiResponse>(`predio/${location.id}`, location);
+      await api.patch<LocationApiResponse>(`/predio/${location.id}`, location);
       await fetchLocations();
     } catch (err) {
-      throw new Error("Não foi possível editar o local");
+      throw Error(err);
+    }
+  }
+
+  const deleteLocation = async (locationId: number) => {
+    try {
+      await api.delete<LocationApiResponse>(`/predio/delete/${locationId}`);
+      await fetchLocations();
+    } catch (err) {
+      throw Error(err);
     }
   }
 
@@ -80,7 +89,8 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
     addLocation,
     fetchLocations,
     getLocationById,
-    editLocation
+    editLocation,
+    deleteLocation
   };
 
   return (
