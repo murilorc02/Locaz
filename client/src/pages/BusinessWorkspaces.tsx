@@ -7,19 +7,25 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Users, Plus, Search, Edit, Trash2, DollarSign } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, DollarSign, AlertTriangle } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
+import { toast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const BusinessWorkspaces = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
+
+  const [workspaceToDelete, setWorkspaceToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const { locations: businessLocations, fetchLocations } = useLocations();
-  const { workspaces: businessWorkspaces, fetchWorkspaces } = useWorkspaces();
+  const { workspaces: businessWorkspaces, fetchWorkspaces, deleteWorkspace } = useWorkspaces();
 
   useEffect(() => {
     const reloadData = async () => {
@@ -71,6 +77,35 @@ const BusinessWorkspaces = () => {
     }
     const location = userLocations.find(loc => loc.id === locationId);
     return location ? location.nome : 'Local não encontrado';
+  };
+
+  const handleDeleteWorkspace = async () => {
+    if (!workspaceToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteWorkspace(workspaceToDelete.id);
+
+      toast({
+        title: "Espaço excluído!",
+        description: `"${workspaceToDelete.name}" foi removido com sucesso.`,
+      });
+
+      // Recarrega os dados
+      await Promise.all([
+        fetchLocations(),
+        fetchWorkspaces()
+      ]);
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o espaço. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setWorkspaceToDelete(null);
+    }
   };
 
   return (
@@ -233,6 +268,7 @@ const BusinessWorkspaces = () => {
                                   variant="ghost"
                                   size="sm"
                                   className="text-red-600 hover:text-red-700"
+                                  onClick={() => setWorkspaceToDelete({ id: workspace.id, name: workspace.nome })}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -249,6 +285,39 @@ const BusinessWorkspaces = () => {
           </main>
         </SidebarInset>
       </div>
+
+      <AlertDialog open={!!workspaceToDelete} onOpenChange={(open) => !open && setWorkspaceToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Confirmar Exclusão
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Tem certeza que deseja excluir o espaço{' '}
+                <span className="font-semibold text-foreground">"{workspaceToDelete?.name}"</span>?
+              </p>
+              <p className="text-red-600 font-medium">
+                Esta ação não pode ser desfeita e todas as reservas relacionadas serão afetadas.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteWorkspace}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir Espaço'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </SidebarProvider>
   );
 };
