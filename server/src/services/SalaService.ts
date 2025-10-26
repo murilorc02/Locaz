@@ -103,6 +103,10 @@ export class SalaService {
     return await this.salaRepository.buscarPorPredio(predioIdNumero);
   }
 
+  async buscarPorProprietario(usuarioId: number): Promise<Sala[]> {
+    return await this.salaRepository.buscarPorProprietario(usuarioId);
+  }
+
   async buscarPorFiltros(filtros: {
     nome?: string;
     cidade?: string;
@@ -298,48 +302,48 @@ export class SalaService {
   }
 
   async atualizarHorariosFuncionamento(
-  salaId: number,
-  horariosFuncionamento: Array<{
-    diaSemana: string;
-    horarioAbertura: string;
-    horarioFechamento: string;
-    ativo: boolean;
-  }>
-): Promise<Sala | null> {
-  const sala = await this.salaRepository.buscarPorId(salaId);
+    salaId: number,
+    horariosFuncionamento: Array<{
+      diaSemana: string;
+      horarioAbertura: string;
+      horarioFechamento: string;
+      ativo: boolean;
+    }>
+  ): Promise<Sala | null> {
+    const sala = await this.salaRepository.buscarPorId(salaId);
 
-  if (!sala) {
-    throw new Error('Sala não encontrada');
-  }
-
-  // Validar se todos os dias da semana estão presentes
-  const diasValidos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
-  const diasRecebidos = horariosFuncionamento.map(h => h.diaSemana);
-  
-  const diasFaltantes = diasValidos.filter(dia => !diasRecebidos.includes(dia));
-  if (diasFaltantes.length > 0) {
-    throw new Error(`Dias da semana faltantes: ${diasFaltantes.join(', ')}`);
-  }
-
-  // Validar horários
-  for (const horario of horariosFuncionamento) {
-    const abertura = this.converterHorarioParaMinutos(horario.horarioAbertura);
-    const fechamento = this.converterHorarioParaMinutos(horario.horarioFechamento);
-
-    if (abertura >= fechamento) {
-      throw new Error(`Horário de abertura deve ser menor que horário de fechamento para ${horario.diaSemana}`);
+    if (!sala) {
+      throw new Error('Sala não encontrada');
     }
+
+    // Validar se todos os dias da semana estão presentes
+    const diasValidos = ['segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado', 'domingo'];
+    const diasRecebidos = horariosFuncionamento.map(h => h.diaSemana);
+
+    const diasFaltantes = diasValidos.filter(dia => !diasRecebidos.includes(dia));
+    if (diasFaltantes.length > 0) {
+      throw new Error(`Dias da semana faltantes: ${diasFaltantes.join(', ')}`);
+    }
+
+    // Validar horários
+    for (const horario of horariosFuncionamento) {
+      const abertura = this.converterHorarioParaMinutos(horario.horarioAbertura);
+      const fechamento = this.converterHorarioParaMinutos(horario.horarioFechamento);
+
+      if (abertura >= fechamento) {
+        throw new Error(`Horário de abertura deve ser menor que horário de fechamento para ${horario.diaSemana}`);
+      }
+    }
+
+    await this.salaRepository.atualizar(salaId, {
+      horariosFuncionamento: horariosFuncionamento as any
+    });
+
+    return await this.salaRepository.buscarPorId(salaId);
   }
 
-  await this.salaRepository.atualizar(salaId, {
-    horariosFuncionamento: horariosFuncionamento as any
-  });
-
-  return await this.salaRepository.buscarPorId(salaId);
-}
-
-private converterHorarioParaMinutos(horario: string): number {
-  const [horas, minutos] = horario.split(':').map(Number);
-  return horas * 60 + minutos;
-}
+  private converterHorarioParaMinutos(horario: string): number {
+    const [horas, minutos] = horario.split(':').map(Number);
+    return horas * 60 + minutos;
+  }
 }

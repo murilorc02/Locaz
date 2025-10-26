@@ -132,57 +132,56 @@ salaController.patch('/sala/editar/:id',
     }
 );
 
-salaController.put('/sala/:id/horarios-funcionamento',
-    authMiddleware,
-    validationMiddleware(AtualizarHorariosFuncionamentoSalaDto),
-    async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-        try {
-            const id = parseInt(req.params.id);
+salaController.patch('/sala/:id/horarios-funcionamento',
+  authMiddleware,
+  validationMiddleware(AtualizarHorariosFuncionamentoSalaDto),
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      const id = parseInt(req.params.id);
 
-            if (isNaN(id)) {
-                return res.status(400).json({
-                    message: 'ID da sala inválido',
-                    statusCode: 400,
-                    timestamp: new Date().toISOString(),
-                    path: req.path
-                });
-            }
+      if (isNaN(id)) {
+        return res.status(400).json({
+          message: 'ID da sala inválido',
+          statusCode: 400,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
 
-            // Verificar se a sala existe e pertence ao usuário
-            const salaExistente = await salaService.buscarPorId(id);
-            if (!salaExistente) {
-                return res.status(404).json({
-                    message: 'Sala não encontrada',
-                    statusCode: 404,
-                    timestamp: new Date().toISOString(),
-                    path: req.path
-                });
-            }
+      const salaExistente = await salaService.buscarPorId(id);
+      if (!salaExistente) {
+        return res.status(404).json({
+          message: 'Sala não encontrada',
+          statusCode: 404,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
 
-            if (salaExistente.predio.usuario.id !== req.user?.sub) {
-                return res.status(403).json({
-                    message: 'Você não tem permissão para editar horários desta sala',
-                    statusCode: 403,
-                    timestamp: new Date().toISOString(),
-                    path: req.path
-                });
-            }
+      if (salaExistente.predio.usuario.id !== req.user?.sub) {
+        return res.status(403).json({
+          message: 'Você não tem permissão para editar horários desta sala',
+          statusCode: 403,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
 
-            const salaAtualizada = await salaService.atualizarHorariosFuncionamento(
-                id,
-                req.body.horariosFuncionamento
-            );
+      const salaAtualizada = await salaService.atualizarHorariosFuncionamento(
+        id,
+        req.body.horariosFuncionamento
+      );
 
-            res.json({
-                message: 'Horários de funcionamento atualizados com sucesso',
-                data: salaAtualizada,
-                statusCode: 200,
-                timestamp: new Date().toISOString()
-            });
-        } catch (error) {
-            next(error);
-        }
+      res.json({
+        message: 'Horários de funcionamento atualizados com sucesso',
+        data: salaAtualizada,
+        statusCode: 200,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      next(error);
     }
+  }
 );
 
 // GET /api/sala/:id/horarios-funcionamento - Obter horários de funcionamento
@@ -227,7 +226,6 @@ salaController.get('/sala/:id/horarios-funcionamento',
     }
 );
 
-// GET /api/sala/getByAll
 salaController.get('/sala/getByAll', async (req: Request, res: Response, next: NextFunction) => {
     try {
         const salas = await salaService.buscarTodas();
@@ -255,6 +253,55 @@ salaController.get('/sala/getByAll', async (req: Request, res: Response, next: N
         next(error);
     }
 });
+
+salaController.get('/sala/minhas-salas',
+  authMiddleware,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (req.user?.tipo !== TipoUsuario.LOCADOR) {
+        return res.status(403).json({
+          message: 'Apenas proprietários podem acessar esta funcionalidade',
+          statusCode: 403,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      const salas = await salaService.buscarPorProprietario(req.user.sub);
+
+      const salasFormatadas = salas.map((sala: any) => ({
+        id: sala.id,
+        nome: sala.nome,
+        descricao: sala.descricao,
+        capacidade: sala.capacidade,
+        categoria: sala.categoria,
+        precoHora: sala.precoHora,
+        reservaGratuita: sala.reservaGratuita,
+        comodidades: sala.comodidades,
+        horariosFuncionamento: sala.horariosFuncionamento,
+        predio: {
+          id: sala.predio.id,
+          nome: sala.predio.nome,
+          cidade: sala.predio.cidade,
+          estado: sala.predio.estado,
+          endereco: sala.predio.endereco
+        },
+        createdAt: sala.createdAt,
+        updatedAt: sala.updatedAt
+      }));
+
+      res.json({
+        message: 'Salas encontradas com sucesso',
+        total: salasFormatadas.length,
+        data: salasFormatadas,
+        statusCode: 200,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 // GET /api/sala/search - Rota principal para busca com filtros avançados
 salaController.get('/sala/search', async (req: Request, res: Response, next: NextFunction) => {

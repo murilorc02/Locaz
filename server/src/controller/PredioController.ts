@@ -126,7 +126,7 @@ predioController.patch('/predio/:id',
   }
 );
 
-predioController.put('/predio/:id/horarios-funcionamento',
+predioController.patch('/predio/:id/horarios-funcionamento',
   authMiddleware,
   validationMiddleware(AtualizarHorariosFuncionamentoPredioDto),
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -268,6 +268,53 @@ predioController.get('/predio/getByAll', async (req: Request, res: Response, nex
     next(error);
   }
 });
+
+predioController.get('/predio/meus-predios',
+  authMiddleware,
+  async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+    try {
+      if (req.user?.tipo !== TipoUsuario.LOCADOR) {
+        return res.status(403).json({
+          message: 'Apenas proprietários podem acessar esta funcionalidade',
+          statusCode: 403,
+          timestamp: new Date().toISOString(),
+          path: req.path
+        });
+      }
+
+      const predios = await predioService.buscarPorUsuario(req.user.sub);
+
+      const prediosResponse = predios.map(predio => ({
+        id: predio.id,
+        nome: predio.nome,
+        endereco: predio.endereco,
+        cidade: predio.cidade,
+        estado: predio.estado,
+        cep: predio.cep,
+        descricao: predio.descricao,
+        horariosFuncionamento: predio.horariosFuncionamento,
+        salas: predio.salas?.map(sala => ({
+          id: sala.id,
+          nome: sala.nome,
+          capacidade: sala.capacidade,
+          categoria: sala.categoria
+        })),
+        createdAt: predio.createdAt,
+        updatedAt: predio.updatedAt
+      }));
+
+      res.json({
+        message: 'Prédios encontrados com sucesso',
+        total: prediosResponse.length,
+        data: prediosResponse,
+        statusCode: 200,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+);
 
 predioController.get('/predio/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {

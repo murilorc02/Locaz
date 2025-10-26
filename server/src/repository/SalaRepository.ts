@@ -44,6 +44,17 @@ export class SalaRepository {
         });
     }
 
+    async buscarPorProprietario(usuarioId: number): Promise<Sala[]> {
+        return await this.repository.createQueryBuilder('sala')
+            .leftJoinAndSelect('sala.predio', 'predio')
+            .leftJoinAndSelect('predio.usuario', 'usuario')
+            .leftJoinAndSelect('sala.reservas', 'reservas')
+            .where('usuario.id = :usuarioId', { usuarioId })
+            .orderBy('predio.nome', 'ASC')
+            .addOrderBy('sala.nome', 'ASC')
+            .getMany();
+    }
+
     async buscarPorNomeEPredio(nome: string, predioId: number): Promise<Sala | null> {
         return await this.repository.findOne({
             where: {
