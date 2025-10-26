@@ -1,36 +1,51 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import LocationCard from '@/components/LocationCard';
-import { locations } from '@/data/locations';
 import { Search, MapPin } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
+import { useLocations } from '@/contexts/LocationsContext';
+import { Location, LocationApiResponse } from '@/types';
 
 const Index = () => {
+  const { isLoading, getLocationById } = useLocations();
   const [searchLocation, setSearchLocation] = useState('');
+  const [featuredLocations, setFeaturedLocations] = useState([] as Location[]);
   const navigate = useNavigate();
-  
+
+  const getFeaturedLocations = async () => {
+    let loc: LocationApiResponse;
+    try {
+      loc = (await getLocationById(1));
+      setFeaturedLocations((prev) => [...prev, loc.data])
+    } catch (e) {
+      console.log("Não foi possível encontrar os locais: ", e)
+      setFeaturedLocations([])
+    }
+  }
+
+  useEffect(() => {
+    getFeaturedLocations();
+  }, [])
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     navigate(`/search?location=${encodeURIComponent(searchLocation)}`);
   };
 
-  // Featured locations
-  const featuredLocations = locations.slice(0, 3);
-  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
         {/* Hero Section */}
         <section className="relative">
-          <div 
+          <div
             className="bg-cover bg-center h-[380px] sm:h-[500px] md:h-[600px]"
-            style={{ 
+            style={{
               backgroundImage: "url('https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80')",
               backgroundPosition: "center 30%"
             }}
@@ -39,7 +54,7 @@ const Index = () => {
             <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex h-full items-center justify-center">
               <div className="max-w-3xl text-center">
                 <h1 className="text-3xl font-bold tracking-tight sm:!leading-[3.8rem] md:!leading-[4.5rem] text-white sm:text-5xl md:text-6xl">
-                  Encontre Seu Local de <br/>
+                  Encontre Seu Local de <br />
                   Trabalho
                   <span className="text-secondary text-3xl sm:text-5xl md:text-6xl bg-muted mx-1 px-2 rounded-lg center">Perfeito</span>
                 </h1>
@@ -125,9 +140,17 @@ const Index = () => {
               </Button>
             </div>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {featuredLocations.map((location) => (
-                <LocationCard key={location.id} location={location} />
-              ))}
+              {!featuredLocations ?
+                (
+                  <div>
+                    <p> Não há locais disponíveis ainda </p>
+                  </div>
+                )
+                :
+                featuredLocations.map((location) => (
+                  <LocationCard key={location.id} location={location} />
+                ))
+              }
             </div>
           </div>
         </section>
@@ -141,8 +164,8 @@ const Index = () => {
                 <p className="mt-4 text-white/90">
                   Cadastre seus espaços de trabalho em nossa plataforma e alcance centenas de profissionais que estão procurando pelo local perfeito para trabalhar!
                 </p>
-                <Button 
-                  variant="secondary" 
+                <Button
+                  variant="secondary"
                   className="mt-6 bg-white text-primary hover:bg-gray-100"
                   onClick={() => navigate('/signup')}
                 >
@@ -150,9 +173,9 @@ const Index = () => {
                 </Button>
               </div>
               <div className="w-full md:w-1/2 lg:w-2/5">
-                <img 
-                  src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80" 
-                  alt="Business workspace" 
+                <img
+                  src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
+                  alt="Business workspace"
                   className="rounded-lg shadow-lg"
                 />
               </div>

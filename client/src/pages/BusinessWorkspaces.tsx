@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
@@ -7,40 +7,107 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { workspaces } from '../data/workspaces';
-import { Users, Plus, Search, Edit, Trash2, DollarSign } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, DollarSign, AlertTriangle } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
+import { useWorkspaces } from '@/contexts/WorkspacesContext';
+import { toast } from '@/hooks/use-toast';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 
 const BusinessWorkspaces = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const { locations: businessLocations } = useLocations();
-    
-  const businessWorkspaces = workspaces.filter(workspace => 
-    businessLocations.some(location => location.id === workspace.locationId)
-  );
-  
+
+  const [workspaceToDelete, setWorkspaceToDelete] = useState<{ id: number; name: string } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { locations: businessLocations, fetchLocations } = useLocations();
+  const { workspaces: businessWorkspaces, fetchWorkspaces, deleteWorkspace } = useWorkspaces();
+
+  useEffect(() => {
+    const reloadData = async () => {
+      if (isAuthenticated && user?.tipo === 'locador') {
+        // Recarrega ambos em paralelo
+        await Promise.all([
+          fetchLocations(),
+          fetchWorkspaces()
+        ]);
+      }
+    };
+
+    reloadData();
+  }, [isAuthenticated, user, fetchLocations, fetchWorkspaces]);
+
   // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-    navigate('/login');
-    return null;
+  useEffect(() => {
+    if (!isAuthenticated || (user && user.tipo !== 'locador')) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, user, navigate])
+
+  if (!businessLocations?.data || !businessWorkspaces.data || !user) {
+    return <div> Carregando... </div>
   }
 
-  const filteredWorkspaces = businessWorkspaces.filter(workspace => {
-    const matchesSearch = workspace.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLocation = selectedLocation === 'all' || workspace.locationId.toString() === selectedLocation;
+  const userLocations = businessLocations.data.filter(
+    (location) => location.usuario.id === user.id,
+  );
+
+  const userWorkspacesIds = userLocations.flatMap(
+    (location) => location.salas.map((sala) => sala.id) || []
+  );
+
+  const userWorkspaces = businessWorkspaces.data.filter(
+    (workspace) => userWorkspacesIds.includes(workspace.id)
+  );
+
+  const filteredWorkspaces = userWorkspaces.filter(workspace => {
+    const matchesSearch = workspace.nome.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLocation = selectedLocation === 'all' ||
+      (workspace.predio.id ? workspace.predio.id.toString() === selectedLocation : false);
     return matchesSearch && matchesLocation;
   });
 
-  const getLocationName = (locationId: string) => {
-    const location = businessLocations.find(loc => loc.id.toString() === locationId);
-    return location ? location.nomePredio : 'Local não encontrado';
+  const getLocationName = (locationId: number | undefined) => {
+    if (locationId == null) {
+      return 'Local não encontrado';
+    }
+    const location = userLocations.find(loc => loc.id === locationId);
+    return location ? location.nome : 'Local não encontrado';
   };
-  
+
+  const handleDeleteWorkspace = async () => {
+    if (!workspaceToDelete) return;
+
+    setIsDeleting(true);
+    try {
+      await deleteWorkspace(workspaceToDelete.id);
+
+      toast({
+        title: "Espaço excluído!",
+        description: `"${workspaceToDelete.name}" foi removido com sucesso.`,
+      });
+
+      // Recarrega os dados
+      await Promise.all([
+        fetchLocations(),
+        fetchWorkspaces()
+      ]);
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o espaço. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setWorkspaceToDelete(null);
+    }
+  };
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -54,9 +121,9 @@ const BusinessWorkspaces = () => {
                 <p className="text-gray-600 text-sm">Visualize e gerencie todos os seus espaços de trabalho</p>
               </div>
               <div className="mt-2 md:mt-0">
-                <Button 
+                <Button
                   onClick={() => navigate('/business/add-workspace')}
-                  disabled={businessLocations.length === 0}
+                  disabled={userLocations.length === 0}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Espaço
@@ -64,7 +131,7 @@ const BusinessWorkspaces = () => {
               </div>
             </div>
           </header>
-          
+
           <main className="flex-1 p-6">
             <div className="mb-6 flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
@@ -82,16 +149,16 @@ const BusinessWorkspaces = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os Locais</SelectItem>
-                  {businessLocations.map(location => (
+                  {userLocations.map(location => (
                     <SelectItem key={location.id} value={location.id.toString()}>
-                      {location.nomePredio}
+                      {location.nome}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {businessLocations.length === 0 ? (
+            {userLocations.length === 0 ? (
               <Card>
                 <CardContent className="py-12 text-center">
                   <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -152,53 +219,56 @@ const BusinessWorkspaces = () => {
                           <TableRow key={workspace.id}>
                             <TableCell className="font-medium">
                               <div className="flex items-center gap-3">
-                                <img 
-                                  src={workspace.images[0]} 
-                                  alt={workspace.name}
+                                {/* <img 
+                                  src={workspace.imagens[0]} 
+                                  alt={workspace.nome}
                                   className="w-10 h-10 rounded object-cover"
-                                />
+                                /> */}
                                 <div>
-                                  <p className="font-medium">{workspace.name}</p>
-                                  <p className="text-sm text-gray-500">{workspace.description}</p>
+                                  <p className="font-medium">{workspace.nome}</p>
+                                  <p className="text-sm text-gray-500">{workspace.descricao}</p>
                                 </div>
                               </div>
                             </TableCell>
-                            <TableCell>{getLocationName(workspace.locationId.toString())}</TableCell>
+                            <TableCell>
+                              {getLocationName(workspace.predio.id)}
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <Users className="h-4 w-4" />
-                                {workspace.capacity}
+                                {workspace.capacidade || 0}
                               </div>
                             </TableCell>
                             <TableCell>
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4" />
-                                R${workspace.pricePerHour}
+                                R${workspace.precoHora || 0}
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Badge 
-                                className={workspace.available 
+                              {/* <Badge 
+                                className={workspace.dispo 
                                   ? "bg-green-100 text-green-800" 
                                   : "bg-red-100 text-red-800"
                                 }
                               >
                                 {workspace.available ? "Disponível" : "Indisponível"}
-                              </Badge>
+                              </Badge> */}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex justify-end gap-2">
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   onClick={() => navigate(`/business/edit-workspace/${workspace.id}`)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button 
-                                  variant="ghost" 
+                                <Button
+                                  variant="ghost"
                                   size="sm"
                                   className="text-red-600 hover:text-red-700"
+                                  onClick={() => setWorkspaceToDelete({ id: workspace.id, name: workspace.nome })}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -215,6 +285,39 @@ const BusinessWorkspaces = () => {
           </main>
         </SidebarInset>
       </div>
+
+      <AlertDialog open={!!workspaceToDelete} onOpenChange={(open) => !open && setWorkspaceToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Confirmar Exclusão
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Tem certeza que deseja excluir o espaço{' '}
+                <span className="font-semibold text-foreground">"{workspaceToDelete?.name}"</span>?
+              </p>
+              <p className="text-red-600 font-medium">
+                Esta ação não pode ser desfeita e todas as reservas relacionadas serão afetadas.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteWorkspace}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir Espaço'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </SidebarProvider>
   );
 };

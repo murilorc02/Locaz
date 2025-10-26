@@ -19,17 +19,16 @@ const EditLocation = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const [isLocationLoading, setIsLocationLoading] = useState(true);
-  const [originalData, setOriginalData] = useState<Location | null>(null);
   const { getLocationById, editLocation } = useLocations();
 
-  const getDefaultOpeningDays = () => ({     
-      segunda: { active: false, timeSlots: [] },
-      terca: { active: false, timeSlots: [] },
-      quarta: { active: false, timeSlots: [] },
-      quinta: { active: false, timeSlots: [] },
-      sexta: { active: false, timeSlots: [] },
-      sabado: { active: false, timeSlots: [] },
-      domingo: { active: false, timeSlots: [] }
+  const getDefaultOpeningDays = () => ({
+    segunda: { active: false, timeSlots: [] },
+    terca: { active: false, timeSlots: [] },
+    quarta: { active: false, timeSlots: [] },
+    quinta: { active: false, timeSlots: [] },
+    sexta: { active: false, timeSlots: [] },
+    sabado: { active: false, timeSlots: [] },
+    domingo: { active: false, timeSlots: [] }
   });
 
   const [formData, setFormData] = useState({
@@ -76,7 +75,7 @@ const EditLocation = () => {
           horarioAbertura: slot.start,
           horarioFechamento: slot.end,
           ativo: day.active,
-          predio: {id: locationId}
+          predio: { id: locationId }
         })
       })
     });
@@ -84,8 +83,15 @@ const EditLocation = () => {
   }
 
   const fetchLocation = async () => {
+    setIsLocationLoading(true)
     try {
       const filteredLocation = await getLocationById(id as unknown as number);
+
+      if (filteredLocation.data.usuario.id !== user.id) {
+        navigate('/');
+        return;
+      }
+
       console.log("Filtered: ", filteredLocation.data)
       setFormData(prev => ({
         ...prev,
@@ -96,7 +102,7 @@ const EditLocation = () => {
         zipCode: filteredLocation.data.cep,
         description: filteredLocation.data.descricao,
         images: filteredLocation.data.imagens,
-        schedule: openingHoursToWeeklySchedule(filteredLocation.data.horarioPredio)
+        schedule: openingHoursToWeeklySchedule(filteredLocation.data.horariosFuncionamento)
       }));
     } catch (err) {
       throw (`Location not fetched. Error: ${err}`);
@@ -110,11 +116,18 @@ const EditLocation = () => {
   }, [id]);
 
   useEffect(() => {
-    if (isLocationLoading) return;
     if (!isAuthenticated || (user && user.tipo !== 'locador')) {
       navigate('/login');
     }
-  }, [isLocationLoading, isAuthenticated, user, location, navigate]);
+  }, [isAuthenticated, user, location, navigate]);
+
+  if (isLocationLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,7 +140,7 @@ const EditLocation = () => {
       estado: formData.state,
       cep: formData.zipCode,
       descricao: formData.description,
-      horarioPredio: weeklyScheduleToOpeningHours(formData.schedule, locationId),
+      horariosFuncionamento: weeklyScheduleToOpeningHours(formData.schedule, locationId),
       usuario: user
     }
     editLocation(locationPayload);
@@ -317,6 +330,7 @@ const EditLocation = () => {
                     <WeeklySchedule
                       schedule={formData.schedule}
                       onChange={(schedule) => setFormData(prev => ({ ...prev, schedule }))}
+                      showTemplates={false}
                     />}
                   </CardContent>
                 </Card>

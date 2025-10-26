@@ -14,11 +14,11 @@ const LocationCard = ({ location }: LocationCardProps) => {
     <Link to={`/location/${location.id}`}>
       <div className="workspace-card overflow-hidden">
         <div className="relative h-64 w-full overflow-hidden">
-          <img
+          {/* <img
             src={location.imagens[0]}
             alt={location.nome}
             className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
-          />
+          /> */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
           <div className="absolute bottom-0 left-0 right-0 p-4">
             <h3 className="text-xl font-bold text-white">{location.nome}</h3>

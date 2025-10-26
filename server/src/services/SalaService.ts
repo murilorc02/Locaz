@@ -81,6 +81,14 @@ export class SalaService {
     if (dadosAtualizacao.horariosFuncionamento !== undefined) {
       camposParaAtualizar.horariosFuncionamento = dadosAtualizacao.horariosFuncionamento as HorarioFuncionamentoSala[];
     }
+    if (dadosAtualizacao.predioId !== undefined) {
+      const predio = await this.predioRepository.findOne({
+        where: { id: dadosAtualizacao.predioId as any },
+        relations: ['usuario']
+      });
+      if (!predio) throw new Error("Prédio não encontrado");
+      camposParaAtualizar.predio = predio;
+    }
 
     if (Object.keys(camposParaAtualizar).length > 0) {
       await this.salaRepository.atualizar(idNumero, camposParaAtualizar);

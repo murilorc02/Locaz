@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect, useCallback } from 'react';
 import { CreatePredioPayload, Location, LocationApiResponse, LocationsApiResponse } from '../types';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
@@ -12,73 +12,73 @@ interface LocationsContextType {
   fetchLocations: () => void;
   getLocationById: (locationId: number) => Promise<LocationApiResponse>;
   editLocation: (location: Partial<Location>) => Promise<any>
+  deleteLocation: (locationId: number) => void
 }
 
 // Cria o contexto
 const LocationsContext = createContext<LocationsContextType | undefined>(undefined);
 
 // Define o provedor do contexto
-export default function LocationsProvider ({ children }: { children: ReactNode }) {
+export function LocationsProvider({ children }: { children: ReactNode }) {
   const { user, isLoading: isAuthLoading, isAuthenticated } = useAuth();
   const [locations, setLocations] = useState<LocationsApiResponse>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchLocations = async () => {
-
-    if (!user) {
-        setIsLoading(false);
-        return;
-    };
-
+  const fetchLocations = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await api.get<LocationsApiResponse>(`/predio/getByAll`);
       setLocations(response.data);
     } catch (err) {
-      console.error("Erro ao buscar locais:", err);
       setError("Não foi possível carregar os locais.");
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if(user && user.tipo === 'locador') {
-      fetchLocations();
-    } else {
-      setLocations(null);
-      setIsLoading(false);
-    }
+    fetchLocations();
   }, [user]);
 
-  const addLocation = async (payload: CreatePredioPayload) => {
+  const addLocation = useCallback(async (payload: CreatePredioPayload) => {
     try {
       // Agora o 'payload' tem o tipo correto e pode ser enviado diretamente
       await api.post('/predio/create', payload);
-      await fetchLocations(); 
+      await fetchLocations();
     } catch (err) {
-      console.error("Erro ao adicionar local:", err);
-      throw new Error("Não foi possível adicionar o novo local.");
+      throw Error(err);
     }
-  };
+  }, []);
 
-  const getLocationById = async (locationId: number) => {
+  const getLocationById = useCallback(async (locationId: number) => {
+    setIsLoading(true);
     try {
       const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
-      return response.data
+      return response.data;
     } catch (err) {
-      throw new Error("Não foi possível encontrar o local");
+      throw Error(err);
+    } finally {
+      setIsLoading(false);
     }
-  }
+  }, [])
 
   const editLocation = async (location: Partial<Location>) => {
     try {
-      await api.patch<LocationApiResponse>(`predio/${location.id}`, location);
+      await api.patch<LocationApiResponse>(`/predio/${location.id}`, location);
       await fetchLocations();
     } catch (err) {
-      throw new Error("Não foi possível editar o local");
+      throw Error(err);
+    }
+  }
+
+  const deleteLocation = async (locationId: number) => {
+    try {
+      await api.delete<LocationApiResponse>(`/predio/delete/${locationId}`);
+      await fetchLocations();
+    } catch (err) {
+      throw Error(err);
     }
   }
 
@@ -89,7 +89,8 @@ export default function LocationsProvider ({ children }: { children: ReactNode }
     addLocation,
     fetchLocations,
     getLocationById,
-    editLocation
+    editLocation,
+    deleteLocation
   };
 
   return (
