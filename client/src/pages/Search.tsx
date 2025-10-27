@@ -5,125 +5,121 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import WorkspaceCard from '../components/WorkspaceCard';
 import CategoryNavbar from '../components/CategoryNavbar';
-import AmenityBadge from '../components/AmenityBadge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { amenities } from '../data/amenities';
-import { MapPin, Search as SearchIcon, Filter } from 'lucide-react';
-import { Location, LocationApiResponse, Workspace, WorkspacesApiResponse } from '../types';
+import { MapPin, Search as SearchIcon, Filter, Loader2 } from 'lucide-react';
+import { SearchSalaPayload, Workspace } from '../types';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
-import { useLocations } from '@/contexts/LocationsContext';
+import LocationSelector from '@/components/LocationSelector';
 
 const Search = () => {
-  const { workspaces, fetchWorkspaces } = useWorkspaces();
-  const { getLocationById } = useLocations();
+  const { getFilteredWorkspaces } = useWorkspaces();
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const locationQuery = searchParams.get('location') || '';
+  const [searchLocation, setSearchLocation] = useState({
+    state: searchParams.get('estado') || '',
+    city: searchParams.get('cidade') || ''
+  });
+  const [searchTerm, setSearchTerm] = useState(() => searchParams.get('local') || '');
+  const [minPrice, setMinPrice] = useState(() => searchParams.get('precoMinimo') || '');
+  const [maxPrice, setMaxPrice] = useState(() => searchParams.get('precoMaximo') || '');
+  const [capacityInput, setCapacityInput] = useState(searchParams.get('capacidade') || '');
+  const [selectedAmenities, setSelectedAmenities] = useState(() => searchParams.getAll('comodidades') || []);
+  const [selectedCategory, setSelectedCategory] = useState<Workspace['categoria'] | 'all'>(
+    () => (searchParams.get('categoria') as Workspace['categoria']) || 'all'
+  );
 
-  const [filteredWorkspaces, setFilteredWorkspaces] = useState<Workspace[]>([]);
-  const [searchTerm, setSearchTerm] = useState(locationQuery);
-  const [minPrice, setMinPrice] = useState('');
-  const [maxPrice, setMaxPrice] = useState('');
-  const [capacityInput, setCapacityInput] = useState('');
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<Workspace['categoria'] | 'all'>('all');
+  const [baseSearchResults, setBaseSearchResults] = useState<Workspace[]>([]);
+  const [displayedWorkspaces, setDisplayedWorkspaces] = useState<Workspace[]>([]);
+
+  const [isLoading, setIsLoading] = useState(false);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
-  // Find max price for reference
-  const workspaceMaxPrice = Math.max(...workspaces.data.map(w => w.precoHora), 100);
 
   // Calculate workspace counts by category
   const workspaceCounts = {
-    all: workspaces.data.length,
-    workstation: workspaces.data.filter(w => w.categoria === 'workstation').length,
-    'meeting-room': workspaces.data.filter(w => w.categoria === 'meeting-room').length,
-    'training-room': workspaces.data.filter(w => w.categoria === 'training-room').length,
-    auditorium: workspaces.data.filter(w => w.categoria === 'auditorium').length,
+    all: baseSearchResults.length,
+    workstation: baseSearchResults.filter(w => w.categoria === 'workstation').length,
+    'meeting-room': baseSearchResults.filter(w => w.categoria === 'meeting-room').length,
+    'training-room': baseSearchResults.filter(w => w.categoria === 'training-room').length,
+    auditorium: baseSearchResults.filter(w => w.categoria === 'auditorium').length,
+  };
+
+  const updateUrlParams = async () => {
+    const newParams = new URLSearchParams();
+    if (searchTerm) newParams.set('location', searchTerm);
+    if (searchLocation.city) newParams.set('cidade', searchLocation.city);
+    if (searchLocation.state) newParams.set('estado', searchLocation.state);
+    if (capacityInput) newParams.set('capacidade', capacityInput);
+    if (selectedCategory !== 'all') newParams.set('categoria', selectedCategory);
+    if (minPrice) newParams.set('precoMinimo', minPrice);
+    if (maxPrice) newParams.set('precoMaximo', maxPrice);
+    selectedAmenities.forEach(amenity => newParams.append('comodidades', amenity));
+
+    // Usa 'replace: true' para não poluir o histórico do navegador
+    setSearchParams(newParams, { replace: true });
+  }
+
+  const performSearch = async () => {
+    setIsLoading(true);
+    try {
+      const searchPayload: SearchSalaPayload = {
+        nome: searchTerm || undefined,
+        cidade: searchLocation.city || undefined,
+        estado: searchLocation.state || undefined,
+        capacidade: capacityInput ? parseInt(capacityInput) : undefined,
+        categoria: selectedCategory !== 'all' ? selectedCategory : undefined,
+        precoMinimo: minPrice ? parseFloat(minPrice) : undefined,
+        precoMaximo: maxPrice ? parseFloat(maxPrice) : undefined,
+        comodidades: selectedAmenities.length > 0 ? selectedAmenities : undefined,
+        ordenarPor: 'preco',
+        ordem: 'ASC'
+      };
+
+      const cleanPayload = Object.fromEntries(
+        Object.entries(searchPayload).filter(([_, v]) => v !== undefined)
+      ) as SearchSalaPayload;
+
+      const result = await getFilteredWorkspaces(cleanPayload);
+
+      if (result?.data) {
+        setBaseSearchResults(result.data);
+      } else {
+        setBaseSearchResults([]);
+      }
+    } catch (error) {
+      setBaseSearchResults([]);
+      console.error("Falha ao realizar busca:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
-    fetchWorkspaces();
-  }, [])
+    performSearch();
+  }, []);
 
   useEffect(() => {
-    // Initial filter based on URL params
-    filterWorkspaces();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [locationQuery]);
-
-  const filterWorkspaces = async () => {
-    let filtered: Workspace[] = workspaces.data;
-
-    // Filter by category
-    if (selectedCategory !== 'all') {
-      filtered = workspaces.data.filter(workspace => workspace.categoria == selectedCategory);
-    }
-
-    // Filter by search term (location or workspace name)
-    if (searchTerm) {
-      const searchLower = searchTerm.toLowerCase();
-      const results = [];
-
-      for (const workspace of filtered) {
-        const nameMatches = workspace.nome.toLowerCase().includes(searchLower);
-
-        if (nameMatches) {
-          results.push(workspace);
-          continue;
-        }
-
-        try {
-          const location = await getLocationById(workspace.predio.id);
-
-          if (location) {
-            const locationMatches =
-              location.data.nome.toLowerCase().includes(searchLower) ||
-              location.data.cidade.toLowerCase().includes(searchLower) ||
-              location.data.estado.toLowerCase().includes(searchLower);
-
-              if (locationMatches) {
-                results.push(workspace);
-              }
-          }
-        } catch (err) {
-          throw new Error(err);
-        }
-      }
-    }
-
-    // Filter by price range
-    const minPriceNum = minPrice ? parseFloat(minPrice) : 0;
-    const maxPriceNum = maxPrice ? parseFloat(maxPrice) : Infinity;
-    filtered = filtered.filter(workspace =>
-      workspace.precoHora >= minPriceNum &&
-      workspace.precoHora <= maxPriceNum
-    );
-
-    // Filter by capacity
-    const capacityNum = capacityInput ? parseInt(capacityInput) : null;
-    if (capacityNum) {
-      filtered = filtered.filter(workspace => workspace.capacidade >= capacityNum);
-    }
-
-    // Filter by amenities
-    if (selectedAmenities.length > 0) {
-      filtered = filtered.filter(workspace =>
-        selectedAmenities.every(amenityId => workspace.comodidades.includes(amenityId))
+    if (selectedCategory === 'all') {
+      setDisplayedWorkspaces(baseSearchResults);
+    } else {
+      setDisplayedWorkspaces(
+        baseSearchResults.filter(w => w.categoria === selectedCategory)
       );
     }
+  }, [selectedCategory, baseSearchResults]);
 
-    setFilteredWorkspaces(filtered);
-  };
+  const handleApplyFilters = () => {
+    updateUrlParams();
+    performSearch();
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    filterWorkspaces();
-    setSearchParams({ location: searchTerm });
+    updateUrlParams();
+    performSearch();
   };
 
   const handleAmenityToggle = (amenityId: string) => {
@@ -134,57 +130,66 @@ const Search = () => {
     );
   };
 
-  const clearFilters = () => {
+  const clearFilters = async () => {
     setSearchTerm('');
     setMinPrice('');
     setMaxPrice('');
     setCapacityInput('');
     setSelectedAmenities([]);
     setSelectedCategory('all');
+    setSearchLocation({ state: '', city: '' });
     setSearchParams({});
-    setFilteredWorkspaces(workspaces.data);
+
+    setIsLoading(true);
+    try {
+      const result = await getFilteredWorkspaces({
+        ordenarPor: 'preco',
+        ordem: 'ASC'
+      });
+
+      if (result?.data) {
+        setBaseSearchResults(result.data);
+      } else {
+        setBaseSearchResults([]);
+      }
+    } catch (error) {
+      setBaseSearchResults([]);
+      console.error("Falha ao limpar filtros: ", error);
+    } finally {
+      setIsLoading(false);
+    }
+    performSearch();
   };
 
   const handleCategoryChange = (category: Workspace['categoria'] | 'all') => {
     setSelectedCategory(category);
   };
 
-  // Effect to trigger filtering only when category changes or on initial load
-  useEffect(() => {
-    filterWorkspaces();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory]);
-
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
       <main className="flex-grow">
-        <div className="bg-gradient-to-t from-transparent to-secondary/35 via-transparent py-8">
+        <div className="bg-secondary/35 py-8">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold mb-4">Encontre seu Espaço Ideal</h1>
 
             <form onSubmit={handleSearch} className="flex w-full max-w-4xl gap-2">
-              <div className="relative flex-grow">
-                <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
-                <Input
-                  placeholder="Pesquisar por cidade, local ou nome do espaço"
-                  className="pl-10 h-12 rounded-lg"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+              <div className="flex w-full gap-2">
+                <div className="relative flex-grow">
+                  <MapPin className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-text-muted" />
+                  <Input
+                    placeholder="Pesquisar por nome do espaço ou empresa"
+                    className="pl-10 h-12 rounded-lg"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <LocationSelector
+                    onLocationChange={setSearchLocation}
+                  />
+                </div>
               </div>
-              <Select value={selectedCategory} onValueChange={(value: Workspace['categoria'] | 'all') => setSelectedCategory(value)}>
-                <SelectTrigger className="w-48 h-12">
-                  <SelectValue placeholder="Categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas Categorias</SelectItem>
-                  <SelectItem value="workstation">Estações de Trabalho</SelectItem>
-                  <SelectItem value="meeting-room">Salas de Reunião</SelectItem>
-                  <SelectItem value="training-room">Salas de Treinamento</SelectItem>
-                  <SelectItem value="auditorium">Auditórios</SelectItem>
-                </SelectContent>
-              </Select>
               <Button type="submit" className="h-12 px-6">
                 <SearchIcon className="h-5 w-5 mr-2" />
                 Buscar
@@ -232,7 +237,9 @@ const Search = () => {
                         type="number"
                         placeholder="0"
                         value={minPrice}
-                        onChange={(e) => setMinPrice(e.target.value)}
+                        onChange={(e) => {
+                          setMinPrice(e.target.value);
+                        }}
                         className="h-8"
                       />
                     </div>
@@ -252,7 +259,7 @@ const Search = () => {
 
                 {/* Capacity */}
                 <div className="mb-6">
-                  <h3 className="font-medium mb-2">Capacidade Desejada</h3>
+                  <h3 className="font-medium mb-2">Capacidade</h3>
                   <Input
                     type="number"
                     placeholder="Ex: 4 pessoas"
@@ -289,9 +296,17 @@ const Search = () => {
 
                 <Button
                   className="w-full mt-6"
-                  onClick={filterWorkspaces}
+                  onClick={handleApplyFilters}
+                  disabled={isLoading}
                 >
-                  Aplicar Filtros
+                  {isLoading ? (
+                    <>
+                      <Loader2 className='h-4 w-4 mr-2 animate-spin' />
+                      Buscando...
+                    </>
+                  ) : (
+                    'Aplicar Filtros'
+                  )}
                 </Button>
               </div>
             </div>
@@ -304,31 +319,33 @@ const Search = () => {
                 onCategoryChange={handleCategoryChange}
                 workspaceCounts={workspaceCounts}
               />
-
-              <div className="p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">
-                    {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'Espaço' : 'Espaços'} Disponíve{filteredWorkspaces.length === 1 ? 'l' : 'is'}
-                  </h2>
-                  <div className="text-sm text-text-muted">
-                    Ordenar por: <span className="font-medium">Preço (Menor para Maior)</span>
-                  </div>
+              {isLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
                 </div>
-
-                {filteredWorkspaces.length === 0 ? (
-                  <div className="text-center py-16 bg-bg-muted rounded-lg">
-                    <h3 className="text-xl font-semibold mb-2">Nenhum espaço encontrado</h3>
-                    <p className="text-text-muted mb-4">Tente ajustar seus filtros ou termo de busca</p>
-                    <Button onClick={clearFilters}>Limpar Filtros</Button>
+              ) : displayedWorkspaces.length === 0 ? (
+                <div className="text-center py-16 bg-white rounded-lg border">
+                  <h3 className="text-xl font-semibold mb-2">Nenhum espaço encontrado</h3>
+                  <p className="text-gray-600 mb-4">Tente ajustar seus filtros ou termo de busca</p>
+                  <Button onClick={clearFilters}>Limpar Filtros</Button>
+                </div>
+              ) : (
+                <div className="p-0 sm:p-6"> {/* Padding aplicado aqui, mas removido em telas pequenas */}
+                  <div className="mb-4 flex items-center justify-between">
+                    <h2 className="text-xl font-semibold">
+                      {displayedWorkspaces.length} {displayedWorkspaces.length === 1 ? 'Espaço' : 'Espaços'} Disponíve{displayedWorkspaces.length === 1 ? 'l' : 'is'}
+                    </h2>
+                    <div className="text-sm text-gray-500">
+                      Ordenar por: <span className="font-medium text-gray-700">Preço (Menor para Maior)</span>
+                    </div>
                   </div>
-                ) : (
                   <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {filteredWorkspaces.map((workspace) => (
+                    {displayedWorkspaces.map((workspace) => (
                       <WorkspaceCard key={workspace.id} workspace={workspace} />
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

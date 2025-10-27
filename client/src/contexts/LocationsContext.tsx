@@ -39,8 +39,10 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    fetchLocations();
-  }, [user]);
+    if (!isAuthLoading) { 
+      fetchLocations();
+    }
+  }, [isAuthLoading, fetchLocations]);
 
   const addLocation = useCallback(async (payload: CreatePredioPayload) => {
     try {
@@ -53,14 +55,11 @@ export function LocationsProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const getLocationById = useCallback(async (locationId: number) => {
-    setIsLoading(true);
     try {
       const response = await api.get<LocationApiResponse>(`/predio/${locationId}`)
       return response.data;
     } catch (err) {
       throw Error(err);
-    } finally {
-      setIsLoading(false);
     }
   }, [])
 

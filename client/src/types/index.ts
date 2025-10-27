@@ -19,7 +19,11 @@ export type Amenity = {
   description?: string;
 };
 
-export type WorkspaceCategory = "workstation" | "meeting-room" | "training-room" | "auditorium";
+export type WorkspaceCategory =
+  | "workstation"
+  | "meeting-room"
+  | "training-room"
+  | "auditorium";
 
 export type Workspace = {
   id: number;
@@ -109,7 +113,7 @@ export type HorarioPayload = {
   horarioAbertura: string;
   horarioFechamento: string;
   ativo: boolean;
-}
+};
 
 export type CreatePredioPayload = {
   nome: string;
@@ -134,4 +138,21 @@ export type CreateSalaPayload = {
   comodidades: string[];
   imagens?: string[];
   predioId: number;
-}
+};
+
+export type SearchSalaPayload = {
+  nome?: string;
+  cidade?: string;
+  estado?: string;
+  capacidade?: number;
+  categoria?: WorkspaceCategory;
+  precoMinimo?: number;
+  precoMaximo?: number;
+  comodidades?: string[];
+  dataReserva?: string;
+  horarioInicio?: string;
+  horarioFim?: string;
+  ordenarPor?: "preco" | "capacidade" | "nome";
+  ordem?: "ASC" | "DESC";
+  predioId?: number;
+};
