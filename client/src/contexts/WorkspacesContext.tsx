@@ -1,4 +1,4 @@
-import { CreateSalaPayload, LocationApiResponse, Workspace, WorkspaceApiResponse, WorkspacesApiResponse } from "@/types";
+import { CreateSalaPayload, LocationApiResponse, SearchSalaPayload, Workspace, WorkspaceApiResponse, WorkspaceCategory, WorkspacesApiResponse } from "@/types";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import api from "@/services/api";
@@ -12,6 +12,7 @@ interface WorkspacesContextType {
     getWorkspaceById: (workspaceId: string) => Promise<WorkspaceApiResponse>;
     editWorkspace: (workspaceId: number, payload: Partial<CreateSalaPayload>) => Promise<any>
     deleteWorkspace: (workspaceId: number) => void
+    getFilteredWorkspaces: (searchParams: SearchSalaPayload) => Promise<WorkspacesApiResponse>
 }
 
 // Cria o contexto
@@ -60,7 +61,7 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
             const response = await api.get<WorkspaceApiResponse>(`/sala/${workspaceId}`);
             return response.data;
         } catch (err) {
-            throw new Error("Não foi possível econtrar o local", err)
+            throw new Error("Não foi possível econtrar o local", err);
         }
     }
 
@@ -69,7 +70,7 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
             await api.patch<WorkspaceApiResponse>(`/sala/editar/${workspaceId}`, payload);
             await fetchWorkspaces();
         } catch (err) {
-            throw Error(err)
+            throw Error(err);
         }
     }
 
@@ -78,7 +79,19 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
             await api.delete(`/sala/delete/${workspaceId}`);
             await fetchWorkspaces();
         } catch (err) {
-            throw Error(err)
+            throw Error(err);
+        }
+    }
+
+    const getFilteredWorkspaces = async (searchParams: SearchSalaPayload): Promise<WorkspacesApiResponse> => {
+        try {
+            const response = await api.get<WorkspacesApiResponse>('/sala/search', {
+                params: searchParams
+            });
+            return response.data;
+        } catch (err) {
+            console.error('Erro na busca:', err);
+            throw err;
         }
     }
 
@@ -90,7 +103,8 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         addWorkspace,
         getWorkspaceById,
         editWorkspace,
-        deleteWorkspace
+        deleteWorkspace,
+        getFilteredWorkspaces
     }
 
     return (

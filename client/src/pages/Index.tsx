@@ -9,32 +9,53 @@ import { Search, MapPin } from 'lucide-react';
 import Footer from '@/components/Footer';
 import Navbar from '@/components/Navbar';
 import { useLocations } from '@/contexts/LocationsContext';
-import { Location, LocationApiResponse } from '@/types';
+import { Location } from '@/types';
+import LocationSelector from '@/components/LocationSelector';
+import { Spinner } from '@phosphor-icons/react';
 
 const Index = () => {
-  const { isLoading, getLocationById } = useLocations();
-  const [searchLocation, setSearchLocation] = useState('');
-  const [featuredLocations, setFeaturedLocations] = useState([] as Location[]);
+  const { isLoading, locations, error } = useLocations();
+  const [searchName, setSearchName] = useState('')
+  const [searchLocation, setSearchLocation] = useState({ state: '', city: '' });
   const navigate = useNavigate();
 
-  const getFeaturedLocations = async () => {
-    let loc: LocationApiResponse;
-    try {
-      loc = (await getLocationById(1));
-      setFeaturedLocations((prev) => [...prev, loc.data])
-    } catch (e) {
-      console.log("Não foi possível encontrar os locais: ", e)
-      setFeaturedLocations([])
+  const renderFeaturedLocations = () => {
+    if (isLoading) {
+      return <Spinner className='py-10 justify-center'> Carregando locais... </Spinner>
     }
-  }
 
-  useEffect(() => {
-    getFeaturedLocations();
-  }, [])
+    if (error) {
+      return <div>{error}</div>
+    }
+
+    if (!locations || !locations.data || locations.data.length === 0) {
+      return <div> Nenhum local encontrado. </div>
+    }
+
+    const featured = locations.data.slice(0,3);
+
+    return (
+      featured.map((location) => (
+        <LocationCard key={location.id} location={location} />
+      ))
+    )
+  }
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate(`/search?location=${encodeURIComponent(searchLocation)}`);
+    const params = new URLSearchParams();
+
+    if (searchName) {
+      params.append('local', searchName);
+    }
+
+    if (searchLocation.city) {
+      params.append('cidade', searchLocation.city);
+    }
+    if (searchLocation.state) {
+      params.append('estado', searchLocation.state);
+    }
+    navigate(`/search?${params.toString()}`);
   };
 
   return (
@@ -50,32 +71,40 @@ const Index = () => {
               backgroundPosition: "center 30%"
             }}
           >
-            <div className="absolute inset-0 bg-gradient-to-t from-primary/90 to-secondary/60" />
-            <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10 flex h-full items-center justify-center">
+            <div className="absolute inset-0 bg-gradient-to-t from-foreground/90 to-foreground/80" />
+            <div className="relative z-10 flex flex-col items-center justify-center w-full min-h-[500px] sm:min-h-[600px] px-4 py-12">
               <div className="max-w-3xl text-center">
-                <h1 className="text-3xl font-bold tracking-tight sm:!leading-[3.8rem] md:!leading-[4.5rem] text-white sm:text-5xl md:text-6xl">
+                <h1 className="text-3xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl leading-tight sm:leading-tight md:leading-tight">
                   Encontre Seu Local de <br />
                   Trabalho
-                  <span className="text-secondary text-3xl sm:text-5xl md:text-6xl bg-muted mx-1 px-2 rounded-lg center">Perfeito</span>
+                  <span className="text-secondary text-3xl sm:text-5xl md:text-6xl bg-accent mx-1 px-2 rounded-lg">Perfeito</span>
                 </h1>
-                <p className="mt-4 sm:mt-6 sm:text-lg text-sm text-white w-3/4 place-self-center">
+                <p className="mt-4 sm:mt-6 sm:text-lg text-sm text-white max-w-lg mx-auto">
                   Descubra e agende locais de trabalho na sua área.
                   De ambientes silenciosos à salas de conferência colaborativas.
                 </p>
                 <div className="mt-6 sm:mt-10">
-                  <form onSubmit={handleSearch} className="flex w-[85%] max-w-lg mx-auto">
-                    <div className="relative flex-grow">
-                      <MapPin className="absolute left-2.5 sm:left-3 top-1/2 h-4 w-4 sm:h-5 sm:w-5 -translate-y-1/2 text-gray-400" />
-                      <Input
-                        placeholder="Where do you want to work?"
-                        className="pl-8 sm:pl-10 h-10 sm:h-12 text-[0.75rem] rounded-l-lg rounded-r-none border-r-0"
-                        value={searchLocation}
-                        onChange={(e) => setSearchLocation(e.target.value)}
-                      />
+                  <form onSubmit={handleSearch} className="flex flex-col w-ful max-w-lg mx-auto gap-2">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-2">
+                      <div className="relative w-full sm:flex-1">
+                        <MapPin className="absolute left-2.5 sm:left-3 top-1/2 h-4 w-4 sm:h-5 sm:w-5 -translate-y-1/2 text-gray-400" />
+                        <Input
+                          placeholder="Onde quer trabalhar?"
+                          className="pl-8 sm:pl-10 h-10 sm:h-12 rounded-lg w-full"
+                          value={searchName}
+                          onChange={(e) => setSearchName(e.target.value)}
+                        />
+                      </div>
+                      <div className="w-full sm:flex-1">
+                        <LocationSelector
+                          onLocationChange={setSearchLocation}
+                          height="h-10 sm:h-12"
+                        />
+                      </div>
                     </div>
-                    <Button type="submit" className="h-10 sm:h-12 px-4 sm:px-6 sm:text-[0.75rem] md:text-base rounded-l-none">
-                      <Search className="h-5 w-5 mr-0 sm:mr-2" />
-                      Search
+                    <Button type="submit" className="h-10 sm:h-12 px-4 sm:px-6 bg-accent rounded-lg w-full">
+                      <Search className="h-4 w-4 sm:h-5 sm:w-5 mr-2" />
+                      Buscar
                     </Button>
                   </form>
                 </div>
@@ -140,17 +169,7 @@ const Index = () => {
               </Button>
             </div>
             <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {!featuredLocations ?
-                (
-                  <div>
-                    <p> Não há locais disponíveis ainda </p>
-                  </div>
-                )
-                :
-                featuredLocations.map((location) => (
-                  <LocationCard key={location.id} location={location} />
-                ))
-              }
+              {renderFeaturedLocations()}
             </div>
           </div>
         </section>
@@ -172,7 +191,7 @@ const Index = () => {
                   Cadastre seu espaço agora
                 </Button>
               </div>
-              <div className="w-full md:w-1/2 lg:w-2/5">
+              <div className="w-full md:w-1/2 lg:w-2/5 flex-shrink-0">
                 <img
                   src="https://images.unsplash.com/photo-1497366811353-6870744d04b2?ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&ixlib=rb-1.2.1&auto=format&fit=crop&w=1050&q=80"
                   alt="Business workspace"

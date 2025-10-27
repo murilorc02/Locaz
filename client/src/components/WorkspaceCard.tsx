@@ -7,6 +7,7 @@ import WorkspaceCategoryIcon from './WorkspaceCategoryIcon';
 import AmenityBadge from './AmenityBadge';
 import { useEffect, useState } from 'react';
 import { useLocations } from '@/contexts/LocationsContext';
+import defaultImage from '../assets/imgs/bg_header.jpg';
 
 interface WorkspaceCardProps {
   workspace: Workspace;
@@ -15,13 +16,13 @@ interface WorkspaceCardProps {
 const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
   const { getLocationById } = useLocations();
   const [location, setLocation] = useState({} as LocationApiResponse);
-  
+
   const getLocation = async () => {
     try {
       const fetchedLocation = await getLocationById(workspace.predio.id);
       setLocation(fetchedLocation)
     } catch (err) {
-      throw new Error(err);
+      console.error("Falha ao buscar local para o card:", err);
     }
   };
 
@@ -34,7 +35,7 @@ const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
       <div className="workspace-card overflow-hidden">
         <div className="relative h-48 w-full overflow-hidden">
           <img
-            src={workspace.imagens[0]}
+            src={defaultImage}
             alt={workspace.nome}
             className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
           />
@@ -49,7 +50,7 @@ const WorkspaceCard = ({ workspace }: WorkspaceCardProps) => {
           <h3 className="font-bold text-lg">{workspace.nome}</h3>
           <div className="flex items-center text-text-muted text-sm mt-1">
             <MapPin className="h-4 w-4 mr-1" />
-            <span>{location?.data.endereco}</span>
+            <span>{location.data?.endereco || ''} | {location.data?.cidade || ''} - {location.data?.estado.slice(0,2) || ''} </span>
           </div>
           <p className="mt-2 text-sm text-text-muted line-clamp-2">{workspace.descricao}</p>
           <div className="mt-3 flex flex-wrap gap-2">

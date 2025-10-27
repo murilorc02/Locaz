@@ -371,7 +371,7 @@ const WorkspaceEditor = () => {
                                                 : 'Preencha os detalhes do seu novo espaço de trabalho'}
                                         </CardDescription>
                                     </CardHeader>
-                                    <CardContent>
+                                    <CardContent className='space-y-4'>
                                         <div className="space-y-2">
                                             <Label htmlFor="name">Nome do Espaço</Label>
                                             <Input
@@ -480,7 +480,7 @@ const WorkspaceEditor = () => {
 
                                         <div className="space-y-3">
                                             <Label>Comodidades</Label>
-                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                                 {workspaceAmenities.map((amenity) => (
                                                     <div key={amenity.id} className="flex items-center space-x-2">
                                                         <Checkbox

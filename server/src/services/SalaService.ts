@@ -118,6 +118,7 @@ export class SalaService {
   async buscarPorFiltros(filtros: {
     nome?: string;
     cidade?: string;
+    estado?: string;
     capacidade?: number;
     categoria?: string;
     precoMinimo?: number;
@@ -138,6 +139,7 @@ export class SalaService {
       const filtrosAdicionais = {
         nome: filtros.nome,
         cidade: filtros.cidade,
+        estado: filtros.estado,
         capacidade: filtros.capacidade,
         categoria: filtros.categoria,
         precoMinimo: filtros.precoMinimo,
@@ -159,6 +161,7 @@ export class SalaService {
     return await this.salaRepository.buscarComFiltros({
       nome: filtros.nome,
       cidade: filtros.cidade,
+      estado: filtros.estado,
       capacidade: filtros.capacidade,
       categoria: filtros.categoria,
       precoMinimo: filtros.precoMinimo,

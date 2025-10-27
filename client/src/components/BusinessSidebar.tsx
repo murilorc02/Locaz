@@ -1,6 +1,6 @@
 
 import { NavLink, useLocation } from 'react-router-dom';
-import { Building, Home, Users, Calendar, Plus } from 'lucide-react';
+import { Building, Home, Users, Calendar, Plus, Info } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -28,7 +28,7 @@ const businessMenuItems = [
   {
     title: 'Visão Geral',
     url: '/business/dashboard',
-    icon: Home,
+    icon: Info,
   },
   {
     title: 'Locais',
@@ -53,6 +53,11 @@ const quickActions = [
     url: '/business/add-location',
     icon: Plus,
   },
+  {
+    title: 'Adicionar Espaço',
+    url: '/business/add-workspace',
+    icon: Plus,
+  },
 ];
 
 export function BusinessSidebar() {
@@ -75,7 +80,7 @@ export function BusinessSidebar() {
             <Building className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">WorkHub</h2>
+            <h2 className="text-lg font-semibold">Locaz</h2>
             <p className="text-sm text-gray-500">Painel Admin</p>
           </div>
         </div>
@@ -83,6 +88,12 @@ export function BusinessSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
+        <SidebarMenuButton className='my-4 mt-0'>
+          <NavLink to={'/'} className={'flex gap-2 flex-row items-center'}>
+            <Home className='h-4 w-4'/>
+            <span> Página Inicial </span>
+          </NavLink>
+        </SidebarMenuButton>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
