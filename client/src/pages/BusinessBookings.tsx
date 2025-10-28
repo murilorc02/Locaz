@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
@@ -71,15 +71,19 @@ const BusinessBookings = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  
+
+  console.log('🔍 BusinessBookings renderizou');
+  console.log('📱 isMobile:', window.innerWidth < 768);
+
   // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-    navigate('/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!isAuthenticated || (user && user.tipo !== 'locador')) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const filteredBookings = mockBookings.filter(booking => {
-    const matchesSearch = 
+    const matchesSearch =
       booking.workspaceName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       booking.locationName.toLowerCase().includes(searchTerm.toLowerCase());
@@ -105,7 +109,7 @@ const BusinessBookings = () => {
     .reduce((sum, booking) => sum + booking.totalPrice, 0);
 
   const pendingBookings = filteredBookings.filter(booking => booking.status === 'pending').length;
-  
+
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
@@ -118,7 +122,7 @@ const BusinessBookings = () => {
               <p className="text-gray-600 text-sm">Visualize e gerencie todas as reservas dos seus espaços</p>
             </div>
           </header>
-          
+
           <main className="flex-1 p-6">
             {/* Statistics Cards */}
             <div className="grid gap-4 md:grid-cols-3 mb-6">

@@ -195,7 +195,7 @@ const WorkspaceEditor = () => {
             if (isEditMode && id) {
                 setIsLoadingWorkspace(true);
                 try {
-                    const response = await getWorkspaceById(id);
+                    const response = await getWorkspaceById(Number(id));
                     const workspace = response.data;
 
                     const workspaceSchedule = workspace.horariosFuncionamento

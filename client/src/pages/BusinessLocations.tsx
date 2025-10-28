@@ -166,12 +166,12 @@ const BusinessLocations = () => {
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
+            <div className="flex flex-row sm:flex-col md:flex-row justify-between items-center w-full">
               <div>
                 <h1 className="text-2xl font-bold">Gerenciar Locais</h1>
                 <p className="text-gray-600 text-sm">Visualize e gerencie todos os seus locais</p>
               </div>
-              <div className="mt-2 md:mt-0">
+              <div>
                 <Button onClick={() => navigate('/business/add-location')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Local

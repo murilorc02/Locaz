@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -23,6 +24,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useEffect } from 'react';
 
 const businessMenuItems = [
   {
@@ -64,6 +68,7 @@ export function BusinessSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const currentPath = location.pathname;
+  const { isMobile } = useSidebar();
 
   const isActive = (path: string) => {
     if (path === '/business/dashboard') {
@@ -84,16 +89,27 @@ export function BusinessSidebar() {
             <p className="text-sm text-gray-500">Painel Admin</p>
           </div>
         </div>
+
+        {isMobile && (
+          <VisuallyHidden>
+            <SheetHeader>
+              <SheetTitle>Menu Lateral do Painel de Controle</SheetTitle>
+              <SheetDescription>
+                Navegação principal do painel de controle do locador.
+              </SheetDescription>
+            </SheetHeader>
+          </VisuallyHidden>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-        <SidebarMenuButton className='my-4 mt-0'>
-          <NavLink to={'/'} className={'flex gap-2 flex-row items-center'}>
-            <Home className='h-4 w-4'/>
-            <span> Página Inicial </span>
-          </NavLink>
-        </SidebarMenuButton>
+          <SidebarMenuButton asChild className='my-4 mt-0'>
+            <NavLink to={'/'} className={'flex gap-2 flex-row items-center'}>
+              <Home className='h-4 w-4' />
+              <span> Página Inicial </span>
+            </NavLink>
+          </SidebarMenuButton>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
