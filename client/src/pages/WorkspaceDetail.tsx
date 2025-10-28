@@ -15,8 +15,9 @@ import { useAuth } from '../contexts/AuthContext';
 import { MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
-import { LocationApiResponse, WorkspaceApiResponse } from '@/types';
+import { Workspace, Location } from '@/types';
 import { useLocations } from '@/contexts/LocationsContext';
+import defaultImage from '../assets/imgs/bg_header.jpg';
 
 const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,30 +26,22 @@ const WorkspaceDetail = () => {
   const { isAuthenticated } = useAuth();
   const { getWorkspaceById } = useWorkspaces();
   const { getLocationById } = useLocations();
-  const [workspace, setWorkspace] = useState({} as WorkspaceApiResponse);
-  const [location, setLocation] = useState({} as LocationApiResponse);
+  const [workspace, setWorkspace] = useState({} as Workspace);
+  const [location, setLocation] = useState({} as Location);
   
-  const findWorkspace = async (id: number) => {
+  const findWorkspaceData = async (id: number) => {
       try {
         const locatedWorkspace = await getWorkspaceById(id);
-        setWorkspace(locatedWorkspace);
+        setWorkspace(locatedWorkspace.data);
+        const locatedLocation = await getLocationById(locatedWorkspace.data.predio.id);
+        setLocation(locatedLocation.data);
       } catch (err) {
         throw new Error(err)
       }
   }
 
-  const findLocation = async (id: number) => {
-    try {
-      const locatedLocation = await getLocationById(id);
-      setLocation(locatedLocation);
-    } catch (err) {
-      throw new Error(err);
-    }
-  }
-
   useEffect(() => {
-    findWorkspace(id as unknown as number);
-    findLocation(workspace.data.predio.id);
+    findWorkspaceData(Number(id));
   }, [id])
   
   const [bookingDialogOpen, setBookingDialogOpen] = useState(false);
@@ -96,13 +89,13 @@ const WorkspaceDetail = () => {
     const endDateTime = new Date(startDateTime);
     endDateTime.setHours(startDateTime.getHours() + duration);
     
-    const totalPrice = workspace.data.precoHora * duration;
+    const totalPrice = workspace.precoHora * duration;
     
     // In a real app, this would make an API call to create the booking
     
     toast({
       title: "Booking Confirmed!",
-      description: `You've booked ${workspace.data.nome} for ${duration} hour${duration > 1 ? 's' : ''} on ${format(startDateTime, 'PPP')} from ${format(startDateTime, 'p')} to ${format(endDateTime, 'p')}. Total: $${totalPrice}`,
+      description: `You've booked ${workspace.nome} for ${duration} hour${duration > 1 ? 's' : ''} on ${format(startDateTime, 'PPP')} from ${format(startDateTime, 'p')} to ${format(endDateTime, 'p')}. Total: $${totalPrice}`,
     });
     
     setBookingDialogOpen(false);
@@ -117,8 +110,8 @@ const WorkspaceDetail = () => {
           <div className="container mx-auto px-4 py-6 sm:px-6 lg:px-8">
             <div className="aspect-[16/9] w-full overflow-hidden rounded-lg">
               <img
-                src={workspace.data.imagens[0]}
-                alt={workspace.data.nome}
+                src={defaultImage}
+                alt={workspace.nome}
                 className="h-full w-full object-cover"
               />
             </div>
@@ -136,30 +129,30 @@ const WorkspaceDetail = () => {
                   <li>/</li>
                   <li><a href="/search" className="hover:text-primary">Search</a></li>
                   <li>/</li>
-                  <li><span className="text-gray-700">{workspace.data.nome}</span></li>
+                  <li><span className="text-gray-700">{workspace.nome}</span></li>
                 </ol>
               </nav>
 
               {/* Workspace Header */}
               <div className="mb-6">
-                <h1 className="text-3xl font-bold">{workspace.data.nome}</h1>
+                <h1 className="text-3xl font-bold">{workspace.nome}</h1>
                 <div className="flex items-center mt-2 text-gray-600">
                   <MapPin className="h-5 w-5 mr-1" />
-                  <span>{location.data.nome} - {location.data.endereco}</span>
+                  <span>{location.nome} - {location.endereco}</span>
                 </div>
               </div>
 
               {/* Workspace Description */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3">Description</h2>
-                <p className="text-gray-700">{workspace.data.descricao}</p>
+                <p className="text-gray-700">{workspace.descricao}</p>
               </div>
 
               {/* Amenities */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3">Amenities</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {workspace.data.comodidades.map((amenityId) => {
+                  {workspace.comodidades?.map((amenityId) => {
                     const amenity = getAmenity(amenityId);
                     return amenity ? (
                       <div key={amenityId} className="flex items-center">
@@ -174,7 +167,7 @@ const WorkspaceDetail = () => {
               {/* Location Details */}
               <div className="mb-8">
                 <h2 className="text-xl font-semibold mb-3">Location</h2>
-                <p className="text-gray-700 mb-4">{location.data.descricao}</p>
+                <p className="text-gray-700 mb-4">{location.descricao}</p>
                 <div className="bg-gray-100 h-64 rounded-lg flex items-center justify-center">
                   <p className="text-gray-500">Map view would be displayed here</p>
                 </div>
@@ -187,19 +180,19 @@ const WorkspaceDetail = () => {
                 <Card>
                   <CardContent className="p-6">
                     <div className="mb-4 flex items-baseline justify-between">
-                      <div className="text-2xl font-bold">${workspace.data.precoHora}</div>
+                      <div className="text-2xl font-bold">${workspace.precoHora}</div>
                       <div className="text-gray-500">per hour</div>
                     </div>
                     
                     <div className="mb-6">
                       <div className="flex items-center mb-2">
                         <span className="text-gray-700 font-medium">Capacity:</span>
-                        <span className="ml-2">{workspace.data.capacidade} people</span>
+                        <span className="ml-2">{workspace.capacidade} people</span>
                       </div>
                       {/* <div className="flex items-center">
                         <span className="text-gray-700 font-medium">Availability:</span>
-                        <span className={`ml-2 ${workspace.data.disponivel ? 'text-green-600' : 'text-red-600'}`}>
-                          {workspace.data.disponivel ? 'Available' : 'Unavailable'}
+                        <span className={`ml-2 ${workspace.disponivel ? 'text-green-600' : 'text-red-600'}`}>
+                          {workspace.disponivel ? 'Available' : 'Unavailable'}
                         </span>
                       </div> */}
                     </div>
@@ -208,7 +201,7 @@ const WorkspaceDetail = () => {
                       className="w-full" 
                       size="lg"
                       onClick={handleBookNow}
-                      // disabled={!workspace.data.available}
+                      // disabled={!workspace.available}
                     >
                       Book Now
                     </Button>
@@ -225,7 +218,7 @@ const WorkspaceDetail = () => {
       <Dialog open={bookingDialogOpen} onOpenChange={setBookingDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Book {workspace.data.nome}</DialogTitle>
+            <DialogTitle>Book {workspace.nome}</DialogTitle>
             <DialogDescription>
               Select your preferred date and time to book this workspace.
             </DialogDescription>
@@ -271,7 +264,7 @@ const WorkspaceDetail = () => {
             
             <div>
               <p className="text-sm text-gray-500">
-                Total Price: <span className="font-bold">${workspace.data.precoHora * duration}</span>
+                Total Price: <span className="font-bold">${workspace.precoHora * duration}</span>
               </p>
             </div>
           </div>
