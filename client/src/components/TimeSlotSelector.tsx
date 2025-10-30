@@ -204,7 +204,7 @@ export const TimeSlotSelector = ({
 
                 </p>
                 <Badge variant="secondary">
-                  R$ {selectedTimeSlots.reduce((total, slot) => total + slot.price, 0)}
+                  R$ {selectedTimeSlots.length * pricePerHour}
                 </Badge>
               </div>
               <div className="space-y-1">

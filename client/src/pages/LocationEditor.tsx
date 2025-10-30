@@ -8,7 +8,7 @@ import { Textarea } from '../components/ui/textarea';
 import { Label } from '../components/ui/label';
 import { Checkbox } from '../components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { amenities } from '../data/amenities';
+import { locationAmenities } from '@/data/amenities';
 import AmenityIcon from '../components/AmenityIcon';
 import { ArrowLeft, Clock, Save, SearchIcon, Upload, X, Loader2 } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
@@ -420,7 +420,7 @@ const LocationEditor = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {amenities.map((amenity) => (
+                      {locationAmenities.map((amenity) => (
                         <div key={amenity.id} className="flex items-center space-x-2">
                           <Checkbox
                             id={`amenity-${amenity.id}`}
