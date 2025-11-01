@@ -78,6 +78,7 @@ export class SalaRepository {
     async buscarComFiltros(filtros: {
         nome?: string;
         cidade?: string;
+        estado?: string;
         capacidade?: number;
         categoria?: string;
         precoMinimo?: number;
@@ -105,6 +106,12 @@ export class SalaRepository {
         if (filtros.cidade) {
             queryBuilder.andWhere('LOWER(predio.cidade) LIKE LOWER(:cidade)', {
                 cidade: `%${filtros.cidade}%`
+            });
+        }
+        
+        if (filtros.estado) {
+            queryBuilder.andWhere('LOWER(predio.estado) LIKE LOWER(:estado)', {
+                estado: `%${filtros.estado}%`
             });
         }
 

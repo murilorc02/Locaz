@@ -1,6 +1,6 @@
 
 import { NavLink, useLocation } from 'react-router-dom';
-import { Building, Home, Users, Calendar, Plus } from 'lucide-react';
+import { Building, Home, Users, Calendar, Plus, Info } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -12,6 +12,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from '@/components/ui/sidebar';
 import {
   DropdownMenu,
@@ -23,12 +24,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SheetDescription, SheetHeader, SheetTitle } from './ui/sheet';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
+import { useEffect } from 'react';
 
 const businessMenuItems = [
   {
     title: 'Visão Geral',
     url: '/business/dashboard',
-    icon: Home,
+    icon: Info,
   },
   {
     title: 'Locais',
@@ -53,12 +57,18 @@ const quickActions = [
     url: '/business/add-location',
     icon: Plus,
   },
+  {
+    title: 'Adicionar Espaço',
+    url: '/business/add-workspace',
+    icon: Plus,
+  },
 ];
 
 export function BusinessSidebar() {
   const location = useLocation();
   const { user, logout } = useAuth();
   const currentPath = location.pathname;
+  const { isMobile } = useSidebar();
 
   const isActive = (path: string) => {
     if (path === '/business/dashboard') {
@@ -75,14 +85,31 @@ export function BusinessSidebar() {
             <Building className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h2 className="text-lg font-semibold">WorkHub</h2>
+            <h2 className="text-lg font-semibold">Locaz</h2>
             <p className="text-sm text-gray-500">Painel Admin</p>
           </div>
         </div>
+
+        {isMobile && (
+          <VisuallyHidden>
+            <SheetHeader>
+              <SheetTitle>Menu Lateral do Painel de Controle</SheetTitle>
+              <SheetDescription>
+                Navegação principal do painel de controle do locador.
+              </SheetDescription>
+            </SheetHeader>
+          </VisuallyHidden>
+        )}
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
+          <SidebarMenuButton asChild className='my-4 mt-0'>
+            <NavLink to={'/'} className={'flex gap-2 flex-row items-center'}>
+              <Home className='h-4 w-4' />
+              <span> Página Inicial </span>
+            </NavLink>
+          </SidebarMenuButton>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>

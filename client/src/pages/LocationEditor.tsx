@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
@@ -10,30 +10,26 @@ import { Checkbox } from '../components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { amenities } from '../data/amenities';
 import AmenityIcon from '../components/AmenityIcon';
-import { ArrowLeft, Clock, Save, Upload, X } from 'lucide-react';
+import { ArrowLeft, Clock, Save, SearchIcon, Upload, X, Loader2 } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
 import WeeklySchedule from '@/components/WeeklySchedule';
-import { CreatePredioPayload, HorarioPayload } from '@/types';
+import { CreatePredioPayload, HorarioPayload, Location, OpeningHours } from '@/types';
+import LocationSelector from '@/components/LocationSelector';
 
-const AddLocation = () => {
+const LocationEditor = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { addLocation } = useLocations();
+  const { id } = useParams();
+  
+  // Determina se é modo de edição ou criação
+  const isEditMode = !!id;
+  
+  const { addLocation, getLocationById, editLocation } = useLocations();
 
-
-  const [locationName, setLocationName] = useState('');
-  const [address, setAddress] = useState('');
-  const [city, setCity] = useState('');
-  const [state, setState] = useState('');
-  const [zipCode, setZipCode] = useState('');
-  const [description, setDescription] = useState('');
-  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
-  const [images, setImages] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [schedule, setSchedule] = useState({
+  const getDefaultOpeningDays = () => ({
     segunda: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
     terca: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
     quarta: { active: true, timeSlots: [{ start: '08:00', end: '12:00' }, { start: '13:00', end: '18:00' }] },
@@ -43,11 +39,145 @@ const AddLocation = () => {
     domingo: { active: false, timeSlots: [] }
   });
 
-  // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-    navigate('/login');
-    return null;
+  const [locationName, setLocationName] = useState('');
+  const [address, setAddress] = useState('');
+  const [location, setLocation] = useState({ state: '', city: '' });
+  const [zipCode, setZipCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
+  const [images, setImages] = useState<string[]>([]);
+  const [schedule, setSchedule] = useState(getDefaultOpeningDays());
+  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  function openingHoursToWeeklySchedule(openingHours: OpeningHours[]) {
+    const days = getDefaultOpeningDays();
+    if (!Array.isArray(openingHours)) return days;
+
+    Object.keys(days).forEach(key => {
+      days[key].active = false;
+      days[key].timeSlots = [];
+    });
+
+    openingHours.forEach((oh) => {
+      const key = oh.diaSemana?.toLowerCase();
+      if (key && days[key]) {
+        days[key].active = oh.ativo;
+        days[key].timeSlots.push({
+          start: oh.horarioAbertura,
+          end: oh.horarioFechamento
+        });
+      }
+    });
+
+    return days;
   }
+
+  function weeklyScheduleToHorarioPayload(scheduleData: typeof schedule): HorarioPayload[] {
+    const payload: HorarioPayload[] = [];
+
+    Object.entries(scheduleData).forEach(([day, dayData]) => {
+      if (dayData.active && dayData.timeSlots.length > 0) {
+        dayData.timeSlots.forEach(slot => {
+          payload.push({
+            diaSemana: day,
+            horarioAbertura: slot.start,
+            horarioFechamento: slot.end,
+            ativo: dayData.active
+          });
+        });
+      }
+    });
+
+    return payload;
+  }
+
+  useEffect(() => {
+    const loadLocation = async () => {
+      if (isEditMode && id) {
+        setIsLoadingLocation(true);
+        try {
+          const response = await getLocationById(Number(id));
+          const locationData = response.data;
+
+          if (locationData.usuario.id !== user?.id) {
+            toast({
+              title: "Acesso negado",
+              description: "Você não tem permissão para editar este local.",
+              variant: "destructive"
+            });
+            navigate('/business/locations');
+            return;
+          }
+
+          setLocationName(locationData.nome || '');
+          setAddress(locationData.endereco || '');
+          setLocation({ city: locationData.cidade || '', state: locationData.estado || '' });
+          setZipCode(locationData.cep || '');
+          setDescription(locationData.descricao || '');
+          setImages(locationData.imagens || []);
+        //   setSelectedAmenities(locationData.comodidades || []);
+          setSchedule(
+            locationData.horariosFuncionamento 
+              ? openingHoursToWeeklySchedule(locationData.horariosFuncionamento)
+              : getDefaultOpeningDays()
+          );
+        } catch (error) {
+          toast({
+            title: "Erro ao carregar",
+            description: "Não foi possível carregar os dados do local.",
+            variant: "destructive"
+          });
+          navigate('/business/locations');
+        } finally {
+          setIsLoadingLocation(false);
+        }
+      }
+    };
+
+    loadLocation();
+  }, [isEditMode, id]);
+
+  // Redirect if not authenticated or not a business
+  useEffect(() => {
+    if (!isAuthenticated || (user && user.tipo !== 'locador')) {
+      navigate('/login');
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  if (isLoadingLocation || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  const handleCepLookup = async (cep: string) => {
+    try {
+      const response = await fetch(`https://brasilapi.com.br/api/cep/v1/${cep}`);
+      if (!response.ok) {
+        throw new Error('CEP não encontrado ou inválido');
+      }
+
+      const data = await response.json();
+      setAddress(data.street);
+      setLocation({ state: data.state, city: data.city });
+    } catch (error) {
+      toast({
+        title: "Erro ao buscar CEP",
+        description: (error as Error).message,
+        variant: "destructive"
+      });
+    }
+  };
+
+  const runCepSearch = () => {
+    const cleanCep = zipCode.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      handleCepLookup(cleanCep);
+    }
+  };
 
   const handleAmenityToggle = (amenityId: string) => {
     setSelectedAmenities(prev =>
@@ -69,14 +199,18 @@ const AddLocation = () => {
     e.preventDefault();
 
     if (!user) {
-      toast({ title: "Erro de Autenticação", description: "Usuário não encontrado.", variant: "destructive" });
+      toast({ 
+        title: "Erro de Autenticação", 
+        description: "Usuário não encontrado.", 
+        variant: "destructive" 
+      });
       return;
     }
 
-    if (!locationName || !address || !city || !state || !zipCode || !description || selectedAmenities.length === 0) {
+    if (!locationName || !address || !location.city || !location.state || !zipCode || !description) {
       toast({
         title: "Informações Incompletas",
-        description: "Preencha todos os campos obrigatórios e selecione pelo menos uma comodidade.",
+        description: "Preencha todos os campos obrigatórios.",
         variant: "destructive",
       });
       return;
@@ -84,7 +218,7 @@ const AddLocation = () => {
 
     setIsLoading(true);
 
-    const horariosPayload: HorarioPayload[] = convertScheduleToPayload(schedule);
+    const horariosPayload = weeklyScheduleToHorarioPayload(schedule);
 
     if (horariosPayload.length === 0) {
       toast({
@@ -96,61 +230,75 @@ const AddLocation = () => {
       return;
     }
 
-    const payload: CreatePredioPayload = {
-      nome: locationName,
-      endereco: address,
-      cidade: city,
-      estado: state,
-      cep: zipCode,
-      descricao: description,
-      // comodidades: selectedAmenities,
-      horariosFuncionamento: horariosPayload,
-      usuarioId: user.id
-    };
-
     try {
-      await addLocation(payload);
+      if (isEditMode) {
+        // Modo de edição
+        const updatePayload: Partial<Location> = {
+          id: Number(id),
+          nome: locationName,
+          endereco: address,
+          cidade: location.city,
+          estado: location.state,
+          cep: zipCode,
+          descricao: description,
+          horariosFuncionamento: horariosPayload.map((h, index) => ({
+            ...h,
+            id: index, // IDs temporários
+            predio: { id: Number(id) }
+          })),
+          usuario: user
+        };
 
-      toast({
-        title: "Local Adicionado!",
-        description: "Seu novo local foi salvo com sucesso.",
-      });
+        await editLocation(updatePayload);
+        
+        toast({
+          title: "Local Atualizado!",
+          description: "As alterações foram salvas com sucesso.",
+        });
+      } else {
+        // Modo de criação
+        const createPayload: CreatePredioPayload = {
+          nome: locationName,
+          endereco: address,
+          cidade: location.city,
+          estado: location.state,
+          cep: zipCode,
+          descricao: description,
+          horariosFuncionamento: horariosPayload,
+          usuarioId: user.id
+        };
+
+        await addLocation(createPayload);
+
+        toast({
+          title: "Local Adicionado!",
+          description: "Seu novo local foi salvo com sucesso.",
+        });
+      }
+      
       navigate('/business/locations');
-
     } catch (error) {
       toast({
         title: "Erro ao Salvar",
-        description: (error as Error).message || "Ocorreu um problema ao se comunicar com o servidor.",
+        description: (error as Error).message || "Ocorreu um problema ao salvar o local.",
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-
   };
 
-  const convertScheduleToPayload = (scheduleData: typeof schedule) => {
-    const payload = [];
-
-    // Transforma o objeto de dias em um array para podermos iterar
-    for (const [day, dayData] of Object.entries(scheduleData)) {
-      // Apenas processa os dias que estão marcados como ativos
-      if (dayData.timeSlots.length > 0) {
-        // Para cada intervalo de tempo, cria um objeto no formato da API
-        for (const slot of dayData.timeSlots) {
-          payload.push({
-            diaSemana: day, // ex: "segunda"
-            horarioAbertura: slot.start, // ex: "08:00"
-            horarioFechamento: slot.end, // ex: "18:00"
-            ativo: dayData.active
-          });
-        }
-      }
-    }
-
-    return payload;
+  const maskCep = (value: string): string => {
+    if (!value) return "";
+    const digits = value.replace(/\D/g, '');
+    const truncateDigits = digits.slice(0, 8);
+    return truncateDigits.replace(/^(\d{5})(\d)/, '$1-$2');
   };
 
+  const handleZipCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formattedCep = maskCep(e.target.value);
+    setZipCode(formattedCep);
+  };
 
   return (
     <SidebarProvider>
@@ -169,14 +317,20 @@ const AddLocation = () => {
                 Voltar
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Adicionar Local</h1>
-                <p className="text-gray-600 text-sm">Crie um novo local de trabalho</p>
+                <h1 className="text-2xl font-bold">
+                  {isEditMode ? 'Editar Local' : 'Adicionar Local'}
+                </h1>
+                <p className="text-gray-600 text-sm">
+                  {isEditMode 
+                    ? 'Atualize as informações do local' 
+                    : 'Crie um novo local de trabalho'}
+                </p>
               </div>
             </div>
           </header>
 
           <main className="flex-1 p-6">
-            <div className="max-w-3xl mx-auto">
+            <div className="mx-auto">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Basic Information */}
                 <Card>
@@ -210,35 +364,35 @@ const AddLocation = () => {
                     </div>
 
                     <div className="grid grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="city">Cidade</Label>
-                        <Input
-                          id="city"
-                          value={city}
-                          onChange={(e) => setCity(e.target.value)}
-                          placeholder="Ex: São Paulo"
-                          required
+                      <div className='col-span-2'>
+                        <LocationSelector
+                          showLabels={true}
+                          onLocationChange={setLocation}
+                          height='h-10'
+                          initialState={location.state}
+                          initialCity={location.city}
                         />
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="state">Estado</Label>
-                        <Input
-                          id="state"
-                          value={state}
-                          onChange={(e) => setState(e.target.value)}
-                          placeholder="Ex: SP"
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 col-span-1">
                         <Label htmlFor="zipCode">CEP</Label>
-                        <Input
-                          id="zipCode"
-                          value={zipCode}
-                          onChange={(e) => setZipCode(e.target.value)}
-                          placeholder="Ex: 01234-567"
-                          required
-                        />
+                        <div className='grid grid-cols-4 focus-visible:ring-ring'>
+                          <Input
+                            id="zipCode"
+                            value={zipCode}
+                            onChange={handleZipCodeChange}
+                            required
+                            placeholder='_____-___'
+                            className='rounded-r-none col-start-1 col-end-4'
+                            maxLength={9}
+                          />
+                          <Button
+                            type='button'
+                            className='bg-primary rounded-l-none col-start-4'
+                            onClick={runCepSearch}
+                          >
+                            <SearchIcon className='text-white' />
+                          </Button>
+                        </div>
                       </div>
                     </div>
 
@@ -334,6 +488,7 @@ const AddLocation = () => {
                   </CardContent>
                 </Card>
 
+                {/* Schedule */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center">
@@ -348,6 +503,7 @@ const AddLocation = () => {
                     <WeeklySchedule
                       schedule={schedule}
                       onChange={setSchedule}
+                      showTemplates={isEditMode}
                     />
                   </CardContent>
                 </Card>
@@ -358,6 +514,7 @@ const AddLocation = () => {
                     variant="outline"
                     className="flex-1"
                     onClick={() => navigate('/business/locations')}
+                    disabled={isLoading}
                   >
                     Cancelar
                   </Button>
@@ -366,8 +523,17 @@ const AddLocation = () => {
                     className="flex-1"
                     disabled={isLoading}
                   >
-                    <Save className="h-4 w-4 mr-2" />
-                    {isLoading ? 'Salvando...' : 'Salvar Local'}
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        {isEditMode ? 'Salvar Alterações' : 'Salvar Local'}
+                      </>
+                    )}
                   </Button>
                 </div>
               </form>
@@ -379,4 +545,4 @@ const AddLocation = () => {
   );
 };
 
-export default AddLocation;
+export default LocationEditor;
