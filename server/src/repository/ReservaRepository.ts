@@ -18,7 +18,7 @@ class ReservaRepository {
   }
 
   async buscarPorId(id: number): Promise<Reserva | null> {
-    return await this.repository.findOne({ 
+    return await this.repository.findOne({
       where: { id },
       relations: ['locatario', 'sala', 'sala.predio'],
     });
@@ -123,9 +123,9 @@ class ReservaRepository {
     status: StatusReserva,
   ): Promise<Reserva[]> {
     return await this.repository.find({
-      where: { 
-        locatario: { id: locatarioId }, 
-        status 
+      where: {
+        locatario: { id: locatarioId },
+        status
       },
       order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
       relations: ['locatario', 'sala', 'sala.predio'],
@@ -290,6 +290,44 @@ class ReservaRepository {
         createdAt: LessThan(setentaEDuasHorasAtras),
       },
     });
+  }
+
+  async buscarReservasPorSalaPeriodo(
+    salaId: number,
+    dataInicio: Date,
+    dataFim: Date
+  ): Promise<Reserva[]> {
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .where('sala.id = :salaId', { salaId })
+      .andWhere('reserva.dataReserva BETWEEN :dataInicio AND :dataFim', {
+        dataInicio: dataInicio.toISOString().split('T')[0],
+        dataFim: dataFim.toISOString().split('T')[0]
+      })
+      .andWhere('reserva.status IN (:...status)', {
+        status: [StatusReserva.ACEITA, StatusReserva.PENDENTE]
+      })
+      .orderBy('reserva.dataReserva', 'ASC')
+      .addOrderBy('reserva.horarioInicio', 'ASC')
+      .getMany();
+  }
+
+  async buscarInfoSala(idSala: number): Promise<{
+    sala_id: number;
+    sala_nome: string;
+    sala_precoHora: string;
+  } | null> {
+    const result = await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoin('reserva.sala', 'sala')
+      .where('sala.id = :idSala', { idSala })
+      .select(['sala.id', 'sala.nome', 'sala.precoHora'])
+      .getRawOne();
+
+    return result;
   }
 }
 

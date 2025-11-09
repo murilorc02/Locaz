@@ -56,7 +56,7 @@ class ReservaService {
     }
 
     const reserva = await reservaRepository.buscarPorId(id);
-    
+
     if (!reserva) {
       throw new Error('Reserva não encontrada');
     }
@@ -212,6 +212,118 @@ class ReservaService {
     });
   }
 
+  async buscarHorarios(idSala: number): Promise<{
+    salaId: number;
+    nomeSala: string;
+    precoHora: number;
+    diasDisponiveis: Array<{
+      data: string;
+      diaSemana: string;
+      horarios: Array<{
+        horario: string;
+        disponivel: boolean;
+        status: string;
+        preco: number;
+      }>;
+    }>;
+  }> {
+    if (!idSala) {
+      throw new Error('ID da sala inválido');
+    }
+
+    // Buscar informações da sala
+    const salaInfo = await reservaRepository.buscarInfoSala(idSala);
+
+    if (!salaInfo) {
+      throw new Error('Sala não encontrada');
+    }
+
+    // Definir período: hoje + 30 dias
+    const dataInicio = new Date();
+    dataInicio.setHours(0, 0, 0, 0);
+
+    const dataFim = new Date();
+    dataFim.setDate(dataFim.getDate() + 30);
+    dataFim.setHours(23, 59, 59, 999);
+
+    // Buscar todas as reservas do período
+    const reservas = await reservaRepository.buscarReservasPorSalaPeriodo(
+      idSala,
+      dataInicio,
+      dataFim
+    );
+
+    // Criar mapa de reservas por data
+    const reservasPorData = new Map<string, Reserva[]>();
+    reservas.forEach(reserva => {
+      const dataStr = reserva.dataReserva.toISOString().split('T')[0];
+      if (!reservasPorData.has(dataStr)) {
+        reservasPorData.set(dataStr, []);
+      }
+      reservasPorData.get(dataStr)!.push(reserva);
+    });
+
+    // Gerar estrutura de 30 dias
+    const diasDisponiveis: Array<{
+      data: string;
+      diaSemana: string;
+      horarios: Array<{
+        horario: string;
+        disponivel: boolean;
+        status: string;
+        preco: number;
+      }>;
+    }> = [];
+
+    const diasSemana = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+
+    for (let i = 0; i < 30; i++) {
+      const data = new Date(dataInicio);
+      data.setDate(data.getDate() + i);
+      const dataStr = data.toISOString().split('T')[0];
+      const diaSemanaIdx = data.getDay();
+      const diaSemana = diasSemana[diaSemanaIdx];
+
+      // Gerar horários de 7h às 19h
+      const horarios: Array<{
+        horario: string;
+        disponivel: boolean;
+        status: string;
+        preco: number;
+      }> = [];
+
+      for (let hora = 7; hora < 19; hora++) {
+        const horarioInicio = `${hora.toString().padStart(2, '0')}:00:00`;
+
+        // Verificar se há reserva neste horário
+        const reservasData = reservasPorData.get(dataStr) || [];
+        const ocupado = reservasData.some(reserva => {
+          return reserva.horarioInicio === horarioInicio;
+        });
+
+        horarios.push({
+          horario: horarioInicio.substring(0, 5),
+          disponivel: !ocupado,
+          status: ocupado ? 'ocupado' : 'disponivel',
+          preco: Number(salaInfo.sala_precoHora)
+        });
+      }
+
+      diasDisponiveis.push({
+        data: dataStr,
+        diaSemana,
+        horarios
+      });
+    }
+
+    return {
+      salaId: idSala,
+      nomeSala: salaInfo.sala_nome,
+      precoHora: Number(salaInfo.sala_precoHora),
+      diasDisponiveis
+    };
+  }
+
   // ==================== MÉTODOS DO LOCADOR ====================
 
   /**
@@ -339,7 +451,7 @@ class ReservaService {
     }
 
     const pertenceAoLocador = await reservaRepository.verificarProprietarioSala(idSala, idLocador);
-    
+
     if (!pertenceAoLocador) {
       throw new Error('Você não tem permissão para visualizar reservas desta sala');
     }
@@ -441,13 +553,13 @@ class ReservaService {
 
   private validarFormatoData(data: string): void {
     const regex = /^\d{4}-\d{2}-\d{2}$/;
-    
+
     if (!regex.test(data)) {
       throw new Error('A data deve estar no formato YYYY-MM-DD');
     }
 
     const dataObj = new Date(data);
-    
+
     if (isNaN(dataObj.getTime())) {
       throw new Error('Data inválida');
     }
@@ -455,7 +567,7 @@ class ReservaService {
 
   private validarFormatoHorario(horario: string): void {
     const regex = /^([0-1][0-9]|2[0-3]):00:00$/;
-    
+
     if (!regex.test(horario)) {
       throw new Error('O horário deve estar no formato HH:00:00 (hora cheia)');
     }
@@ -473,7 +585,7 @@ class ReservaService {
 
   private validarStatus(status: StatusReserva): void {
     const statusValidos = Object.values(StatusReserva);
-    
+
     if (!statusValidos.includes(status)) {
       throw new Error(`Status inválido. Use: ${statusValidos.join(', ')}`);
     }
@@ -493,7 +605,7 @@ class ReservaService {
     const dataReserva = new Date(dataReservada);
     const agora = new Date();
     agora.setHours(0, 0, 0, 0);
-    
+
     const diferencaDias = Math.ceil(
       (dataReserva.getTime() - agora.getTime()) / (1000 * 60 * 60 * 24)
     );
