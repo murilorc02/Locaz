@@ -194,6 +194,7 @@ const WorkspaceDetail = () => {
                 pricePerHour={workspace.precoHora ? workspace.precoHora : 0}
                 onTimeSlotSelect={handleTimeSlotSelect}
                 selectedTimeSlots={selectedTimeSlots}
+                workspaceId={id}
               />
             </div>
           </div>
