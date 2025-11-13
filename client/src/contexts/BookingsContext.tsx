@@ -3,7 +3,7 @@ import { CreateBookingPayload } from "@/types";
 import { createContext, ReactNode, useContext } from "react";
 
 interface BookingsContextType {
-    getBookingsByWorkspaceId: (workspaceId: string) => void
+    getWorkspaceSchedulesStatus: (workspaceId: string) => void
     createBooking: (bookingPayload: CreateBookingPayload) => void
 }
 
@@ -19,9 +19,9 @@ export function BookingsProvider({ children }: {children: ReactNode}) {
         }
     };
 
-    const getBookingsByWorkspaceId = async (workspaceId: string) => {
+    const getWorkspaceSchedulesStatus = async (workspaceId: string) => {
         try {
-            const bookings = await api.get(`/locatario/sala/${workspaceId}`)
+            const bookings = await api.get(`/horarios/${workspaceId}`)
             return bookings
         } catch (err) {
             console.error(err)
@@ -30,7 +30,7 @@ export function BookingsProvider({ children }: {children: ReactNode}) {
     };
 
     const contextValue = {
-        getBookingsByWorkspaceId,
+        getWorkspaceSchedulesStatus,
         createBooking
     };
 

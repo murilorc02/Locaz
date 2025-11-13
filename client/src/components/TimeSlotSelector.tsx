@@ -26,6 +26,7 @@ interface TimeSlotSelectorProps {
   selectedTimeSlots: TimeSlot[];
   workspaceId?: string;
   isLoading?: boolean;
+  onDateChange?: (newDate: Date) => void;
 }
 
 export const TimeSlotSelector = ({
@@ -34,18 +35,42 @@ export const TimeSlotSelector = ({
   onTimeSlotSelect,
   selectedTimeSlots,
   workspaceId,
-  isLoading
+  isLoading,
+  onDateChange
 }: TimeSlotSelectorProps) => {
   const { toast } = useToast();
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { getSchedulesByWorkspaceId } = useWorkspaces()
-  const { createBooking, getBookingsByWorkspaceId } = useBookings()
+  const { getSchedulesByWorkspaceId } = useWorkspaces();
+  const { createBooking } = useBookings();
+  const { user } = useAuth();
 
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [effectiveDate, setEffectiveDate] = useState<Date>(selectedDate);
+
+  // Check if a time slot is in the past (only for today)
+  const isSlotInPast = (slot: TimeSlot): boolean => {
+    const now = new Date();
+    const today = format(now, 'yyyy-MM-dd');
+    const slotDate = slot.id.split('-')[0]; // Extract date from id (yyyy-MM-dd)
+
+    // Only consider past if slot is today AND time is before current hour
+    if (slotDate === today) {
+      const slotHour = parseInt(slot.time.split(':')[0], 10);
+      const currentHour = now.getHours();
+      return slotHour < currentHour;
+    }
+
+    return false;
+  };
+
+  // Mark slots as available based on past/present status and actual availability
+  const getAvailableStatus = (slot: TimeSlot): boolean => {
+    return slot.available && !isSlotInPast(slot);
+  };
 
   // Load schedules from API and convert opening intervals into hourly slots (inclusive)
-  const loadTimeSlots = async () => {
+  const loadTimeSlots = async (dateToLoad: Date) => {
     try {
       // If no workspaceId provided, use fallback generated slots
       if (!workspaceId) {
@@ -60,7 +85,7 @@ export const TimeSlotSelector = ({
 
       // Map JS Date day -> API day string
       const weekdayMap = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
-      const selectedDayName = weekdayMap[selectedDate.getDay()];
+      const selectedDayName = weekdayMap[dateToLoad.getDay()];
 
       // Filter schedules for the selected day and that are active
       const daySchedules = horarios.filter(h => h.diaSemana === selectedDayName && (h.ativo === true || h.ativo === undefined));
@@ -76,45 +101,75 @@ export const TimeSlotSelector = ({
         const endHour = parseInt(end.split(':')[0], 10);
         if (Number.isNaN(startHour) || Number.isNaN(endHour)) return;
 
-        // inclusive: include end hour as requested (ex: 09:00-12:00 -> 09,10,11,12)
-        for (let h = startHour; h <= endHour; h++) {
+        // Exclude the closing hour: if space closes at 18h, last selectable slot is 17h
+        // inclusive: include hours up to (but excluding) end hour (ex: 09:00-18:00 -> 09,10,...,17)
+        for (let h = startHour; h < endHour; h++) {
           const time = `${h.toString().padStart(2, '0')}:00`;
-          const id = `${format(selectedDate, 'yyyy-MM-dd')}-${time}`;
+          const id = `${format(dateToLoad, 'yyyy-MM-dd')}-${time}`;
           if (!slotsMap.has(id)) {
             slotsMap.set(id, { id, time, available: Boolean(s.ativo), price: pricePerHour });
           }
         }
       });
 
-      const slots = Array.from(slotsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
+      let slots = Array.from(slotsMap.values()).sort((a, b) => a.time.localeCompare(b.time));
 
-      // if API returned no slots for that day, fallback to generated ones
-      if (slots.length === 0) {
-        setTimeSlots([]);
-      } else {
-        setTimeSlots(slots);
+      // Filter out past slots for today
+      slots = slots.filter(slot => !isSlotInPast(slot));
+
+      // If no valid slots for today, try next day
+      if (slots.length === 0 && format(dateToLoad, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')) {
+        const nextDay = new Date(dateToLoad);
+        nextDay.setDate(nextDay.getDate() + 1);
+        setEffectiveDate(nextDay);
+        if (onDateChange) onDateChange(nextDay);
+        await loadTimeSlots(nextDay);
+        return;
       }
+
+      setTimeSlots(slots);
     } catch (err) {
       console.error('Erro ao carregar horários do workspace:', err);
-      // fallback
       setTimeSlots([]);
     }
   };
 
   // Reload when selected date, workspace or price changes
   useEffect(() => {
-    loadTimeSlots();
+    setEffectiveDate(selectedDate);
+    loadTimeSlots(selectedDate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, workspaceId, pricePerHour]);
 
   const getSlotStatus = (slot: TimeSlot) => {
+    if (isSlotInPast(slot)) return 'past';
     if (!slot.available) return 'occupied';
     if (selectedTimeSlots.some(s => s.id === slot.id)) return 'selected';
     return 'available';
   };
 
+  // Check if slots are consecutive (no gaps in time)
+  const areSlotConsecutive = (slots: TimeSlot[]): boolean => {
+    if (slots.length <= 1) return true;
+
+    const sortedSlots = [...slots].sort((a, b) => a.time.localeCompare(b.time));
+    
+    for (let i = 0; i < sortedSlots.length - 1; i++) {
+      const currentHour = parseInt(sortedSlots[i].time.split(':')[0], 10);
+      const nextHour = parseInt(sortedSlots[i + 1].time.split(':')[0], 10);
+      
+      // Next slot should be exactly 1 hour after current
+      if (nextHour - currentHour !== 1) {
+        return false;
+      }
+    }
+    
+    return true;
+  };
+
   const handleSlotClick = (slot: TimeSlot) => {
-    if (!slot.available) return;
+    // Prevent clicking past or unavailable slots
+    if (isSlotInPast(slot) || !slot.available) return;
 
     const isSelected = selectedTimeSlots.some(s => s.id === slot.id);
     let newSelectedSlots;
@@ -123,8 +178,20 @@ export const TimeSlotSelector = ({
       // Remove slot if already selected
       newSelectedSlots = selectedTimeSlots.filter(s => s.id !== slot.id);
     } else {
-      // Add slot to selection
-      newSelectedSlots = [...selectedTimeSlots, slot];
+      // Try to add slot
+      const candidateSlots = [...selectedTimeSlots, slot];
+      
+      // Check if new selection would be consecutive
+      if (!areSlotConsecutive(candidateSlots)) {
+        toast({
+          title: "Horários não consecutivos",
+          description: "Você pode selecionar apenas horários consecutivos sem interrupções.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      newSelectedSlots = candidateSlots;
     }
 
     onTimeSlotSelect(newSelectedSlots);
@@ -150,21 +217,48 @@ export const TimeSlotSelector = ({
       return;
     }
 
-    // const bookingPayload: CreateBookingPayload = {} as CreateBookingPayload;
-    // await createBooking(bookingPayload)
+    // Build booking payload
+    if (!workspaceId) {
+      toast({
+        title: "Erro",
+        description: "Workspace não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    const totalHours = selectedTimeSlots.length;
-    const totalPrice = selectedTimeSlots.reduce((total, slot) => total + slot.price, 0);
+    // Sort selected slots in ascending order and use first and last as start and end times
+    const sortedSlots = [...selectedTimeSlots].sort((a, b) => a.time.localeCompare(b.time));
+    
+    const bookingPayload: CreateBookingPayload = {
+      salaId: Number(workspaceId),
+      locatarioId: user.id,
+      dataReservada: format(selectedDate, "yyyy-MM-dd"),
+      horarioInicio: sortedSlots[0].time,
+      horarioFim: sortedSlots[sortedSlots.length - 1].time,
+      valorTotal: selectedTimeSlots.length * pricePerHour,
+      observacoes: "Reserva via app",
+    };
 
-    toast({
-      title: "Reserva iniciada",
-      description: `${totalHours} horário${totalHours > 1 ? 's' : ''} selecionado${totalHours > 1 ? 's' : ''} (R$ ${totalPrice}). Redirecionando para finalizar sua reserva...`,
-    });
-    // In a real app, this would navigate to booking page with selected time slot
+    try {
+      await createBooking(bookingPayload);
+      toast({
+        title: "Reserva realizada",
+        description: `Reserva criada para ${selectedTimeSlots.length} horário${selectedTimeSlots.length > 1 ? 's' : ''}.`,
+      });
+      // Optionally, redirect or clear selection
+    } catch (err) {
+      toast({
+        title: "Erro ao reservar",
+        description: "Não foi possível criar a reserva. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getSlotColor = (status: string) => {
     switch (status) {
+      case 'past': return 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed';
       case 'occupied': return 'bg-red-100 text-red-700 border-red-200';
       case 'selected': return 'bg-primary text-white border-primary';
       case 'available': return 'bg-green-100 text-green-700 border-green-200 hover:bg-green-200';
@@ -180,47 +274,13 @@ export const TimeSlotSelector = ({
           Horários Disponíveis
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          {format(selectedDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
+          {format(effectiveDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
         </p>
       </CardHeader>
       <CardContent>
         {/* Visual Timeline */}
         {!isLoading && timeSlots.length > 0 ? (
           <>
-            <div className="mb-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm text-muted-foreground">Linha do tempo</span>
-              </div>
-              <div className="relative">
-                <>
-                  <div className="flex h-8 rounded-lg overflow-hidden border">
-                    {timeSlots.map((slot) => {
-                      const status = getSlotStatus(slot);
-                      return (
-                        <div
-                          key={slot.id}
-                          className={`flex-1 cursor-pointer transition-all ${status === 'occupied'
-                            ? 'bg-red-200'
-                            : status === 'selected'
-                              ? 'bg-primary'
-                              : 'bg-green-200 hover:bg-green-300'
-                            }`}
-                          onClick={() => handleSlotClick(slot)}
-                          title={`${slot.time} - ${slot.available ? 'Disponível' : 'Ocupado'}`}
-                        />
-                      );
-                    })}
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                    <span>{timeSlots[0].time}</span>
-                    <span>{timeSlots[(timeSlots.length / 2)].time}</span>
-                    <span>{timeSlots[(timeSlots.length-1)].time}</span>
-                  </div>
-                </>
-              </div>
-            </div>
-
             {/* Legend */}
             <div className="flex flex-wrap gap-3 mb-6">
               <div className="flex items-center gap-2">
@@ -246,13 +306,13 @@ export const TimeSlotSelector = ({
                     key={slot.id}
                     variant="outline"
                     size="sm"
-                    disabled={!slot.available}
+                    disabled={isSlotInPast(slot) || !slot.available}
                     onClick={() => handleSlotClick(slot)}
-                    className={`h-12 flex flex-col items-center justify-center ${getSlotColor(status)}`}
+                    className={`h-12 flex flex-col items-center justify-center ${getSlotColor(getSlotStatus(slot))}`}
                   >
                     <span className="font-medium">{slot.time}</span>
                     <span className="text-xs">
-                      {slot.available ? `R$ ${slot.price}` : 'Ocupado'}
+                      {isSlotInPast(slot) ? 'Passou' : slot.available ? `R$ ${slot.price}` : 'Ocupado'}
                     </span>
                   </Button>
                 );
@@ -299,7 +359,7 @@ export const TimeSlotSelector = ({
               <CheckCircle className="h-4 w-4 mr-2" />
               Reservar {selectedTimeSlots.length} horário{selectedTimeSlots.length > 1 ? 's' : ''}
               <span className="ml-2 text-sm">
-                (R$ {selectedTimeSlots.reduce((total, slot) => total + slot.price, 0)})
+                (R$ {selectedTimeSlots.length * pricePerHour})
               </span>
             </>
           ) : (

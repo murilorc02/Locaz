@@ -1,7 +1,33 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import { authMiddleware } from '../middleware/authMiddleware';
 import reservaService from '../services/ReservaService';
 
 const reservaController = Router();
+
+/**
+ * GET /api/reservas/horarios/:idSala
+ * Retorna os horários disponíveis e ocupados de uma sala
+ */
+reservaController.get('/horarios/:idSala', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const idSala = Number(req.params.idSala);
+    
+    if (!idSala || isNaN(idSala)) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID da sala inválido',
+      });
+    }
+
+    const horarios = await reservaService.buscarHorarios(idSala);
+    return res.json({
+      success: true,
+      data: horarios,
+    });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ==================== ENDPOINTS DO LOCATÁRIO ====================
 
@@ -9,7 +35,9 @@ const reservaController = Router();
  * 1. POST /api/reservas/locatario/create
  * Criar nova reserva com status PENDENTE
  */
-reservaController.post('/locatario/create', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.post('/locatario/create',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
 
@@ -39,7 +67,9 @@ reservaController.post('/locatario/create', async (req: Request, res: Response, 
  * 2. GET /api/reservas/locatario/detalhes/:id
  * Buscar reserva por ID (apenas reservas do próprio locatário)
  */
-reservaController.get('/locatario/detalhes/:id', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/detalhes/:id',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseInt(req.params.id);
     const idLocatario = (req as any).user?.id;
@@ -73,7 +103,9 @@ reservaController.get('/locatario/detalhes/:id', async (req: Request, res: Respo
  * 3. GET /api/reservas/locatario/predio/:idPredio
  * Buscar reservas por ID de prédio
  */
-reservaController.get('/locatario/predio/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/predio/:idPredio',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idPredio = parseInt(req.params.idPredio);
     const idLocatario = (req as any).user?.id;
@@ -108,7 +140,9 @@ reservaController.get('/locatario/predio/:idPredio', async (req: Request, res: R
  * 4. GET /api/reservas/locatario/predio/:nomePredio
  * Buscar reservas por nome de prédio (busca com LIKE)
  */
-reservaController.get('/locatario/predio/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/predio/:nomePredio',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomePredio = req.params.nomePredio;
     const idLocatario = (req as any).user?.id;
@@ -143,7 +177,9 @@ reservaController.get('/locatario/predio/:nomePredio', async (req: Request, res:
  * 5. GET /api/reservas/locatario/sala/:idSala
  * Buscar reservas por ID de sala
  */
-reservaController.get('/locatario/sala/:idSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/sala/:idSala',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idSala = parseInt(req.params.idSala);
     const idLocatario = (req as any).user?.id;
@@ -175,7 +211,9 @@ reservaController.get('/locatario/sala/:idSala', async (req: Request, res: Respo
 });
 
 // 6. Buscar reservas por nome de sala 
-reservaController.get('/locatario/sala/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/sala/:nomeSala',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomeSala = req.params.nomeSala;
     const idLocatario = (req as any).user?.id;
@@ -208,7 +246,9 @@ reservaController.get('/locatario/sala/:nomeSala', async (req: Request, res: Res
 
 
 // 7. Buscar todas as reservas do locatário
-reservaController.get('/locatario/all', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/all',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
 
@@ -233,7 +273,9 @@ reservaController.get('/locatario/all', async (req: Request, res: Response, next
 
 
 // 8. Buscar reservas por status (pendente, aceita, recusada, cancelada)
-reservaController.get('/locatario/:status', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/:status',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.params.status;
     const idLocatario = (req as any).user?.id;
@@ -261,7 +303,9 @@ reservaController.get('/locatario/:status', async (req: Request, res: Response, 
  * 9. GET /api/reservas/locatario/ordenar/data?ordem=asc|desc
  * Ordenar reservas por data (mais recente ao mais antigo ou vice-versa)
  */
-reservaController.get('/locatario/ordenarData', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/ordenarData',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
     const ordem = req.query.ordem as string;
@@ -296,7 +340,9 @@ reservaController.get('/locatario/ordenarData', async (req: Request, res: Respon
  * 10. GET /api/reservas/locatario/ordenar/valor
  * Ordenar reservas por valor total (do menor para o maior)
  */
-reservaController.get('/locatario/ordenaValor', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locatario/ordenaValor',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.id;
 
@@ -323,7 +369,9 @@ reservaController.get('/locatario/ordenaValor', async (req: Request, res: Respon
  * 11. PATCH /api/reservas/locatario/:id/cancelar
  * Cancelar reserva (atualiza status para CANCELADA)
  */
-reservaController.patch('/locatario/:id/cancelar', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.patch('/locatario/:id/cancelar',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idReserva = parseInt(req.params.id);
     const idLocatario = (req as any).user?.id;
@@ -388,7 +436,9 @@ reservaController.get('/locatario/sala/:idSala/horarios-reserva',
  * 12. PATCH /api/reservas/locador/:id/aceitar
  * Aceitar solicitação de reserva (muda status de PENDENTE para ACEITA)
  */
-reservaController.patch('/locador/:id/aceitar', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.patch('/locador/:id/aceitar',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idReserva = parseInt(req.params.id);
     const idLocador = (req as any).user?.id;
@@ -426,7 +476,9 @@ reservaController.patch('/locador/:id/aceitar', async (req: Request, res: Respon
  * 13. PATCH /api/reservas/locador/:id/recusar
  * Recusar solicitação de reserva (muda status de PENDENTE para RECUSADA)
  */
-reservaController.patch('/locador/:id/recusar', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.patch('/locador/:id/recusar',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idReserva = parseInt(req.params.id);
     const idLocador = (req as any).user?.id;
@@ -464,7 +516,9 @@ reservaController.patch('/locador/:id/recusar', async (req: Request, res: Respon
  * 14. GET /api/reservas/locador/predio/:idPredio
  * Buscar reservas por ID de prédio (apenas prédios do locador)
  */
-reservaController.get('/locador/predio/:idPredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/predio/:idPredio',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idPredio = parseInt(req.params.idPredio);
     const idLocador = (req as any).user?.id;
@@ -499,7 +553,9 @@ reservaController.get('/locador/predio/:idPredio', async (req: Request, res: Res
  * 15. GET /api/reservas/locador/predio/nome/:nomePredio
  * Buscar reservas por nome de prédio (apenas prédios do locador)
  */
-reservaController.get('/locador/predio/:nomePredio', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/predio/:nomePredio',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomePredio = req.params.nomePredio;
     const idLocador = (req as any).user?.id;
@@ -534,7 +590,9 @@ reservaController.get('/locador/predio/:nomePredio', async (req: Request, res: R
  * 16. GET /api/reservas/locador/sala/:idSala
  * Buscar reservas por ID de sala (apenas salas do locador)
  */
-reservaController.get('/locador/sala/:idSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/sala/:idSala',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idSala = parseInt(req.params.idSala);
     const idLocador = (req as any).user?.id;
@@ -569,7 +627,9 @@ reservaController.get('/locador/sala/:idSala', async (req: Request, res: Respons
  * 17. GET /api/reservas/locador/sala/nome/:nomeSala
  * Buscar reservas por nome de sala (apenas salas do locador)
  */
-reservaController.get('/locador/sala/:nomeSala', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/sala/:nomeSala',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const nomeSala = req.params.nomeSala;
     const idLocador = (req as any).user?.id;
@@ -604,7 +664,9 @@ reservaController.get('/locador/sala/:nomeSala', async (req: Request, res: Respo
  * 18. GET /api/reservas/locador/all
  * Buscar todas as reservas de todos os prédios/salas do locador
  */
-reservaController.get('/locador/all', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/all',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.id;
 
@@ -631,7 +693,9 @@ reservaController.get('/locador/all', async (req: Request, res: Response, next: 
  * 19. GET /api/reservas/locador/status/:status
  * Buscar reservas por status (apenas das salas do locador)
  */
-reservaController.get('/locador/:status', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/:status',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.params.status;
     const idLocador = (req as any).user?.id;
@@ -659,7 +723,9 @@ reservaController.get('/locador/:status', async (req: Request, res: Response, ne
  * 20. GET /api/reservas/locador/ordenar/data?ordem=asc|desc
  * Ordenar reservas por data (mais recente ao mais antigo ou vice-versa)
  */
-reservaController.get('/locador/ordenarData', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/ordenarData',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.id;
     const ordem = req.query.ordem as string;
@@ -694,7 +760,9 @@ reservaController.get('/locador/ordenarData', async (req: Request, res: Response
  * 21. GET /api/reservas/locador/ordenar/valor
  * Ordenar reservas por valor total (do menor para o maior)
  */
-reservaController.get('/locador/ordenarValor', async (req: Request, res: Response, next: NextFunction) => {
+reservaController.get('/locador/ordenarValor',
+  authMiddleware,
+  async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.id;
 
