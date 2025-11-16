@@ -27,6 +27,7 @@ interface TimeSlotSelectorProps {
   workspaceId?: string;
   isLoading?: boolean;
   onDateChange?: (newDate: Date) => void;
+  onBookingClick: () => void;
 }
 
 export const TimeSlotSelector = ({
@@ -36,14 +37,11 @@ export const TimeSlotSelector = ({
   selectedTimeSlots,
   workspaceId,
   isLoading,
-  onDateChange
+  onDateChange,
+  onBookingClick
 }: TimeSlotSelectorProps) => {
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
-  const navigate = useNavigate();
   const { getSchedulesByWorkspaceId } = useWorkspaces();
-  const { createBooking } = useBookings();
-  const { user } = useAuth();
 
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [effectiveDate, setEffectiveDate] = useState<Date>(selectedDate);
@@ -62,11 +60,6 @@ export const TimeSlotSelector = ({
     }
 
     return false;
-  };
-
-  // Mark slots as available based on past/present status and actual availability
-  const getAvailableStatus = (slot: TimeSlot): boolean => {
-    return slot.available && !isSlotInPast(slot);
   };
 
   // Load schedules from API and convert opening intervals into hourly slots (inclusive)
@@ -197,65 +190,6 @@ export const TimeSlotSelector = ({
     onTimeSlotSelect(newSelectedSlots);
   };
 
-  const handleBooking = async () => {
-    if (!isAuthenticated) {
-      toast({
-        title: "Login necessário",
-        description: "Você precisa fazer login para reservar um espaço.",
-        variant: "destructive",
-      });
-      navigate('/login');
-      return;
-    }
-
-    if (selectedTimeSlots.length === 0) {
-      toast({
-        title: "Selecione um horário",
-        description: "Escolha pelo menos um horário disponível para prosseguir com a reserva.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Build booking payload
-    if (!workspaceId) {
-      toast({
-        title: "Erro",
-        description: "Workspace não encontrado.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Sort selected slots in ascending order and use first and last as start and end times
-    const sortedSlots = [...selectedTimeSlots].sort((a, b) => a.time.localeCompare(b.time));
-    
-    const bookingPayload: CreateBookingPayload = {
-      salaId: Number(workspaceId),
-      locatarioId: user.id,
-      dataReservada: format(selectedDate, "yyyy-MM-dd"),
-      horarioInicio: sortedSlots[0].time,
-      horarioFim: sortedSlots[sortedSlots.length - 1].time,
-      valorTotal: selectedTimeSlots.length * pricePerHour,
-      observacoes: "Reserva via app",
-    };
-
-    try {
-      await createBooking(bookingPayload);
-      toast({
-        title: "Reserva realizada",
-        description: `Reserva criada para ${selectedTimeSlots.length} horário${selectedTimeSlots.length > 1 ? 's' : ''}.`,
-      });
-      // Optionally, redirect or clear selection
-    } catch (err) {
-      toast({
-        title: "Erro ao reservar",
-        description: "Não foi possível criar a reserva. Tente novamente.",
-        variant: "destructive",
-      });
-    }
-  };
-
   const getSlotColor = (status: string) => {
     switch (status) {
       case 'past': return 'bg-gray-200 text-gray-500 border-gray-300 cursor-not-allowed';
@@ -349,7 +283,7 @@ export const TimeSlotSelector = ({
         )}
 
         <Button
-          onClick={handleBooking}
+          onClick={onBookingClick}
           className="w-full mt-4"
           size="lg"
           disabled={selectedTimeSlots.length === 0}

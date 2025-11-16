@@ -5,14 +5,22 @@ import Footer from '../components/Footer';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Calendar } from '../components/ui/calendar';
-import { ArrowLeft, MapPin, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle, MapPin, Users } from 'lucide-react';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
-import { Workspace, Location } from '@/types';
+import { Workspace, Location, CreateBookingPayload } from '@/types';
 import { useLocations } from '@/contexts/LocationsContext';
 import defaultImage from '../assets/imgs/bg_header.jpg';
 import { TimeSlotSelector } from '@/components/TimeSlotSelector';
 import AmenityBadge from '@/components/AmenityBadge';
 import { BarLoader } from 'react-spinners';
+import { toast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { format } from 'date-fns';
+import { useBookings } from '@/contexts/BookingsContext';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+import { ptBR } from 'date-fns/locale';
 
 interface TimeSlot {
   id: string;
@@ -24,11 +32,17 @@ interface TimeSlot {
 const WorkspaceDetail = () => {
   const { id } = useParams<{ id: string; }>();
   const navigate = useNavigate();
+
+  const { user, isAuthenticated } = useAuth();
   const { getWorkspaceById, isLoading: isWorkspaceContextLoading } = useWorkspaces();
   const { getLocationById, isLoading: isLocationContextLoading } = useLocations();
+  const { createBooking } = useBookings();
+
   const [workspace, setWorkspace] = useState({} as Workspace);
   const [location, setLocation] = useState({} as Location);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [bookingNotes, setBookingNotes] = useState('');
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -54,6 +68,69 @@ const WorkspaceDetail = () => {
 
   const handleTimeSlotSelect = (timeSlots: TimeSlot[]) => {
     setSelectedTimeSlots(timeSlots);
+  };
+
+  const handleBookingClick = async () => {
+    if (!isAuthenticated) {
+      toast({
+        title: "Login necessário",
+        description: "Você precisa fazer login para reservar um espaço.",
+        variant: "destructive",
+      });
+      navigate('/login');
+      return;
+    }
+
+    if (selectedTimeSlots.length === 0) {
+      toast({
+        title: "Selecione um horário",
+        description: "Escolha pelo menos um horário disponível para prosseguir com a reserva.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Build booking payload
+    if (!id) {
+      toast({
+        title: "Erro",
+        description: "Workspace não encontrado.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsBookingModalOpen(true);
+  }
+
+  const handleConfirmBooking = async () => {
+    // Sort selected slots in ascending order and use first and last as start and end times
+    const sortedSlots = [...selectedTimeSlots].sort((a, b) => a.time.localeCompare(b.time));
+
+    const bookingPayload: CreateBookingPayload = {
+      salaId: Number(id),
+      locatarioId: user.id,
+      dataReservada: format(selectedDate, "yyyy-MM-dd"),
+      horarioInicio: sortedSlots[0].time,
+      horarioFim: sortedSlots[sortedSlots.length - 1].time,
+      valorTotal: selectedTimeSlots.length * workspace.precoHora,
+      observacoes: bookingNotes,
+    };
+
+    try {
+      await createBooking(bookingPayload);
+      toast({
+        title: "Reserva realizada",
+        description: `Reserva criada para ${selectedTimeSlots.length} horário${selectedTimeSlots.length > 1 ? 's' : ''}.`,
+      });
+      // Optionally, redirect or clear selection
+    } catch (err) {
+      toast({
+        title: "Erro ao reservar",
+        description: "Não foi possível criar a reserva. Tente novamente.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isPageLoading || isLocationContextLoading || isWorkspaceContextLoading || !workspace || !location) {
@@ -178,9 +255,9 @@ const WorkspaceDetail = () => {
                       mode="single"
                       selected={selectedDate}
                       onSelect={(date) => date && (
-                          setSelectedDate(date),
-                          setSelectedTimeSlots([])
-                        )}
+                        setSelectedDate(date),
+                        setSelectedTimeSlots([])
+                      )}
                       disabled={(date) => date < new Date()}
                       className="rounded-md border"
                     />
@@ -195,11 +272,87 @@ const WorkspaceDetail = () => {
                 onTimeSlotSelect={handleTimeSlotSelect}
                 selectedTimeSlots={selectedTimeSlots}
                 workspaceId={id}
+                onBookingClick={handleBookingClick}
               />
             </div>
           </div>
         </div>
       </main>
+
+      <Dialog open={isBookingModalOpen} onOpenChange={setIsBookingModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Confirmar Reserva</DialogTitle>
+            <DialogDescription>
+              Revise os detalhes da sua reserva antes de confirmar.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            {/* Workspace Info */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm text-muted-foreground">Espaço</h4>
+              <p className="font-medium">{workspace.nome}</p>
+              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {location.nome} - {location.cidade}, {location.estado}
+              </p>
+            </div>
+
+            {/* Date and Time Slots */}
+            <div className="space-y-2">
+              <h4 className="font-semibold text-sm text-muted-foreground">Data e Horários</h4>
+              <p className="text-sm font-medium">
+                {format(selectedDate, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectedTimeSlots.map((slot) => (
+                  <span key={slot.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                    {slot.time}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Price Summary */}
+            <div className="space-y-2 pt-2 border-t">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">
+                  {selectedTimeSlots.length} horário{selectedTimeSlots.length > 1 ? 's' : ''}
+                </span>
+                <span className="font-medium">R$ {workspace.precoHora}</span>
+              </div>
+              <div className="flex items-center justify-between font-semibold">
+                <span>Total</span>
+                <span className="text-lg">R$ {selectedTimeSlots.length * workspace.precoHora}</span>
+              </div>
+            </div>
+
+            {/* Notes Field */}
+            <div className="space-y-2">
+              <Label htmlFor="notes">Observações (opcional)</Label>
+              <Textarea
+                id="notes"
+                placeholder="Adicione observações ou pedidos especiais para sua reserva..."
+                value={bookingNotes}
+                onChange={(e) => setBookingNotes(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBookingModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleConfirmBooking}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Confirmar Reserva
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>
