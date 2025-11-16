@@ -12,10 +12,11 @@ const BookingsContext = createContext<BookingsContextType | undefined>(undefined
 export function BookingsProvider({ children }: {children: ReactNode}) {
     const createBooking = async (bookingPayload: CreateBookingPayload) => {
         try {
-            await api.post(`/locatario/create`, bookingPayload);
+            const response = await api.post(`/locatario/create`, bookingPayload);
+            return response.data;
         } catch (err) {
             console.error(err);
-            throw Error;
+            throw err;
         }
     };
 

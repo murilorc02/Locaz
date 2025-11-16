@@ -21,12 +21,12 @@ export class removehorario1761092698319 implements MigrationInterface {
         }
 
         // Adicionar coluna horariosFuncionamento na tabela Predio se não existir
-        const predioTable = await queryRunner.getTable("Predio");
+        const predioTable = await queryRunner.getTable("predio");
         const horariosPredioColumn = predioTable?.columns.find(column => column.name === "horariosFuncionamento");
         
         if (!horariosPredioColumn) {
             await queryRunner.query(`
-                ALTER TABLE "Predio" 
+                ALTER TABLE "predio" 
                 ADD COLUMN "horariosFuncionamento" jsonb
             `);
         }
@@ -107,7 +107,7 @@ export class removehorario1761092698319 implements MigrationInterface {
         const predioFkExists = await queryRunner.query(`
             SELECT 1 FROM information_schema.table_constraints 
             WHERE constraint_name = 'FK_Predio_Usuario' 
-            AND table_name = 'Predio'
+            AND table_name = 'predio'
         `);
 
         if (predioFkExists.length === 0) {
@@ -115,14 +115,14 @@ export class removehorario1761092698319 implements MigrationInterface {
             const usuarioIdColumn = predioTable?.columns.find(column => column.name === "usuarioId");
             if (!usuarioIdColumn) {
                 await queryRunner.query(`
-                    ALTER TABLE "Predio" 
+                    ALTER TABLE "predio" 
                     ADD COLUMN "usuarioId" integer
                 `);
             }
 
             // Criar a foreign key
             await queryRunner.query(`
-                ALTER TABLE "Predio" 
+                ALTER TABLE "predio" 
                 ADD CONSTRAINT "FK_Predio_Usuario" 
                 FOREIGN KEY ("usuarioId") REFERENCES "usuario"("id") ON DELETE CASCADE
             `);
@@ -139,13 +139,13 @@ export class removehorario1761092698319 implements MigrationInterface {
             await queryRunner.query(`
                 ALTER TABLE "sala" 
                 ADD CONSTRAINT "FK_Sala_Predio" 
-                FOREIGN KEY ("predio_id") REFERENCES "Predio"("id") ON DELETE CASCADE
+                FOREIGN KEY ("predio_id") REFERENCES "predio"("id") ON DELETE CASCADE
             `);
         }
 
         // Criar índices se não existirem
         const indices = [
-            { name: 'IDX_Predio_usuarioId', query: `CREATE INDEX IF NOT EXISTS "IDX_Predio_usuarioId" ON "Predio" ("usuarioId")` },
+            { name: 'IDX_Predio_usuarioId', query: `CREATE INDEX IF NOT EXISTS "IDX_Predio_usuarioId" ON "predio" ("usuarioId")` },
             { name: 'IDX_Sala_predio_id', query: `CREATE INDEX IF NOT EXISTS "IDX_Sala_predio_id" ON "sala" ("predio_id")` }
         ];
 
@@ -170,7 +170,7 @@ export class removehorario1761092698319 implements MigrationInterface {
 
         // Remover constraints
         await queryRunner.query(`ALTER TABLE "sala" DROP CONSTRAINT IF EXISTS "FK_Sala_Predio"`);
-        await queryRunner.query(`ALTER TABLE "Predio" DROP CONSTRAINT IF EXISTS "FK_Predio_Usuario"`);
+        await queryRunner.query(`ALTER TABLE "predio" DROP CONSTRAINT IF EXISTS "FK_Predio_Usuario"`);
         await queryRunner.query(`ALTER TABLE "reserva" DROP CONSTRAINT IF EXISTS "FK_Reserva_Sala"`);
         await queryRunner.query(`ALTER TABLE "reserva" DROP CONSTRAINT IF EXISTS "FK_Reserva_Usuario"`);
 
@@ -181,7 +181,7 @@ export class removehorario1761092698319 implements MigrationInterface {
         // await queryRunner.query(`ALTER TABLE "sala" DROP COLUMN IF EXISTS "horariosFuncionamento"`);
         // await queryRunner.query(`ALTER TABLE "sala" DROP COLUMN IF EXISTS "comodidades"`);
         // await queryRunner.query(`ALTER TABLE "sala" DROP COLUMN IF EXISTS "categoria"`);
-        // await queryRunner.query(`ALTER TABLE "Predio" DROP COLUMN IF EXISTS "horariosFuncionamento"`);
+        // await queryRunner.query(`ALTER TABLE "predio" DROP COLUMN IF EXISTS "horariosFuncionamento"`);
         // await queryRunner.query(`ALTER TABLE "usuario" DROP COLUMN IF EXISTS "tipo"`);
     }
 
