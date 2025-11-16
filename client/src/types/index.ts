@@ -156,3 +156,13 @@ export type SearchSalaPayload = {
   ordem?: "ASC" | "DESC";
   predioId?: number;
 };
+
+export type CreateBookingPayload = {
+  salaId: number;
+  locatarioId?: number;
+  dataReservada: string;
+  horarioInicio: string;
+  horarioFim: string;
+  valorTotal: number;
+  observacoes?: string;
+};

@@ -1,4 +1,4 @@
-import { CreateSalaPayload, LocationApiResponse, SearchSalaPayload, Workspace, WorkspaceApiResponse, WorkspaceCategory, WorkspacesApiResponse } from "@/types";
+import { CreateSalaPayload, LocationApiResponse, SearchSalaPayload, WorkspaceApiResponse, WorkspacesApiResponse } from "@/types";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useAuth } from "./AuthContext";
 import api from "@/services/api";
@@ -13,6 +13,7 @@ interface WorkspacesContextType {
     editWorkspace: (workspaceId: number, payload: Partial<CreateSalaPayload>) => Promise<any>
     deleteWorkspace: (workspaceId: number) => void
     getFilteredWorkspaces: (searchParams: SearchSalaPayload) => Promise<WorkspacesApiResponse>
+    getSchedulesByWorkspaceId: (workspaceId: string) => Promise<any>
 }
 
 // Cria o contexto
@@ -95,6 +96,16 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         }
     }
 
+    const getSchedulesByWorkspaceId = async (workspaceId: string): Promise<any> => {
+        try {
+            const response = await api.get<any>(`/sala/${workspaceId}/horarios-funcionamento`);
+            return response.data;
+        } catch (err) {
+            console.error('Erro ao buscar horários', err);
+            throw err;
+        }
+    }
+
     const contextValue = {
         workspaces,
         isLoading,
@@ -104,7 +115,8 @@ export function WorkspacesProvider({ children }: { children: ReactNode }) {
         getWorkspaceById,
         editWorkspace,
         deleteWorkspace,
-        getFilteredWorkspaces
+        getFilteredWorkspaces,
+        getSchedulesByWorkspaceId
     }
 
     return (
