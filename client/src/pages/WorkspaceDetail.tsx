@@ -107,12 +107,16 @@ const WorkspaceDetail = () => {
     // Sort selected slots in ascending order and use first and last as start and end times
     const sortedSlots = [...selectedTimeSlots].sort((a, b) => a.time.localeCompare(b.time));
 
+    // Convert display time (HH:MM) to API format (HH:MM:SS)
+    const horarioInicio = sortedSlots[0].time + ':00';
+    const horarioFim = sortedSlots[sortedSlots.length - 1].time + ':00';
+
     const bookingPayload: CreateBookingPayload = {
       salaId: Number(id),
       locatarioId: user.id,
       dataReservada: format(selectedDate, "yyyy-MM-dd"),
-      horarioInicio: sortedSlots[0].time,
-      horarioFim: sortedSlots[sortedSlots.length - 1].time,
+      horarioInicio,
+      horarioFim,
       valorTotal: selectedTimeSlots.length * workspace.precoHora,
       observacoes: bookingNotes,
     };

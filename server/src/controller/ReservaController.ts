@@ -1,34 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import reservaService from '../services/ReservaService';
-import { authMiddleware, locatarioMiddleware, proprietarioMiddleware } from '../middleware/authMiddleware';
+import { locatarioMiddleware, proprietarioMiddleware } from '../middleware/authMiddleware';
 
 const reservaController = Router();
-
-/**
- * GET /api/reservas/horarios/:idSala
- * Retorna os horários disponíveis e ocupados de uma sala
- */
-reservaController.get('/horarios/:idSala', async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const idSala = Number(req.params.idSala);
-    
-    if (!idSala || isNaN(idSala)) {
-      return res.status(400).json({
-        success: false,
-        message: 'ID da sala inválido',
-      });
-    }
-
-    const horarios = await reservaService.buscarHorarios(idSala);
-    return res.json({
-      success: true,
-      data: horarios,
-    });
-  } catch (error) {
-    next(error);
-  }
-});
-reservaController.use(authMiddleware);
 
 // ==================== LOCATÁRIO ====================
 

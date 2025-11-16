@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import { useWorkspaces } from '@/contexts/WorkspacesContext';
 import { CreateBookingPayload } from '@/types';
 import { useBookings } from '@/contexts/BookingsContext';
+import api from '@/services/api';
 
 interface TimeSlot {
   id: string;
@@ -62,6 +63,11 @@ export const TimeSlotSelector = ({
     return false;
   };
 
+  // Check if a slot is reserved (occupied)
+  const isSlotReserved = (slotTime: string, reservedTimes: string[]): boolean => {
+    return reservedTimes.includes(slotTime);
+  };
+
   // Load schedules from API and convert opening intervals into hourly slots (inclusive)
   const loadTimeSlots = async (dateToLoad: Date) => {
     try {
@@ -71,10 +77,33 @@ export const TimeSlotSelector = ({
         return;
       }
 
+      // Fetch workspace schedule
       const resp = await getSchedulesByWorkspaceId(workspaceId);
-      // resp may already be the inner data or an envelope ({ data: { horariosFuncionamento } })
       const payload = resp?.data ?? resp;
       const horarios: any[] = payload?.horariosFuncionamento ?? payload?.data?.horariosFuncionamento ?? [];
+
+      // Fetch existing reservations for this workspace on the selected date
+      let reservedTimes: string[] = [];
+      try {
+        const dateStr = format(dateToLoad, 'yyyy-MM-dd');
+        const reservasResp = await api.get(`/locatario/sala/${workspaceId}`);
+        if (reservasResp.data?.data) {
+          const reservas = reservasResp.data.data;
+          reservedTimes = reservas
+            .filter((r: any) => r.dataReservada === dateStr && (r.status === 'pendente' || r.status === 'aceita'))
+            .flatMap((r: any) => {
+              const times = [];
+              const startHour = parseInt(r.horarioInicio.split(':')[0], 10);
+              const endHour = parseInt(r.horarioFim.split(':')[0], 10);
+              for (let h = startHour; h < endHour; h++) {
+                times.push(`${h.toString().padStart(2, '0')}:00`);
+              }
+              return times;
+            });
+        }
+      } catch (err) {
+        console.error('Erro ao carregar reservas:', err);
+      }
 
       // Map JS Date day -> API day string
       const weekdayMap = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'];
@@ -99,8 +128,17 @@ export const TimeSlotSelector = ({
         for (let h = startHour; h < endHour; h++) {
           const time = `${h.toString().padStart(2, '0')}:00`;
           const id = `${format(dateToLoad, 'yyyy-MM-dd')}-${time}`;
+          
+          // Check if this slot is reserved
+          const isReserved = isSlotReserved(time, reservedTimes);
+          
           if (!slotsMap.has(id)) {
-            slotsMap.set(id, { id, time, available: Boolean(s.ativo), price: pricePerHour });
+            slotsMap.set(id, { 
+              id, 
+              time, 
+              available: !isReserved && Boolean(s.ativo), 
+              price: pricePerHour 
+            });
           }
         }
       });
