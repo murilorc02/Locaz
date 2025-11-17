@@ -9,18 +9,18 @@ export enum StatusReserva {
   CANCELADA = 'cancelada',
 }
 
-@Entity()
+@Entity('Reserva')
 export class Reserva {
   @PrimaryGeneratedColumn()
   id!: number;
 
-  @Column({ name: 'data_reserva', type: 'date' })
+  @Column({ name: 'dataReserva', type: 'date' })
   dataReserva!: Date;
 
-  @Column({ name: 'horario_inicio', type: 'time' })
+  @Column({ name: 'horarioInicio', type: 'time' })
   horarioInicio!: string;
 
-  @Column({ name: 'horario_fim', type: 'time' })
+  @Column({ name: 'horarioFim', type: 'time' })
   horarioFim!: string;
 
   @Column({

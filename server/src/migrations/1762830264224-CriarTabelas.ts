@@ -6,7 +6,7 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
 
         // Tabela Usuario
         await queryRunner.createTable(new Table({
-            name: "usuario",
+            name: "Usuario",
             columns: [
                 {
                     name: "id",
@@ -65,7 +65,7 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
 
         // Tabela Predio (nome em minúsculo para consistência)
         await queryRunner.createTable(new Table({
-            name: "predio",  // ✅ Mudado para minúsculo
+            name: "Predio",  // ✅ Mudado para minúsculo
             columns: [
                 {
                     name: "id",
@@ -133,7 +133,7 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
 
         // Tabela Sala
         await queryRunner.createTable(new Table({
-            name: "sala",
+            name: "Sala",
             columns: [
                 {
                     name: "id",
@@ -175,7 +175,7 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
                     default: false
                 },
                 {
-                    name: "predio_id",
+                    name: "predioId",
                     type: "int",
                     isNullable: false
                 },
@@ -206,7 +206,7 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
 
         // Tabela Reserva
         await queryRunner.createTable(new Table({
-            name: "reserva",
+            name: "Reserva",
             columns: [
                 {
                     name: "id",
@@ -214,17 +214,17 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
                     isPrimary: true
                 },
                 {
-                    name: "data_reserva",
+                    name: "dataReserva",
                     type: "date",
                     isNullable: false
                 },
                 {
-                    name: "horario_inicio",
+                    name: "horarioInicio",
                     type: "time",
                     isNullable: false
                 },
                 {
-                    name: "horario_fim",
+                    name: "horarioFim",
                     type: "time",
                     isNullable: false
                 },
@@ -270,66 +270,66 @@ export class CriarTabelas1762830264224 implements MigrationInterface {
         }), true);
 
         // Foreign Keys
-        await queryRunner.createForeignKey("predio", new TableForeignKey({  
+        await queryRunner.createForeignKey("Predio", new TableForeignKey({  
             columnNames: ["usuarioId"],
             referencedColumnNames: ["id"],
-            referencedTableName: "usuario",
+            referencedTableName: "Usuario",
             onDelete: "CASCADE"
         }));
 
-        await queryRunner.createForeignKey("sala", new TableForeignKey({
-            columnNames: ["predio_id"],
+        await queryRunner.createForeignKey("Sala", new TableForeignKey({
+            columnNames: ["predioId"],
             referencedColumnNames: ["id"],
-            referencedTableName: "predio",  
+            referencedTableName: "Predio",  
             onDelete: "CASCADE"
         }));
 
-        await queryRunner.createForeignKey("reserva", new TableForeignKey({
+        await queryRunner.createForeignKey("Reserva", new TableForeignKey({
             columnNames: ["locatarioId"],
             referencedColumnNames: ["id"],
-            referencedTableName: "usuario",
+            referencedTableName: "Usuario",
             onDelete: "CASCADE"
         }));
 
-        await queryRunner.createForeignKey("reserva", new TableForeignKey({
+        await queryRunner.createForeignKey("Reserva", new TableForeignKey({
             columnNames: ["salaId"],
             referencedColumnNames: ["id"],
-            referencedTableName: "sala",
+            referencedTableName: "Sala",
             onDelete: "CASCADE"
         }));
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
         // Remover foreign keys primeiro
-        const reservaTable = await queryRunner.getTable("reserva");
-        const salaTable = await queryRunner.getTable("sala");
-        const predioTable = await queryRunner.getTable("predio");  
+        const reservaTable = await queryRunner.getTable("Reserva");
+        const salaTable = await queryRunner.getTable("Sala");
+        const predioTable = await queryRunner.getTable("Predio");  
 
         if (reservaTable) {
             const foreignKeys = reservaTable.foreignKeys;
             for (const foreignKey of foreignKeys) {
-                await queryRunner.dropForeignKey("reserva", foreignKey);
+                await queryRunner.dropForeignKey("Reserva", foreignKey);
             }
         }
 
         if (salaTable) {
             const foreignKeys = salaTable.foreignKeys;
             for (const foreignKey of foreignKeys) {
-                await queryRunner.dropForeignKey("sala", foreignKey);
+                await queryRunner.dropForeignKey("Sala", foreignKey);
             }
         }
 
         if (predioTable) {
             const foreignKeys = predioTable.foreignKeys;
             for (const foreignKey of foreignKeys) {
-                await queryRunner.dropForeignKey("predio", foreignKey);  
+                await queryRunner.dropForeignKey("Predio", foreignKey);  
             }
         }
 
         // Dropar tabelas
-        await queryRunner.dropTable("reserva");
-        await queryRunner.dropTable("sala");
-        await queryRunner.dropTable("predio");  
-        await queryRunner.dropTable("usuario");
+        await queryRunner.dropTable("Reserva");
+        await queryRunner.dropTable("Sala");
+        await queryRunner.dropTable("Predio");  
+        await queryRunner.dropTable("Usuario");
     }
 }
