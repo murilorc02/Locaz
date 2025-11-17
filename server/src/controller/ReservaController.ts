@@ -1,9 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import reservaService from '../services/ReservaService';
-import { authMiddleware, locatarioMiddleware, proprietarioMiddleware } from '../middleware/authMiddleware';
+import { locatarioMiddleware, proprietarioMiddleware } from '../middleware/authMiddleware';
 
 const reservaController = Router();
-reservaController.use(authMiddleware);
 
 // ==================== LOCATÁRIO ====================
 

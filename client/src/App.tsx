@@ -21,6 +21,7 @@ import WorkspaceEditor from "./pages/WorkspaceEditor";
 import BusinessBookings from "./pages/BusinessBookings";
 import { WorkspacesProvider } from "./contexts/WorkspacesContext";
 import LocationEditor from "./pages/LocationEditor";
+import { BookingsProvider } from "./contexts/BookingsContext";
 
 const queryClient = new QueryClient();
 
@@ -30,29 +31,31 @@ const App = () => (
       <AuthProvider>
         <LocationsProvider>
           <WorkspacesProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/search" element={<Search />} />
-                <Route path="/workspace/:id" element={<WorkspaceDetail />} />
-                <Route path="/location/:id" element={<LocationDetail />} />
-                <Route path="/business/dashboard" element={<BusinessDashboard />} />
-                <Route path="/business/locations" element={<BusinessLocations />} />
-                <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
-                <Route path="/business/bookings" element={<BusinessBookings />} />
-                <Route path="/business/add-location" element={<LocationEditor />} />
-                <Route path="/business/edit-location/:id" element={<LocationEditor />} />
-                <Route path="/business/add-workspace" element={<WorkspaceEditor />} />
-                <Route path="/business/edit-workspace/:id" element={<WorkspaceEditor />} />
-                <Route path="/bookings" element={<Bookings />} />
-                {/* <Route path="*" element={<NotFound />} /> */}
-              </Routes>
-            </TooltipProvider>
+            <BookingsProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/workspace/:id" element={<WorkspaceDetail />} />
+                  <Route path="/location/:id" element={<LocationDetail />} />
+                  <Route path="/business/dashboard" element={<BusinessDashboard />} />
+                  <Route path="/business/locations" element={<BusinessLocations />} />
+                  <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
+                  <Route path="/business/bookings" element={<BusinessBookings />} />
+                  <Route path="/business/add-location" element={<LocationEditor />} />
+                  <Route path="/business/edit-location/:id" element={<LocationEditor />} />
+                  <Route path="/business/add-workspace" element={<WorkspaceEditor />} />
+                  <Route path="/business/edit-workspace/:id" element={<WorkspaceEditor />} />
+                  <Route path="/bookings" element={<Bookings />} />
+                  {/* <Route path="*" element={<NotFound />} /> */}
+                </Routes>
+              </TooltipProvider>
+            </BookingsProvider>
           </WorkspacesProvider>
         </LocationsProvider>
       </AuthProvider>

@@ -13,7 +13,7 @@ interface LoginResponse {
       id: number,
       nome: string,
       email: string,
-      cpf: string,
+      cpfcnpj: string,
       tipo: UserRole,
       telefone: string
     }
@@ -109,7 +109,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
       senha: password,
       tipo: role,
       telefone: telephone,
-      cpf: document
+      cpfcnpj: document
     };
     await api.post('/auth/register', payload);
     await login(email, password); // loga o usuário após o cadastro
