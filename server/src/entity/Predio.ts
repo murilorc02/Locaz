@@ -19,7 +19,7 @@ export interface HorarioFuncionamentoPredio {
   ativo: boolean;
 }
 
-@Entity('predio')
+@Entity('Predio')
 export class Predio {
   @PrimaryGeneratedColumn()
   id!: number;
