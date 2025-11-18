@@ -11,7 +11,7 @@ class ReservaService {
   // ==================== MÉTODOS DO LOCATÁRIO ====================
 
   /**
-   * 1. Criar nova reserva
+   * 1. Criar nova reserva (LOCADOR ou LOCATÁRIO)
    */
   async criar(dto: CriarReservaDto): Promise<Reserva> {
     this.validarCamposObrigatorios(dto);
