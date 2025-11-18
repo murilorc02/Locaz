@@ -39,7 +39,7 @@ export interface HorarioFuncionamentoSala {
     ativo: boolean;
 }
 
-@Entity()
+@Entity('Sala')
 export class Sala {
     @PrimaryGeneratedColumn()
     id!: number;
@@ -66,7 +66,7 @@ export class Sala {
     reservaGratuita?: boolean;
 
     @ManyToOne(() => Predio, predio => predio.salas)
-    @JoinColumn({ name: 'predio_id' })
+    @JoinColumn({ name: 'predioId' })
     predio!: Predio;
 
     @OneToMany(() => Reserva, reserva => reserva.sala)

@@ -6,10 +6,6 @@ const reservaController = Router();
 
 // ==================== LOCATÁRIO ====================
 
-/**
- * 1. POST /api/reservas/locatario/create
- * Criar nova reserva com status PENDENTE
- */
 reservaController.post('/locatario/create', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.sub;
@@ -36,10 +32,6 @@ reservaController.post('/locatario/create', locatarioMiddleware, async (req: Req
   }
 });
 
-/**
- * 7. GET /api/reservas/locatario/all
- * Buscar todas as reservas do locatário
- */
 reservaController.get('/locatario/all', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.sub;
@@ -56,10 +48,6 @@ reservaController.get('/locatario/all', locatarioMiddleware, async (req: Request
   }
 });
 
-/**
- * 9. GET /api/reservas/locatario/ordenarData?ordem=asc|desc
- * Ordenar reservas por data
- */
 reservaController.get('/locatario/ordenarData', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.sub;
@@ -84,10 +72,6 @@ reservaController.get('/locatario/ordenarData', locatarioMiddleware, async (req:
   }
 });
 
-/**
- * 10. GET /api/reservas/locatario/ordenaValor
- * Ordenar reservas por valor total
- */
 reservaController.get('/locatario/ordenaValor', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocatario = (req as any).user?.sub;
@@ -104,10 +88,6 @@ reservaController.get('/locatario/ordenaValor', locatarioMiddleware, async (req:
   }
 });
 
-/**
- * 2. GET /api/reservas/locatario/detalhes/:id
- * Buscar reserva por ID
- */
 reservaController.get('/locatario/detalhes/:id', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const id = parseInt(req.params.id);
@@ -131,10 +111,6 @@ reservaController.get('/locatario/detalhes/:id', locatarioMiddleware, async (req
   }
 });
 
-/**
- * 3. GET /api/reservas/locatario/predio/:idPredio
- * Buscar reservas por ID de prédio
- */
 reservaController.get('/locatario/predio/:idPredio', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idPredio = parseInt(req.params.idPredio);
@@ -159,10 +135,6 @@ reservaController.get('/locatario/predio/:idPredio', locatarioMiddleware, async 
   }
 });
 
-/**
- * 5. GET /api/reservas/locatario/sala/:idSala
- * Buscar reservas por ID de sala
- */
 reservaController.get('/locatario/sala/:idSala', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idSala = parseInt(req.params.idSala);
@@ -187,10 +159,6 @@ reservaController.get('/locatario/sala/:idSala', locatarioMiddleware, async (req
   }
 });
 
-/**
- * GET /api/reservas/locatario/sala/:idSala/horarios-reserva
- * Buscar horários disponíveis para uma sala
- */
 reservaController.get('/locatario/sala/:idSala/horarios-reserva', 
   async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -216,10 +184,6 @@ reservaController.get('/locatario/sala/:idSala/horarios-reserva',
   }
 );
 
-/**
- * 11. PATCH /api/reservas/locatario/:id/cancelar
- * Cancelar reserva
- */
 reservaController.patch('/locatario/:id/cancelar', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idReserva = parseInt(req.params.id);
@@ -247,11 +211,6 @@ reservaController.patch('/locatario/:id/cancelar', locatarioMiddleware, async (r
   }
 });
 
-/**
- * 8. GET /api/reservas/locatario/:status
- * Buscar reservas por status (pendente, aceita, recusada, cancelada)
- * DEVE VIR POR ÚLTIMO entre as rotas do locatário
- */
 reservaController.get('/locatario/:status', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.params.status;
@@ -269,16 +228,8 @@ reservaController.get('/locatario/:status', locatarioMiddleware, async (req: Req
   }
 });
 
-// ==================== ENDPOINTS DO LOCADOR ====================
-// Mesma lógica: rotas específicas ANTES de rotas com parâmetros
+// ==================== LOCADOR ====================
 
-// ==================== ENDPOINTS DO LOCADOR ====================
-// Mesma lógica: rotas específicas ANTES de rotas com parâmetros
-
-/**
- * 18. GET /api/reservas/locador/all
- * Buscar todas as reservas do locador
- */
 reservaController.get('/locador/all', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.sub;
@@ -295,9 +246,6 @@ reservaController.get('/locador/all', proprietarioMiddleware, async (req: Reques
   }
 });
 
-/**
- * 20. GET /api/reservas/locador/ordenarData?ordem=asc|desc
- */
 reservaController.get('/locador/ordenarData', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.sub;
@@ -322,9 +270,6 @@ reservaController.get('/locador/ordenarData', proprietarioMiddleware, async (req
   }
 });
 
-/**
- * 21. GET /api/reservas/locador/ordenarValor
- */
 reservaController.get('/locador/ordenarValor', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idLocador = (req as any).user?.sub;
@@ -341,9 +286,6 @@ reservaController.get('/locador/ordenarValor', proprietarioMiddleware, async (re
   }
 });
 
-/**
- * 14. GET /api/reservas/locador/predio/:idPredio
- */
 reservaController.get('/locador/predio/:idPredio', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idPredio = parseInt(req.params.idPredio);
@@ -368,9 +310,6 @@ reservaController.get('/locador/predio/:idPredio', proprietarioMiddleware, async
   }
 });
 
-/**
- * 16. GET /api/reservas/locador/sala/:idSala
- */
 reservaController.get('/locador/sala/:idSala', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idSala = parseInt(req.params.idSala);
@@ -395,9 +334,6 @@ reservaController.get('/locador/sala/:idSala', proprietarioMiddleware, async (re
   }
 });
 
-/**
- * 12. PATCH /api/reservas/locador/:id/aceitar
- */
 reservaController.patch('/locador/:id/aceitar', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idReserva = parseInt(req.params.id);
@@ -425,9 +361,6 @@ reservaController.patch('/locador/:id/aceitar', proprietarioMiddleware, async (r
   }
 });
 
-/**
- * 13. PATCH /api/reservas/locador/:id/recusar
- */
 reservaController.patch('/locador/:id/recusar', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const idReserva = parseInt(req.params.id);
@@ -455,10 +388,6 @@ reservaController.patch('/locador/:id/recusar', proprietarioMiddleware, async (r
   }
 });
 
-/**
- * 19. GET /api/reservas/locador/:status
- * DEVE VIR POR ÚLTIMO entre as rotas do locador
- */
 reservaController.get('/locador/:status', proprietarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const status = req.params.status;

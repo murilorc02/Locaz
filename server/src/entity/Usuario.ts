@@ -7,7 +7,7 @@ export enum TipoUsuario {
     LOCATARIO = 'locatario'
 }
 
-@Entity('usuario')
+@Entity('Usuario')
 export class Usuario {
     @PrimaryGeneratedColumn()
     id!: number;

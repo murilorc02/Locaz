@@ -1,4 +1,3 @@
-
 import { AppDataSource } from '../data-source';
 import { Repository, Between, LessThan, In } from 'typeorm';
 import { Reserva, StatusReserva } from '../entity/Reserva';
@@ -18,10 +17,26 @@ class ReservaRepository {
   }
 
   async buscarPorId(id: number): Promise<Reserva | null> {
-    return await this.repository.findOne({
-      where: { id },
-      relations: ['locatario', 'sala', 'sala.predio'],
-    });
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
+      .where('reserva.id = :id', { id })
+      .getOne();
   }
 
   async atualizar(id: number, dados: Partial<Reserva>): Promise<Reserva> {
@@ -59,11 +74,28 @@ class ReservaRepository {
   // ==================== MÉTODOS DO LOCATÁRIO ====================
 
   async buscarPorLocatario(locatarioId: number): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: { locatario: { id: locatarioId } },
-      order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
-      relations: ['locatario', 'sala', 'sala.predio'],
-    });
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
+      .where('locatario.id = :locatarioId', { locatarioId })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
   }
 
   async buscarPorPredioLocatario(idPredio: number, idLocatario: number): Promise<Reserva[]> {
@@ -72,6 +104,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('predio.id = :idPredio', { idPredio })
       .andWhere('locatario.id = :idLocatario', { idLocatario })
       .orderBy('reserva.dataReserva', 'DESC')
@@ -85,6 +130,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('LOWER(predio.nome) LIKE LOWER(:nomePredio)', { nomePredio: `%${nomePredio}%` })
       .andWhere('locatario.id = :idLocatario', { idLocatario })
       .orderBy('reserva.dataReserva', 'DESC')
@@ -98,6 +156,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('sala.id = :idSala', { idSala })
       .andWhere('locatario.id = :idLocatario', { idLocatario })
       .orderBy('reserva.dataReserva', 'DESC')
@@ -111,6 +182,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('LOWER(sala.nome) LIKE LOWER(:nomeSala)', { nomeSala: `%${nomeSala}%` })
       .andWhere('locatario.id = :idLocatario', { idLocatario })
       .orderBy('reserva.dataReserva', 'DESC')
@@ -122,14 +206,29 @@ class ReservaRepository {
     locatarioId: number,
     status: StatusReserva,
   ): Promise<Reserva[]> {
-    return await this.repository.find({
-      where: {
-        locatario: { id: locatarioId },
-        status
-      },
-      order: { dataReserva: 'DESC', horarioInicio: 'DESC' },
-      relations: ['locatario', 'sala', 'sala.predio'],
-    });
+    return await this.repository
+      .createQueryBuilder('reserva')
+      .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .leftJoinAndSelect('reserva.sala', 'sala')
+      .leftJoinAndSelect('sala.predio', 'predio')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
+      .where('locatario.id = :locatarioId', { locatarioId })
+      .andWhere('reserva.status = :status', { status })
+      .orderBy('reserva.dataReserva', 'DESC')
+      .addOrderBy('reserva.horarioInicio', 'DESC')
+      .getMany();
   }
 
   async buscarOrdenadoPorDataLocatario(idLocatario: number, ordem: string): Promise<Reserva[]> {
@@ -138,6 +237,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('locatario.id = :idLocatario', { idLocatario })
       .orderBy('reserva.dataReserva', ordem === 'asc' ? 'ASC' : 'DESC')
       .addOrderBy('reserva.horarioInicio', ordem === 'asc' ? 'ASC' : 'DESC')
@@ -150,6 +262,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('locatario.id = :idLocatario', { idLocatario })
       .orderBy('reserva.valorTotal', 'ASC')
       .getMany();
@@ -162,9 +287,10 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .where('sala.id = :idSala', { idSala })
-      .andWhere('locador.id = :idLocador', { idLocador })
+      .andWhere('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .getOne();
 
     return !!sala;
@@ -175,9 +301,31 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
-      .where('locador.id = :idLocador', { idLocador })
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
+      .where('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
       .getMany();
@@ -188,10 +336,32 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
       .where('predio.id = :idPredio', { idPredio })
-      .andWhere('locador.id = :idLocador', { idLocador })
+      .andWhere('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
       .getMany();
@@ -202,10 +372,32 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
       .where('LOWER(predio.nome) LIKE LOWER(:nomePredio)', { nomePredio: `%${nomePredio}%` })
-      .andWhere('locador.id = :idLocador', { idLocador })
+      .andWhere('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
       .getMany();
@@ -216,10 +408,32 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
       .where('sala.id = :idSala', { idSala })
-      .andWhere('locador.id = :idLocador', { idLocador })
+      .andWhere('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
       .getMany();
@@ -230,10 +444,32 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
       .where('LOWER(sala.nome) LIKE LOWER(:nomeSala)', { nomeSala: `%${nomeSala}%` })
-      .andWhere('locador.id = :idLocador', { idLocador })
+      .andWhere('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
       .getMany();
@@ -244,9 +480,31 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
-      .where('locador.id = :idLocador', { idLocador })
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
+      .where('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .andWhere('reserva.status = :status', { status })
       .orderBy('reserva.dataReserva', 'DESC')
       .addOrderBy('reserva.horarioInicio', 'DESC')
@@ -258,9 +516,31 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
-      .where('locador.id = :idLocador', { idLocador })
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
+      .where('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.dataReserva', ordem === 'asc' ? 'ASC' : 'DESC')
       .addOrderBy('reserva.horarioInicio', ordem === 'asc' ? 'ASC' : 'DESC')
       .getMany();
@@ -271,9 +551,31 @@ class ReservaRepository {
       .createQueryBuilder('reserva')
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
-      .leftJoinAndSelect('predio.locador', 'locador')
+      .leftJoinAndSelect('predio.usuario', 'usuario')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
-      .where('locador.id = :idLocador', { idLocador })
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio',
+        'usuario.id',
+        'usuario.nome',
+        'usuario.email',
+        'usuario.cpfcnpj',
+        'usuario.telefone',
+        'usuario.tipo',
+        'usuario.createdAt',
+        'usuario.updatedAt'
+      ])
+      .where('usuario.id = :idLocador', { idLocador })
+      .andWhere('usuario.tipo = :tipo', { tipo: 'locador' })
       .orderBy('reserva.valorTotal', 'ASC')
       .getMany();
   }
@@ -302,6 +604,19 @@ class ReservaRepository {
       .leftJoinAndSelect('reserva.sala', 'sala')
       .leftJoinAndSelect('sala.predio', 'predio')
       .leftJoinAndSelect('reserva.locatario', 'locatario')
+      .select([
+        'reserva',
+        'locatario.id',
+        'locatario.nome',
+        'locatario.email',
+        'locatario.cpfcnpj',
+        'locatario.telefone',
+        'locatario.tipo',
+        'locatario.createdAt',
+        'locatario.updatedAt',
+        'sala',
+        'predio'
+      ])
       .where('sala.id = :salaId', { salaId })
       .andWhere('reserva.dataReserva BETWEEN :dataInicio AND :dataFim', {
         dataInicio: dataInicio.toISOString().split('T')[0],
