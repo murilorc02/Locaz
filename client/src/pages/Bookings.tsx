@@ -12,7 +12,7 @@ import {
   TabsTrigger,
 } from '../components/ui/tabs';
 import { Badge } from '../components/ui/badge';
-import { MapPin, Calendar } from 'lucide-react';
+import { MapPin, Calendar, CheckIcon } from 'lucide-react';
 import { format } from 'date-fns';
 
 const mockBookings = [
@@ -78,11 +78,17 @@ const Bookings = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge className="bg-green-100 text-green-800">Confirmed</Badge>;
+        return 
+        <div className='flex flex-col'>
+        <CheckIcon/>
+        <Badge className="bg-green-100 text-green-800">
+          Confirmado
+        </Badge>;
+        </div>
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pending</Badge>;
+        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800">Cancelled</Badge>;
+        return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
       default:
         return null;
     }
@@ -94,8 +100,8 @@ const Bookings = () => {
       <main className="flex-grow">
         <div className="bg-primary-light py-8">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 className="text-3xl font-bold">My Bookings</h1>
-            <p className="text-gray-600 mt-2">Manage your workspace reservations</p>
+            <h1 className="text-3xl font-bold">Minhas Reservas</h1>
+            <p className="text-gray-600 mt-2">Gerencie suas reservas de espaços</p>
           </div>
         </div>
 
@@ -103,14 +109,14 @@ const Bookings = () => {
           <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab}>
             <div className="flex justify-between items-center mb-6">
               <TabsList>
-                <TabsTrigger value="all">All Bookings</TabsTrigger>
-                <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-                <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+                <TabsTrigger value="all">Todas as reservas</TabsTrigger>
+                <TabsTrigger value="confirmed">Confirmadas</TabsTrigger>
+                <TabsTrigger value="pending">Pendentes</TabsTrigger>
+                <TabsTrigger value="cancelled">Canceladas</TabsTrigger>
               </TabsList>
               
               <Button variant="outline" onClick={() => navigate('/search')}>
-                Find New Workspace
+                Encontre um Novo Espaço
               </Button>
             </div>
             
@@ -119,14 +125,14 @@ const Bookings = () => {
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold mb-2">No Bookings Found</h3>
+                    <h3 className="text-xl font-semibold mb-2">Nenhuma reserva encontrada</h3>
                     <p className="text-gray-500 mb-6">
                       {activeTab === 'all' 
                         ? "You haven't made any bookings yet" 
                         : `You don't have any ${activeTab} bookings`}
                     </p>
                     <Button onClick={() => navigate('/search')}>
-                      Find a Workspace
+                      Encontre um Espaço
                     </Button>
                   </CardContent>
                 </Card>
@@ -155,7 +161,7 @@ const Bookings = () => {
                           
                           <div className="mt-4 flex flex-col sm:flex-row sm:justify-between gap-4">
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Date & Time</p>
+                              <p className="text-sm font-medium text-gray-500">Data e Hora</p>
                               <p className="font-medium">
                                 {format(booking.startTime, 'PPP')}
                               </p>
@@ -165,7 +171,7 @@ const Bookings = () => {
                             </div>
                             
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Price</p>
+                              <p className="text-sm font-medium text-gray-500">Valor</p>
                               <p className="font-bold text-lg">${booking.totalPrice}</p>
                             </div>
                           </div>
@@ -176,29 +182,29 @@ const Bookings = () => {
                               size="sm"
                               onClick={() => navigate(`/workspace/${booking.workspaceId}`)}
                             >
-                              View Workspace
+                              Ver Espaço
                             </Button>
                             
                             {booking.status === 'pending' && (
                               <>
                                 <Button size="sm">
-                                  Confirm
+                                  Confirmar
                                 </Button>
                                 <Button variant="destructive" size="sm">
-                                  Cancel
+                                  Cancelar
                                 </Button>
                               </>
                             )}
                             
                             {booking.status === 'confirmed' && (
                               <Button variant="destructive" size="sm">
-                                Cancel Booking
+                                Cancelar Reserva
                               </Button>
                             )}
                             
                             {booking.status === 'cancelled' && (
                               <Button size="sm">
-                                Book Again
+                                Agendar Novamente
                               </Button>
                             )}
                           </div>

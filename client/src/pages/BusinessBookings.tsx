@@ -8,11 +8,14 @@ import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
-import { Calendar, Search, Check, X, Clock, DollarSign, User } from 'lucide-react';
+import { Calendar, Search, Check, X, Clock, DollarSign, User, CheckIcon, ClockIcon, XIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 const mockBookings = [
   {
@@ -71,6 +74,8 @@ const BusinessBookings = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [ownerNotes, setOwnerNotes] = useState('');
 
   console.log('🔍 BusinessBookings renderizou');
   console.log('📱 isMobile:', window.innerWidth < 768);
@@ -94,11 +99,26 @@ const BusinessBookings = () => {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'confirmed':
-        return <Badge className="bg-green-100 text-green-800">Confirmado</Badge>;
+        return <div className='flex flex-row'>
+          <Badge className="bg-green-100 text-green-800 min-w-28 justify-center">
+            <CheckIcon className='p-1' />
+            Confirmado
+          </Badge>
+        </div>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">Pendente</Badge>;
+        return <div className='flex flex-row'>
+          <Badge className="bg-yellow-100 text-yellow-800 min-w-28 justify-center">
+            <ClockIcon className='p-1' />
+            Pendente
+          </Badge>
+        </div>;
       case 'cancelled':
-        return <Badge className="bg-red-100 text-red-800">Cancelado</Badge>;
+        return <div className='flex flex-row'>
+          <Badge className="bg-red-100 text-red-800 min-w-28 justify-center">
+            <XIcon className='p-1' />
+            Cancelado
+          </Badge>
+        </div>
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
@@ -109,6 +129,18 @@ const BusinessBookings = () => {
     .reduce((sum, booking) => sum + booking.totalPrice, 0);
 
   const pendingBookings = filteredBookings.filter(booking => booking.status === 'pending').length;
+
+  const openBookingModal = (booking: any) => {
+    setSelectedBooking(booking);
+    setOwnerNotes('');
+  };
+
+  const saveOwnerNotes = () => {
+    // In a real app, this would save to the database
+    console.log('Saving notes for booking:', selectedBooking?.id, 'Notes:', ownerNotes);
+    setSelectedBooking(null);
+    setOwnerNotes('');
+  };
 
   return (
     <SidebarProvider>
@@ -271,9 +303,81 @@ const BusinessBookings = () => {
                                     </Button>
                                   </>
                                 )}
-                                <Button variant="ghost" size="sm">
-                                  Detalhes
-                                </Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" onClick={() => openBookingModal(booking)}>
+                                      Detalhes
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                      <DialogTitle>Detalhes da Reserva</DialogTitle>
+                                      <DialogDescription>
+                                        Informações completas sobre a reserva #{selectedBooking?.id}
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    {selectedBooking && (
+                                      <div className="space-y-6">
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                            <Label className="text-sm font-medium text-gray-500">Cliente</Label>
+                                            <p className="text-lg font-semibold">{selectedBooking.userName}</p>
+                                            <p className="text-sm text-gray-600">{selectedBooking.userEmail}</p>
+                                          </div>
+                                          <div>
+                                            <Label className="text-sm font-medium text-gray-500">Status</Label>
+                                            <div className="mt-1">{getStatusBadge(selectedBooking.status)}</div>
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                            <Label className="text-sm font-medium text-gray-500">Espaço</Label>
+                                            <p className="text-lg font-semibold">{selectedBooking.workspaceName}</p>
+                                            <p className="text-sm text-gray-600">{selectedBooking.locationName}</p>
+                                          </div>
+                                          <div>
+                                            <Label className="text-sm font-medium text-gray-500">Valor Total</Label>
+                                            <p className="text-lg font-semibold">R${selectedBooking.totalPrice}</p>
+                                          </div>
+                                        </div>
+
+                                        <div>
+                                          <Label className="text-sm font-medium text-gray-500">Data e Horário</Label>
+                                          <p className="text-lg font-semibold">
+                                            {format(selectedBooking.startTime, 'dd/MM/yyyy', { locale: ptBR })}
+                                          </p>
+                                          <p className="text-sm text-gray-600">
+                                            {format(selectedBooking.startTime, 'HH:mm')} - {format(selectedBooking.endTime, 'HH:mm')}
+                                          </p>
+                                        </div>
+
+                                        <div>
+                                          <Label htmlFor="owner-notes" className="text-sm font-medium text-gray-500">
+                                            Anotações do Proprietário
+                                          </Label>
+                                          <Textarea
+                                            id="owner-notes"
+                                            value={ownerNotes}
+                                            onChange={(e) => setOwnerNotes(e.target.value)}
+                                            placeholder="Adicione observações sobre esta reserva..."
+                                            rows={3}
+                                            className="mt-1"
+                                          />
+                                        </div>
+
+                                        <div className="flex gap-2 justify-end">
+                                          <Button variant="outline" onClick={() => setSelectedBooking(null)}>
+                                            Fechar
+                                          </Button>
+                                          <Button onClick={saveOwnerNotes}>
+                                            Salvar Anotações
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </DialogContent>
+                                </Dialog>
                               </div>
                             </TableCell>
                           </TableRow>
