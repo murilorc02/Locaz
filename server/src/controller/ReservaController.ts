@@ -1,25 +1,32 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import reservaService from '../services/ReservaService';
-import { locatarioMiddleware, proprietarioMiddleware } from '../middleware/authMiddleware';
+import { locatarioMiddleware, proprietarioMiddleware, authMiddleware } from '../middleware/authMiddleware';
 
 const reservaController = Router();
 
-// ==================== LOCATÁRIO ====================
-
-reservaController.post('/locatario/create', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
+reservaController.post('/create', authMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const idLocatario = (req as any).user?.sub;
+    const userId = (req as any).user?.sub;
+    const userTipo = (req as any).user?.tipo;
 
-    if (!idLocatario) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
         message: 'Usuário não autenticado',
       });
     }
 
+    // Verifica se o tipo de usuário é válido
+    if (userTipo !== 'locador' && userTipo !== 'locatario') {
+      return res.status(403).json({
+        success: false,
+        message: 'Tipo de usuário inválido para criar reserva',
+      });
+    }
+
     const reserva = await reservaService.criar({
       ...req.body,
-      locatarioId: idLocatario,
+      locatarioId: req.body.locatarioId || userId, 
     });
 
     res.status(201).json({
@@ -31,6 +38,8 @@ reservaController.post('/locatario/create', locatarioMiddleware, async (req: Req
     next(error);
   }
 });
+
+// ==================== LOCATÁRIO ====================
 
 reservaController.get('/locatario/all', locatarioMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
