@@ -1,33 +1,76 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { Input } from '../components/ui/input';
-import { getWorkspacesByLocation } from '../data/workspaces';
-import { Building, MapPin, Plus, Search, Edit, Trash2 } from 'lucide-react';
+import { Building, MapPin, Plus, Search, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '../components/ui/sidebar';
 import { useLocations } from '../contexts/LocationsContext';
 import { Skeleton } from '../components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
+import { toast } from '@/hooks/use-toast';
 
 const BusinessLocations = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { locations: businessLocations, isLoading, error } = useLocations();
+  const { locations: businessLocations, isLoading, error, deleteLocation } = useLocations();
   const [searchTerm, setSearchTerm] = useState('');
+  const [locationToDelete, setLocationToDelete] = useState<{ id: number; name: string; salas: number } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Redirect if not authenticated or not a business
-  if (!isAuthenticated || (user && user.tipo !== 'locador')) {
-    navigate('/login');
-    return null;
+  useEffect(() => {
+    if (!isAuthenticated || user?.tipo !== 'locador') {
+      navigate('/login');
+    }
+  }, [isAuthenticated, user, navigate]);
+
+  // Loading states
+  if (isLoading || !businessLocations?.data || !user) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <p>Carregando...</p>
+      </div>
+    );
   }
 
-  const filteredLocations = businessLocations.filter(location =>
-    location.nomePredio.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    location.endereco.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredLocations = businessLocations.data.filter(location =>
+    location.usuario.id === user.id &&
+    (location.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      location.endereco.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleDeleteLocation = async () => {
+    if (!locationToDelete) return;
+    if (locationToDelete.salas > 0) {
+      toast({
+        title:"Erro ao excluir",
+        description: "Exclua ou mova as salas pertencentes para excluir esse local.",
+        variant: "destructive"
+      });
+      return;
+    } 
+    setIsDeleting(true);
+    try {
+      await deleteLocation(locationToDelete.id);
+      toast({
+        title: "Espaço excluído!",
+        description: `"${locationToDelete.name}" foi removido com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Erro ao excluir",
+        description: "Não foi possível excluir o espaço. Tente novamente.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+      setLocationToDelete(null);
+    }
+  };
 
   const renderContent = () => {
     // Tratamento de loading e erro
@@ -61,7 +104,7 @@ const BusinessLocations = () => {
         </Card>
       );
     }
-    
+
     return (
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {filteredLocations.map(location => {
@@ -75,12 +118,17 @@ const BusinessLocations = () => {
               </div>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  {location.nomePredio}
+                  {location.nome}
                   <div className="flex gap-2">
                     <Button variant="ghost" size="icon" onClick={() => navigate(`/business/edit-location/${location.id}`)}>
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="text-red-600 hover:text-red-700">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => setLocationToDelete({ id: location.id, name: location.nome, salas: location.salas.length })}
+                    >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
@@ -94,8 +142,7 @@ const BusinessLocations = () => {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <Badge className="bg-primary-light text-primary-dark">{workspaceCount} Espaços</Badge>
-                    {/* Badge de 'pontosDeDestaque' corrigido para exibir apenas se for true */}
-                    {location.pontosDeDestaque && <Badge variant="secondary">Destaque</Badge>}
+                    {/* {location.pontosDeDestaque && <Badge variant="secondary">Destaque</Badge>} */}
                   </div>
                 </div>
                 <div className="flex gap-2 mt-4">
@@ -119,12 +166,12 @@ const BusinessLocations = () => {
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
+            <div className="flex flex-row sm:flex-col md:flex-row justify-between items-center w-full">
               <div>
                 <h1 className="text-2xl font-bold">Gerenciar Locais</h1>
                 <p className="text-gray-600 text-sm">Visualize e gerencie todos os seus locais</p>
               </div>
-              <div className="mt-2 md:mt-0">
+              <div>
                 <Button onClick={() => navigate('/business/add-location')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Local
@@ -149,6 +196,39 @@ const BusinessLocations = () => {
           </main>
         </SidebarInset>
       </div>
+
+      <AlertDialog open={!!locationToDelete} onOpenChange={(open) => !open && setLocationToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-600" />
+              Confirmar Exclusão
+            </AlertDialogTitle>
+            <AlertDialogDescription className="space-y-2">
+              <p>
+                Tem certeza que deseja excluir o local{' '}
+                <span className="font-semibold text-foreground">"{locationToDelete?.name}"</span>?
+              </p>
+              <p className="text-red-600 font-medium">
+                Esta ação não pode ser desfeita e todas as reservas relacionadas serão afetadas.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteLocation}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir Espaço'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </SidebarProvider>
   );
 };

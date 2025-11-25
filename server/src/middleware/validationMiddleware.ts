@@ -10,7 +10,7 @@ export const validationMiddleware = (dtoClass: any) => {
 
     if (errors.length > 0) {
       res.status(400).json({
-        message: 'Erro de validação',
+        message: 'Login ou senha incorretos',
         errors: errors,
       });
     } else {

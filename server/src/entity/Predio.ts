@@ -1,27 +1,60 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany, ManyToOne } from 'typeorm';
-import { Sala } from './Sala';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 import { Usuario } from './Usuario';
+import { Sala } from './Sala';
 
-@Entity()
+export enum DiaSemana {
+  SEGUNDA = 'segunda',
+  TERCA = 'terca',
+  QUARTA = 'quarta',
+  QUINTA = 'quinta',
+  SEXTA = 'sexta',
+  SABADO = 'sabado',
+  DOMINGO = 'domingo'
+}
+
+export interface HorarioFuncionamentoPredio {
+  diaSemana: DiaSemana;
+  horarioAbertura: string;
+  horarioFechamento: string;
+  ativo: boolean;
+}
+
+@Entity('Predio')
 export class Predio {
-    @PrimaryGeneratedColumn()
-    id!: number;
+  @PrimaryGeneratedColumn()
+  id!: number;
 
-    @Column()
-    nomePredio!: string;
+  @Column({ unique: true })
+  nome!: string;
 
-    @Column()
-    endereco!: string;
+  @Column()
+  endereco!: string;
 
-    @Column('text', { array: true, default: () => "'{}'" })
-    pontosDeDestaque!: string[];
+  @Column()
+  cidade!: string;
 
-    @Column({ type: 'text', nullable: true })
-    descricao?: string;
+  @Column()
+  estado!: string;
 
-    @OneToMany(() => Sala, sala => sala.predio)
-    salas!: Sala[];
+  @Column()
+  cep!: string;
 
-    @ManyToOne(() => Usuario, (usuario) => usuario.predios)
-    usuario!: Usuario;
+  @Column({ type: 'text', nullable: true })
+  descricao?: string;
+
+  @OneToMany(() => Sala, sala => sala.predio)
+  salas?: Sala[];
+
+  @Column({ type: 'jsonb', nullable: true })
+  horariosFuncionamento?: HorarioFuncionamentoPredio[];
+
+  @ManyToOne(() => Usuario, (usuario) => usuario.predio)
+  @JoinColumn({ name: "usuarioId" })
+  usuario!: Usuario;
+
+  @CreateDateColumn()
+  createdAt!: Date;
+
+  @UpdateDateColumn()
+  updatedAt!: Date;
 }

@@ -1,15 +1,19 @@
-import { IsString, IsEmail, IsOptional } from 'class-validator';
+import { IsOptional, IsString, IsEmail, MinLength } from 'class-validator';
 
 export class AtualizarUsuarioDto {
     @IsOptional()
-    @IsString({ message: 'O nome deve ser um texto.' })
+    @IsString({ message: 'Nome deve ser uma string' })
     nome?: string;
 
     @IsOptional()
-    @IsEmail({}, { message: 'Por favor, insira um email válido.' })
+    @IsEmail({}, { message: 'Email inválido' })
     email?: string;
 
     @IsOptional()
-    @IsString({ message: 'O telefone deve ser um texto.' })
+    @IsString({ message: 'CPF/CNPJ deve ser uma string' })
+    cpfcnpj?: string;
+
+    @IsOptional()
+    @IsString({ message: 'Telefone deve ser uma string' })
     telefone?: string;
 }

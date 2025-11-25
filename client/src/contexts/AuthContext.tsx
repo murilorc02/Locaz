@@ -1,12 +1,23 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { User, UserRole } from "../types";
+import { User, UserRole } from "@/types";
 import { useNavigate } from 'react-router-dom';
-import { useToast } from "../components/ui/use-toast";
+import { useToast } from '@/hooks/use-toast';
 import api from '../services/api';
 import axios from 'axios';
 
 interface LoginResponse {
-  access_token: string;
+  message: string,
+  data: {
+    access_token: string,
+    user: {
+      id: number,
+      nome: string,
+      email: string,
+      cpfcnpj: string,
+      tipo: UserRole,
+      telefone: string
+    }
+  },
 }
 
 interface JwtPayload {
@@ -66,8 +77,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, senha: string) => {
     try {
-      const response = await api.post<LoginResponse>('/auth/login', { email, senha: senha });
-      const { access_token } = response.data;
+      const response = await api.post<LoginResponse>('/auth/login', { email: email, senha: senha });
+      const { data: {access_token} } = response.data;
       localStorage.setItem('authToken', access_token);
       await getUserProfile();
     } catch (error) {
@@ -94,11 +105,11 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
     const payload = {
       nome: name,
-      email,
+      email: email,
       senha: password,
       tipo: role,
       telefone: telephone,
-      cpf: document
+      cpfcnpj: document
     };
     await api.post('/auth/register', payload);
     await login(email, password); // loga o usuário após o cadastro
@@ -106,7 +117,7 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('authToken'); // O interceptor vai parar de achar o token
+    localStorage.removeItem('authToken');
     toast({ title: "Logout realizado" });
     navigate('/login');
   };

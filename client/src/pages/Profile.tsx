@@ -8,14 +8,14 @@ import { Input } from '../components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 import { Label } from '../components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Profile = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [name, setName] = useState(user?.name || '');
+  const [name, setName] = useState(user?.nome || '');
   const [email, setEmail] = useState(user?.email || '');
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -91,8 +91,8 @@ const Profile = () => {
                 <form onSubmit={handleProfileUpdate} className="space-y-4">
                   <div className="flex flex-col sm:flex-row items-center gap-4">
                     <Avatar className="h-20 w-20">
-                      <AvatarImage src={user?.avatar} alt={user?.name} />
-                      <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
+                      <AvatarImage src={user?.avatar} alt={user?.nome} />
+                      <AvatarFallback>{user?.nome.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <Button type="button" variant="outline" className="text-sm">
                       Change Avatar

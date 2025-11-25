@@ -1,13 +1,10 @@
 import 'reflect-metadata'
 import { DataSource } from "typeorm"
 import { Usuario } from "./entity/Usuario"
-import { Empresa } from "./entity/Empresa"
-import { Horario } from "./entity/Horario"
 import { Predio } from "./entity/Predio"
-import { Proprietario } from "./entity/Proprietario"
 import { Sala } from "./entity/Sala"
+import { Reserva } from "./entity/Reserva"
 import { config } from './config'
-
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -18,10 +15,13 @@ export const AppDataSource = new DataSource({
     database: config.db.name,
     synchronize: false,
     logging: true,
-    migrations: ['dist/migration/**/*.js'],
-    entities: [Empresa, Horario, Predio, Proprietario, Sala, Usuario],
+    migrations: ["src/migrations/*.{js,ts}"],  // "dist/migration/**/*.js" // npx typeorm-ts-node-commonjs migration:create ./src/migrations/AtualizarTabelaUsuarios -d ./src/data-source.ts
+    entities: [
+        Predio,
+        Sala,
+        Usuario,
+        Reserva
+    ],
     subscribers: [],
-    ssl: {
-        rejectUnauthorized: false
-    }
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 })

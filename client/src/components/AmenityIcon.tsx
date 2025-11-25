@@ -1,4 +1,6 @@
-import { Wifi, Coffee, MapPin, Flower2, Building, Store, Armchair, Trees, AirVent } from 'lucide-react';
+
+import { Wifi, Coffee, MapPin, Building, Store, User, Sofa, Projector, Baby, Snowflake, Square, Car, Utensils } from 'lucide-react';
+import { OfficeChairIcon } from "@phosphor-icons/react";
 
 interface AmenityIconProps {
   type: string;
@@ -14,7 +16,7 @@ const AmenityIcon = ({ type, className, size = 20, color }: AmenityIconProps) =>
     case 'coffee':
       return <Coffee className={className} size={size} color={color || "currentColor"} />;
     case 'park':
-      return <Trees className={className} size={size} color={color || "currentColor"} />;
+      return <Building className={className} size={size} color={color || "currentColor"} />;
     case 'store':
       return <Store className={className} size={size} color={color || "currentColor"} />;
     case 'city':
@@ -22,11 +24,21 @@ const AmenityIcon = ({ type, className, size = 20, color }: AmenityIconProps) =>
     case 'map-pin':
       return <MapPin className={className} size={size} color={color || "currentColor"} />;
     case 'chair':
-      return <Armchair className={className} size={size} color={color || "currentColor"} />;
-    case 'flower2':
-      return <Flower2 className={className} size={size} color={color || "currentColor"} />;
-    case 'air-vent':
-      return <AirVent className={className} size={size} color={color || "currentColor"} />;
+      return <OfficeChairIcon className={className} size={size} color={color || "currentColor"} />;
+    case 'sofa':
+      return <Sofa className={className} size={size} color={color || "currentColor"} />;
+    case 'projector':
+      return <Projector className={className} size={size} color={color || "currentColor"} />;
+    case 'baby':
+      return <Baby className={className} size={size} color={color || "currentColor"} />;
+    case 'snowflake':
+      return <Snowflake className={className} size={size} color={color || "currentColor"} />;
+    case 'square':
+      return <Square className={className} size={size} color={color || "currentColor"} />;
+    case 'car':
+      return <Car className={className} size={size} color={color || "currentColor"} />;
+    case 'utensils':
+      return <Utensils className={className} size={size} color={color || "currentColor"} />;
     default:
       return <MapPin className={className} size={size} color={color || "currentColor"} />;
   }

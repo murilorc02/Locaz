@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { useToast } from '../components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -32,9 +32,10 @@ const Login = () => {
       await login(email, password);
       navigate('/business/dashboard');
     } catch (error) {
-      console.log('A operação de login falhou:', error);
+      throw new Error('A operação de login falhou:', error);
     } finally {
       setIsLoading(false);
+      return
     }
   };
 

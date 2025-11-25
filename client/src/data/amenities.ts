@@ -1,61 +1,100 @@
+
 import { Amenity } from '../types';
 
-export const amenities: Amenity[] = [
+// Location-specific amenities (inherited by workspaces)
+export const locationAmenities: Amenity[] = [
   {
-    id: 'wifi',
-    name: 'Wi-Fi Gratuito',
-    icon: 'wifi',
-    description: 'Acesso a internet disponível em todo o espaço'
-  },
-  {
-    id: 'coffee',
-    name: 'Café Incluso',
-    icon: 'coffee',
-    description: 'Café ou chá para todos os usuários do espaço de trabalho'
-  },
-  {
-    id: 'chair',
-    name: 'Cadeiras Ergonômicas',
-    icon: 'chair',
-    description: 'Assentos ergonômicos e confortáveis para sessões de trabalho produtivas'
-  },
-  {
-    id: 'park',
-    name: 'Parque Próximo',
+    id: 'park-nearby',
+    name: 'Próximo ao Parque',
     icon: 'park',
-    description: 'Local com vista ou proximidade à um ambiente florestal'
+    description: 'Localizado a poucos minutos de caminhada de parques e espaços verdes'
   },
   {
-    id: 'shopping',
+    id: 'shopping-nearby',
     name: 'Shopping Próximo',
     icon: 'store',
-    description: 'Local vizinho ou próximo à shopping, restaurantes e lojas'
+    description: 'Próximo a lojas, restaurantes e estabelecimentos comerciais'
   },
   {
     id: 'city-center',
     name: 'Centro da Cidade',
     icon: 'city',
-    description: 'Localizado no centro da cidade'
+    description: 'Localizado no centro da cidade com fácil acesso ao transporte'
   },
   {
     id: 'central-location',
     name: 'Localização Central',
     icon: 'map-pin',
-    description: 'Localização estratégica para fácil acesso à maioria das partes da cidade'
-  },
-  {
-    id: 'comfort',
-    name: 'Espaço de Descompressão',
-    icon: 'flower2',
-    description: 'Ambiente com local dedicado à descanso e descontração'
-  },
-  {
-    id: 'air-conditioning',
-    name: 'Ar Condicionado',
-    icon: 'air-vent',
-    description: 'Cobertura de ar condicionado para todo o espaço'
+    description: 'Posição estratégica para fácil acesso de qualquer parte da cidade'
   }
 ];
+
+// Workspace-specific amenities  
+export const workspaceAmenities: Amenity[] = [
+  {
+    id: 'wifi-gratis',
+    name: 'WiFi Grátis',
+    icon: 'wifi',
+    description: 'Internet de alta velocidade gratuita'
+  },
+  {
+    id: 'cafe-gratis',
+    name: 'Café Grátis',
+    icon: 'coffee',
+    description: 'Café ou chá cortesia para todos os usuários'
+  },
+  {
+    id: 'cadeiras-ergonomicas',
+    name: 'Cadeiras Ergonômicas',
+    icon: 'chair',
+    description: 'Assentos confortáveis e ergonômicos para sessões produtivas'
+  },
+  {
+    id: 'espaco-kids',
+    name: 'Espaço Kids',
+    icon: 'baby',
+    description: 'Área dedicada para crianças com atividades e supervisão'
+  },
+  {
+    id: 'espaco-descompressao',
+    name: 'Espaço de Descompressão',
+    icon: 'sofa',
+    description: 'Área de relaxamento com poltronas e ambiente tranquilo'
+  },
+  {
+    id: 'ar-condicionado',
+    name: 'Ar Condicionado',
+    icon: 'snowflake',
+    description: 'Sistema de climatização para maior conforto'
+  },
+  {
+    id: 'projetor',
+    name: 'Projetor',
+    icon: 'projector',
+    description: 'Equipamento de projeção para apresentações'
+  },
+  {
+    id: 'quadro-branco',
+    name: 'Quadro Branco',
+    icon: 'square',
+    description: 'Quadro para anotações e diagramas'
+  },
+  {
+    id: 'estacionamento',
+    name: 'Estacionamento',
+    icon: 'car',
+    description: 'Vagas de estacionamento disponíveis'
+  },
+  {
+    id: 'copa',
+    name: 'Copa/Cozinha',
+    icon: 'utensils',
+    description: 'Área com geladeira, micro-ondas e utensílios básicos'
+  }
+];
+
+// All amenities combined
+export const amenities: Amenity[] = [...locationAmenities, ...workspaceAmenities];
 
 export const getAmenity = (id: string): Amenity | undefined => {
   return amenities.find(amenity => amenity.id === id);

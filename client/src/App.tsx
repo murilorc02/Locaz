@@ -6,8 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AuthProvider from "./contexts/AuthContext";
 import Login from "./pages/Login";
 import BusinessDashboard from "./pages/BusinessDashboard";
-import AddLocation from "./pages/AddLocation";
-import LocationsProvider from "./contexts/LocationsContext";
+import { LocationsProvider } from "./contexts/LocationsContext";
 import Index from "./pages/Index";
 // import NotFound from "./pages/NotFound";
 import Signup from "./pages/Signup";
@@ -18,9 +17,11 @@ import LocationDetail from "./pages/LocationDetail";
 import Bookings from "./pages/Bookings";
 import BusinessLocations from "./pages/BusinessLocations";
 import BusinessWorkspaces from "./pages/BusinessWorkspaces";
-import AddWorkspace from "./pages/AddWorkspace";
-import EditLocation from "./pages/EditLocation";
+import WorkspaceEditor from "./pages/WorkspaceEditor";
 import BusinessBookings from "./pages/BusinessBookings";
+import { WorkspacesProvider } from "./contexts/WorkspacesContext";
+import LocationEditor from "./pages/LocationEditor";
+import { BookingsProvider } from "./contexts/BookingsContext";
 
 const queryClient = new QueryClient();
 
@@ -29,29 +30,33 @@ const App = () => (
     <BrowserRouter>
       <AuthProvider>
         <LocationsProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/search" element={<Search />} />
-              <Route path="/workspace/:id" element={<WorkspaceDetail />} />
-              <Route path="/location/:id" element={<LocationDetail />} />
-              <Route path="/business/dashboard" element={<BusinessDashboard />} />
-              <Route path="/business/locations" element={<BusinessLocations />} />
-              <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
-              <Route path="/business/bookings" element={<BusinessBookings />} />
-              <Route path="/business/add-location" element={<AddLocation />} />
-              <Route path="/business/add-workspace" element={<AddWorkspace />} />
-              <Route path="/business/add-workspace/:locationId" element={<AddWorkspace />} />
-              <Route path="/business/edit-location/:id" element={<EditLocation />} />
-              <Route path="/bookings" element={<Bookings />} />
-              {/* <Route path="*" element={<NotFound />} /> */}
-            </Routes>
-          </TooltipProvider>
+          <WorkspacesProvider>
+            <BookingsProvider>
+              <TooltipProvider>
+                <Toaster />
+                <Sonner />
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/search" element={<Search />} />
+                  <Route path="/workspace/:id" element={<WorkspaceDetail />} />
+                  <Route path="/location/:id" element={<LocationDetail />} />
+                  <Route path="/business/dashboard" element={<BusinessDashboard />} />
+                  <Route path="/business/locations" element={<BusinessLocations />} />
+                  <Route path="/business/workspaces" element={<BusinessWorkspaces />} />
+                  <Route path="/business/bookings" element={<BusinessBookings />} />
+                  <Route path="/business/add-location" element={<LocationEditor />} />
+                  <Route path="/business/edit-location/:id" element={<LocationEditor />} />
+                  <Route path="/business/add-workspace" element={<WorkspaceEditor />} />
+                  <Route path="/business/edit-workspace/:id" element={<WorkspaceEditor />} />
+                  <Route path="/bookings" element={<Bookings />} />
+                  {/* <Route path="*" element={<NotFound />} /> */}
+                </Routes>
+              </TooltipProvider>
+            </BookingsProvider>
+          </WorkspacesProvider>
         </LocationsProvider>
       </AuthProvider>
     </BrowserRouter>

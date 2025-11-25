@@ -1,28 +1,29 @@
-import { IsString, IsEmail, MinLength, IsEnum, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString, MinLength, IsEnum } from 'class-validator';
 import { TipoUsuario } from '../../entity/Usuario';
 
 export class CriarUsuarioDto {
-    @IsNotEmpty({ message: 'O nome é obrigatório.'})
-    @IsString()
+    @IsNotEmpty({ message: 'Nome é obrigatório' })
+    @IsString({ message: 'Nome deve ser uma string' })
     nome!: string;
 
-    @IsNotEmpty({ message: 'O email é obrigatório.'})
-    @IsEmail()
+    @IsNotEmpty({ message: 'Email é obrigatório' })
+    @IsEmail({}, { message: 'Email inválido' })
     email!: string;
 
-    @IsNotEmpty({ message: 'A senha é obrigatória.'})
-    @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres.'})
+    @IsNotEmpty({ message: 'Senha é obrigatória' })
+    @IsString({ message: 'Senha deve ser uma string' })
+    @MinLength(6, { message: 'Senha deve ter pelo menos 6 caracteres' })
     senha!: string;
-    
-    @IsNotEmpty({ message: 'O CPF é obrigatório.'})
-    @IsString() 
-    cpf!: string;
 
-    @IsNotEmpty({ message: 'O telefone é obrigatório.'})
-    @IsString()
+    @IsNotEmpty({ message: 'CPF/CNPJ é obrigatório' })
+    @IsString({ message: 'CPF/CNPJ deve ser uma string' })
+    cpfcnpj!: string;
+
+    @IsNotEmpty({ message: 'Telefone é obrigatório' })
+    @IsString({ message: 'Telefone deve ser uma string' })
     telefone!: string;
 
-    @IsNotEmpty({ message: 'O tipo de conta é obrigatório.'})
-    @IsEnum(TipoUsuario, { message: 'O tipo de conta deve ser "locador" ou "locatario".'})
+    @IsNotEmpty({ message: 'Tipo é obrigatório' })
+    @IsEnum(TipoUsuario, { message: 'Tipo deve ser "locador" ou "locatario"' })
     tipo!: TipoUsuario;
 }

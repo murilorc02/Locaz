@@ -4,16 +4,18 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
-import { getWorkspacesByLocation } from '../data/workspaces';
 import { Building, Calendar, Clock, MapPin, Plus, TrendingUp, Users, Link } from 'lucide-react';
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
 import { BusinessSidebar } from '../components/BusinessSidebar';
 import { Skeleton } from '../components/ui/skeleton';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useWorkspaces } from '@/contexts/WorkspacesContext';
+import { Workspace } from '@/types';
 
 const BusinessDashboard = () => {
   const { user, isAuthenticated, isLoading: isAuthLoading, logout } = useAuth();
-  const { locations: locations, isLoading: isLocationsLoading, error } = useLocations();
+  const { locations, isLoading: isLocationsLoading, error } = useLocations();
+  const { workspaces: fetchedWorkspaces, fetchWorkspaces } = useWorkspaces();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,17 +26,25 @@ const BusinessDashboard = () => {
   }, [user, isAuthenticated, isAuthLoading, navigate]);
 
   // Se a autenticação ainda está carregando ou se o usuário não é válido, não renderize nada ainda
-  if (isAuthLoading || !isAuthenticated || user?.tipo !== 'locador') {
+  if (isAuthLoading || isLocationsLoading || !isAuthenticated || user?.tipo !== 'locador') {
     return <div>Carregando...</div>; // Ou um componente de spinner
   }
 
-  const totalLocations = locations.length;
-  const totalWorkspaces = locations.reduce(
+  const totalLocations = locations.data.length;
+  const totalWorkspaces = locations.data.reduce(
     (acc, location) => acc + (location.salas?.length || 0), 0
   );
 
   const totalBookings = 45; // Mock data
   const monthlyRevenue = 12500; // Mock data
+
+  const getWorkspacesByLocationId = (id: number) => {
+    if (!fetchedWorkspaces?.data) return [];
+    const locatedWorkspaces = fetchedWorkspaces.data.filter(
+      (workspace) => workspace.predio.id === id
+    );
+    return locatedWorkspaces;
+  };
 
   const renderContent = () => {
     // Tratamento de erro
@@ -126,8 +136,7 @@ const BusinessDashboard = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {locations.length === 0 ? (
-                console.log(locations.length),
+              {locations.data.length === 0 ? (
                 <div className="text-center py-6">
                   <Building className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <p className="text-gray-500 mb-4">Nenhum local adicionado ainda</p>
@@ -138,14 +147,14 @@ const BusinessDashboard = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {locations.slice(0, 3).map(location => (
+                  {locations.data.map(location => (
                     <div key={location.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex items-center space-x-3">
                         <div className="w-10 h-10 bg-primary-light rounded-lg flex items-center justify-center">
                           <Building className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <p className="font-medium">{location.nomePredio}</p>
+                          <p className="font-medium">{location.nome}</p>
                           <p className="text-sm text-gray-500 flex items-center">
                             <MapPin className="h-3 w-3 mr-1" />
                             {location.endereco}
@@ -153,7 +162,7 @@ const BusinessDashboard = () => {
                         </div>
                       </div>
                       <Badge variant="outline">
-                        {getWorkspacesByLocation(location.id).length} espaços
+                        {getWorkspacesByLocationId(location.id).length} espaços
                       </Badge>
                     </div>
                   ))}
@@ -224,12 +233,12 @@ const BusinessDashboard = () => {
         <SidebarInset>
           <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
             <SidebarTrigger className="-ml-1" />
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center w-full">
+            <div className="flex flex-row sm:flex-col md:flex-row justify-between items-center w-full">
               <div>
                 <h1 className="text-2xl font-bold">Visão Geral</h1>
                 <p className="text-gray-600 text-sm">Resumo das suas atividades</p>
               </div>
-              <div className="mt-2 md:mt-0">
+              <div>
                 <Button onClick={() => navigate('/business/add-location')}>
                   <Plus className="h-4 w-4 mr-2" />
                   Adicionar Local

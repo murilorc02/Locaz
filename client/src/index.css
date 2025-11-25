@@ -1,47 +1,52 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 210 25% 98.4%;
+    --foreground: 192.5 44.4% 10.6%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 189.1 35.5% 18.2%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 192.5 44.4% 10.6%;
 
-    --primary: 57 47% 11%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 111 47% 11%;
+    --primary: 189.1 35.5% 18.2%;
+    --primary-light: 189, 36%, 33%;
+    --primary-dark: 188, 38%, 13%;
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 172.7 57.8% 39%;
+    --secondary-light: 173, 57%, 49%;
+    --secondary-dark: 173, 57%, 25%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 12% 86%;
+    --muted-foreground: 225 1.7% 52.5%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 189 35.1% 22.4%;
+    --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 12 75.8% 61.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
+    --border: 227.1 21.9% 87.5%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --ring: 191.1 37.5% 28.2%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 192.5 44.4% 10.6%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 172.7 57.8% 39%;
+    --sidebar-primary-foreground: 171.8 100% 95.7%;
+    --sidebar-accent: 191.1 37.5% 28.2%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 227.1 21.9% 87.5%;
+    --sidebar-ring: 170.1 59.5% 30%;
   }
 
   .dark {
@@ -54,50 +59,35 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 57 47% 11%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 45 93% 47%;
+    --primary-foreground: 222.2 84% 4.9%;
 
-    --secondary: 111 47% 11%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 43 96% 56%;
+    --secondary-foreground: 222.2 84% 4.9%;
 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 45 93% 47%;
+    --accent-foreground: 222.2 84% 4.9%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 45 93% 47%;
     
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 45 93% 47%;
+    --sidebar-primary-foreground: 240 5.9% 10%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 45 93% 47%;
   }
 }
-
-/* .dashboard-header {
-  background: url('./assets/imgs/bg_header.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-} */
-
-/* .dashboard-header {
-  border-width: 10px;
-  border-style: solid;
-  border-image-source: linear-gradient(90deg,rgba(179, 110, 0, 1) 0%, rgba(245, 230, 189, 1) 100%);
-  border-image-slice: fill 1;
-  mix-blend-mode: color;
-} */
 
 @layer base {
   * {
@@ -128,7 +118,7 @@
 
 @layer components {
   .hero-gradient {
-    @apply bg-gradient-to-r from-primary to-secondary;
+    @apply bg-gradient-to-r from-yellow-400 to-amber-500;
   }
   
   .workspace-card {
